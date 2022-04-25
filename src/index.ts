@@ -13,7 +13,7 @@ const client = new Bot({
         Intents.FLAGS.GUILD_MESSAGES, 
         Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS, 
         Intents.FLAGS.GUILD_MEMBERS
-    ]}, process.env.UID!, process.env.HASH!);
+    ]}, process.env.USER_UID!, process.env.HASH!);
 
 ready(client);
 interactionCreate(client);
