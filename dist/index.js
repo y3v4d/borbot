@@ -15,7 +15,7 @@ const client = new bot_1.default({
         discord_js_1.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
         discord_js_1.Intents.FLAGS.GUILD_MEMBERS
     ]
-}, process.env.UID, process.env.HASH);
+}, process.env.USER_UID, process.env.HASH);
 (0, ready_1.default)(client);
 (0, interactionCreate_1.default)(client);
 (0, message_1.default)(client);

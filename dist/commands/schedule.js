@@ -9,7 +9,14 @@ exports.Schedule = {
         .setName("schedule")
         .setDescription("Show up-to-date schedule!"),
     run: async function (client, interaction) {
-        const schedule = JSON.parse((0, fs_1.readFileSync)("data/schedule.json", { encoding: 'utf-8' }));
+        let schedule;
+        try {
+            schedule = JSON.parse((0, fs_1.readFileSync)("data/schedule.json", { encoding: 'utf-8' }));
+        }
+        catch (e) {
+            interaction.reply({ content: "Schedule doesn't exist! Ask y3v4d to create one :)", ephemeral: true });
+            return;
+        }
         const guild = await client.guilds.fetch(process.env.GUILD_ID);
         const startDate = new Date(schedule.startDay);
         const endDate = new Date(startDate.getTime() + 10 * MS_IN_DAY);
