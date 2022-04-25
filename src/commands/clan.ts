@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
-import Bot from "../shared/bot";
+import Bot from "../core/bot";
+import Command from "../core/command";
 import table from "text-table";
-import Command from "../shared/command";
 import { ClanClass } from "../shared/clan";
 
 export const Clan: Command = {

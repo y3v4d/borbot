@@ -1,10 +1,11 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import { ApplicationCommandPermissionData, Client } from "discord.js";
+import Bot from "../core/bot";
 import { Actions } from "../actions";
 import { Commands } from "../commands";
 
-export default (client: Client): void => {
+export default (client: Bot): void => {
     client.on('ready', async () => {
         if(!client.user || !client.application) return;
 
@@ -22,7 +23,7 @@ export default (client: Client): void => {
         (await client.guilds.cache.get(process.env.GUILD_ID!)!.commands.fetch()).forEach(async cmd => {
             if(!cmd.defaultPermission) {
                 const permissions: ApplicationCommandPermissionData[] = [{
-                    id: "967832546060693544",
+                    id: process.env.ADMIN_ROLE!,
                     type: 'ROLE',
                     permission: true
                 }];

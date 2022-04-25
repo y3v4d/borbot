@@ -1,12 +1,12 @@
 import { Client, ClientOptions } from "discord.js";
-import { Clan } from "./clan";
+import { ClanManager } from "../shared/clan";
 
 export default class Bot extends Client {
-    readonly clan: Clan;
+    readonly clan: ClanManager;
 
     constructor(options: ClientOptions, uid: string, passwordHash: string) {
         super(options);
 
-        this.clan = new Clan(uid, passwordHash);
+        this.clan = new ClanManager(uid, passwordHash);
     }
 }

@@ -1,5 +1,5 @@
 import { UpdateUsers } from "./actions/updateUsers";
-import Action from "./shared/action";
+import Action from "./core/action";
 
 export const Actions: Action[] = [
     UpdateUsers

@@ -1,7 +1,6 @@
-import { Client, Guild } from "discord.js";
 import { readFileSync } from "fs";
-import CH from "../api/clickerheroes";
-import Action from "../shared/action";
+import Bot from "../core/bot";
+import Action from "../core/action";
 
 export const UpdateUsers: Action = {
     timeout: 60000 * 60, // hour
@@ -9,14 +8,14 @@ export const UpdateUsers: Action = {
     startOnInit: true,
     repeat: true,
 
-    async run(client: Client) {
+    async run(client: Bot) {
         console.log("#updateUsers action");
+        await client.clan.update();
 
-        const info = await CH.getGuildInfo(process.env.UID!, process.env.HASH!);
         const userMap = JSON.parse(readFileSync('data/userMap.json', { encoding: 'utf-8' })) as { [key: string]: string };
         
         const guild = client.guilds.cache.get(process.env.GUILD_ID!)!;
-        const clan_members = Object.values(info.guildMembers);
+        const clan_members = client.clan.getAllMembers();
 
         for(let uid in userMap) {
             try {
@@ -32,7 +31,7 @@ export const UpdateUsers: Action = {
                     continue;
                 }
 
-                guild_member.setNickname(`${clan_member.nickname} [${clan_member.classLevel}]`);
+                guild_member.setNickname(`${clan_member.nickname} [${clan_member.level.toString()}]`);
             } catch(error) {
                 console.error(`Error fetching user with ${uid} id!\n${error}`);
             }

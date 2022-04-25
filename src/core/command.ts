@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "@discordjs/builders";
+import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
 import Bot from "./bot";
 

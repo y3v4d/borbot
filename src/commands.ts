@@ -1,4 +1,4 @@
-import Command from "./shared/command";
+import Command from "./core/command";
 import { TypeScript } from "./commands/typescript";
 import { Clan } from "./commands/clan";
 import { Connect } from "./commands/connect";

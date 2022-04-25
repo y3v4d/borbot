@@ -1,9 +1,9 @@
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "@discordjs/builders";
+import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
 import { readFileSync, writeFileSync } from "fs";
-import Bot from "../shared/bot";
-import CH from "../api/clickerheroes";
-import Command from "../shared/command";
+import Bot from "../core/bot";
+import Command from "../core/command";
+import { UpdateUsers } from "../actions/updateUsers";
 
 export const Connect: Command = {
     data: new SlashCommandBuilder()
@@ -32,20 +32,22 @@ export const Connect: Command = {
         const guild_user = interaction.options.get('guild_user')!.user!;
 
         if(guild_user.bot) {
-            interaction.followUp("Did you just try to assign something to the mighty Borb?!");
+            await interaction.followUp("Did you just try to assign something to the mighty Borb?!");
 
             return;
         }
 
         const clan_member = client.clan.getMemberByName(clan_name);
         if(!clan_member) {
-            interaction.followUp(`Couldn't find user with name ${clan_name} in the clan...`);
+            await interaction.followUp(`Couldn't find user with name ${clan_name} in the clan...`);
 
             return;
         }
 
         map[guild_user.id] = clan_member.uid;
-        writeFileSync("data/userMap.json", JSON.stringify(map), { encoding: 'utf-8' });
-        interaction.followUp(`Assigned ${guild_user.username} to ${clan_name}!`);
+        writeFileSync("data/userMap.json", JSON.stringify(map, undefined, "    "), { encoding: 'utf-8' });
+
+        await interaction.followUp(`Assigned ${guild_user.username} to ${clan_name}!`);
+        await UpdateUsers.run(client);
     }
 }

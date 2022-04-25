@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { BaseCommandInteraction, Client } from "discord.js";
-import Bot from "../shared/bot";
-import Command from "../shared/command";
+import { BaseCommandInteraction } from "discord.js";
+import Bot from "../core/bot";
+import Command from "../core/command";
 import Emoji from "../shared/emojis";
 
 export const TypeScript: Command = {

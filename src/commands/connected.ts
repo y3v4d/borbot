@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, SlashCommandSubcommandGroupBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
 import { readFileSync } from "fs";
-import Bot from "src/shared/bot";
-import Command from "../shared/command";
+import Bot from "../core/bot";
+import Command from "../core/command";
 
 export const Connected: Command = {
     data: new SlashCommandBuilder()
@@ -23,7 +23,6 @@ export const Connected: Command = {
         let msg = "**Connected users**:\n";
         for(let gid in userMap) {
             msg += (await guild.members.fetch(gid)).nickname;
-            console.log(msg);
             msg += ` -> ${client.clan.getMemberByUid(userMap[gid])!.nickname}\n`;
 
             all_members.splice(all_members.findIndex(o => o.uid === userMap[gid]), 1);

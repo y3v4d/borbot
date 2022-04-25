@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import Bot from "./bot";
 
 export default interface Action {
     timeout: number;
@@ -6,5 +6,5 @@ export default interface Action {
     startOnInit: boolean;
     repeat: boolean;
     
-    run: (client: Client) => Promise<void>;
+    run: (client: Bot) => Promise<void>;
 }

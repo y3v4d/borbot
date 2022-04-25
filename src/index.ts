@@ -1,10 +1,10 @@
 import 'dotenv/config';
-import { Client, Intents } from "discord.js";
+import { Intents } from "discord.js";
 
 import ready from './listeners/ready';
 import interactionCreate from './listeners/interactionCreate';
 import message from './listeners/message';
-import Bot from './shared/bot';
+import Bot from './core/bot';
 
 console.log("Bot is starting...");
 const client = new Bot({

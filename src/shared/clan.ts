@@ -7,29 +7,18 @@ export enum ClanClass {
     Undefined = -1
 }
 
-export class ClanMember {
-    public uid: string = "";
-    public highestZone: number = 0;
-    public nickname: string = "";
-    public class: ClanClass = ClanClass.Undefined;
-    public level: number = 0;
+export interface ClanMember {
+    uid: string;
+    highestZone: number;
+    nickname: string;
+    class: ClanClass;
+    level: number;
     
-    public lastRewardTimestamp: string = "";
-    public lastBonusRewardTimestamp: string = "";
-
-    constructor(data: CH.GuildInfoResultMember) {
-        this.uid = data.uid;
-        this.highestZone = parseInt(data.highestZone);
-        this.nickname = data.nickname;
-        this.class = parseInt(data.chosenClass) as ClanClass;
-        this.level = parseInt(data.classLevel);
-
-        this.lastRewardTimestamp = data.lastRewardTimestamp;
-        this.lastBonusRewardTimestamp = data.lastBonusRewardTimestamp;
-    }
+    lastRewardTimestamp: string;
+    lastBonusRewardTimestamp: string;
 }
 
-export class Clan {
+export class ClanManager {
     private _name: string = "";
     private _masterUID: string = "";
     private _members: Map<string, ClanMember> = new Map();
@@ -58,7 +47,16 @@ export class Clan {
 
         this._members.clear();
         Object.values(info.guildMembers).forEach(member => {
-            this._members.set(member.uid, new ClanMember(member));
+            this._members.set(member.uid, {
+                uid: member.uid,
+                highestZone: parseInt(member.highestZone),
+                nickname: member.nickname,
+                class: parseInt(member.chosenClass) as ClanClass,
+                level: parseInt(member.classLevel),
+
+                lastRewardTimestamp: member.lastRewardTimestamp,
+                lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
+            } as ClanMember);
         });
     }
 

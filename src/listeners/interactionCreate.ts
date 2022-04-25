@@ -1,5 +1,5 @@
 import { Interaction } from "discord.js";
-import Bot from "src/shared/bot";
+import Bot from "../core/bot";
 import { Commands } from "../commands";
 
 export default (client: Bot): void => {

@@ -1,9 +1,10 @@
-import { Client, Message } from "discord.js";
+import { Message } from "discord.js";
+import Bot from "../core/bot";
 import Emoji from "../shared/emojis";
 
 const PREFIX = "!";
 
-export default (client: Client): void => {
+export default (client: Bot): void => {
     client.on('messageCreate', async (msg: Message) => {
         if(!msg.content.startsWith(PREFIX) || msg.author.bot) return;
 
