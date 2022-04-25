@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
-import { ApplicationCommandPermissionData, Client } from "discord.js";
+import { ApplicationCommandPermissionData } from "discord.js";
 import Bot from "../core/bot";
 import { Actions } from "../actions";
 import { Commands } from "../commands";
