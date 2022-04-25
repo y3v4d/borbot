@@ -1,6 +1,5 @@
 node_modules
 .env
 old/
-dist/
 data/
 _dumps/
