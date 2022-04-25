@@ -18,7 +18,13 @@ export const Schedule: Command = {
         .setDescription("Show up-to-date schedule!"),
 
     run: async function(client: Bot, interaction: BaseCommandInteraction) {
-        const schedule = JSON.parse(readFileSync("data/schedule.json", { encoding: 'utf-8' })) as ScheduleJSON;
+        let schedule: ScheduleJSON;
+        try {
+            schedule = JSON.parse(readFileSync("data/schedule.json", { encoding: 'utf-8' })) as ScheduleJSON;
+        } catch(e) {
+            interaction.reply({ content: "Schedule doesn't exist! Ask y3v4d to create one :)", ephemeral: true });
+            return;
+        }
 
         const guild = await client.guilds.fetch(process.env.GUILD_ID!);
 

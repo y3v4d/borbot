@@ -12,7 +12,12 @@ export const UpdateUsers: Action = {
         console.log("#updateUsers action");
         await client.clan.update();
 
-        const userMap = JSON.parse(readFileSync('data/userMap.json', { encoding: 'utf-8' })) as { [key: string]: string };
+        let userMap: { [key: string]: string } = {};
+        try {
+            userMap = JSON.parse(readFileSync('data/userMap.json', { encoding: 'utf-8' })) as { [key: string]: string };
+        } catch(e) {
+            console.warn("data/userMap.json doesn't exists! Creating...");
+        }
         
         const guild = client.guilds.cache.get(process.env.GUILD_ID!)!;
         const clan_members = client.clan.getAllMembers();
