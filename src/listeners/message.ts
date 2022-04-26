@@ -14,16 +14,14 @@ export default (client: Bot): void => {
         if(cmd === 'send') {
             await msg.channel.sendTyping();
 
-            const startMsg = `**${msg.member!.displayName}** would like to say:\n`;
-            const built = Emoji.makeEmojiMessage(msg.guild!, args);
+            const startMsg = `$$**${msg.member!.displayName}** would like to say:$$ \n`;
+            const built = Emoji.makeEmojiMessage(msg.guild!, startMsg + args);
 
             if(built.length === 0) {
                 await msg.delete();
-                await msg.channel.send(startMsg);
-                await msg.channel.send(args);
+                await msg.channel.send(startMsg + args);
             } else {
                 await msg.delete();
-                await msg.channel.send(startMsg);
                 for(let i = 0; i < built.length; ++i) {
                     await msg.channel.send(`${built[i]}`);
                 }

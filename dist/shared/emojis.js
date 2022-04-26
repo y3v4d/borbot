@@ -82,21 +82,31 @@ var Emoji;
     Emoji.makeEmojiWord = makeEmojiWord;
     function makeEmojiMessageFromWords(guild, words) {
         let final = [];
-        let msg = "**";
+        let msg = ">>> ";
+        let vanilla = false, endVanilla = false;
         for (let word of words) {
-            const emoji_word = makeEmojiWord(guild, word);
+            if (word.search(/\$\$/) != -1) {
+                if (!vanilla)
+                    vanilla = true;
+                else
+                    endVanilla = true;
+                word = word.replace('\$\$', "");
+            }
+            const emoji_word = (vanilla ? word : makeEmojiWord(guild, word));
             if (emoji_word.length >= 2000) {
                 return [];
             }
-            else if (msg.length + emoji_word.length + 2 >= 2000) {
-                msg += '**';
+            else if (msg.length + emoji_word.length >= 2000) {
                 final.push(msg);
-                msg = "**";
+                msg = ">>> ";
+            }
+            if (endVanilla) {
+                vanilla = false;
+                endVanilla = false;
             }
             msg += emoji_word;
-            msg += '   ';
+            msg += (vanilla ? ' ' : '   ');
         }
-        msg += '**';
         final.push(msg);
         return final;
     }
