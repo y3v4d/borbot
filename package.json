@@ -4,6 +4,7 @@
   "description": "Bot for managing clicker heroes server",
   "main": "dist/index.js",
   "scripts": {
+    "deploy": "ts-node src/deploy-commands.ts",
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js"
   },

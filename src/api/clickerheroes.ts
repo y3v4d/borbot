@@ -12,7 +12,7 @@ namespace CH {
             rejectUnauthorized: false
         }
 
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<any>((resolve, reject) => {
             const req = https.request(options, res => {
                 let body = '';
                 res.on('data', d => {
@@ -20,7 +20,8 @@ namespace CH {
                 });
 
                 res.on('end', () => {
-                    resolve(body);
+                    body = body.replaceAll('\\', '/');
+                    resolve(JSON.parse(body));
                 });
             });
 
@@ -88,7 +89,8 @@ namespace CH {
     export async function getGuildInfo(uid: string, passwordHash: string) {
         const data = await post('getGuildInfo', { uid: uid, passwordHash: passwordHash });
 
-        return JSON.parse(data).result as GuildInfoResult;
+        if(!data.success) throw new Error(`getGuildInfo failed: ${data.reason}`);
+        return data.result as GuildInfoResult;
     }
 
     export async function getNewRaid(uid: string, passwordHash: string, guildName: string) {

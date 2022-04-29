@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, GuildMember } from "discord.js";
 import { readFileSync, writeFileSync } from "fs";
+import ScheduleModel from "../models/schedule";
 import Bot from "../core/bot";
 import Command from "../core/command";
 
@@ -21,7 +22,18 @@ export const MakeSchedule: Command = {
             .setRequired(true)),
 
     run: async function(client: Bot, interaction: BaseCommandInteraction) {
-        await interaction.deferReply({ ephemeral: true });
+        const schedule = new ScheduleModel({
+            start_day: "2022-04-28",
+            length: 10
+        });
+
+        schedule.map.push({
+            member: "626c0bef3588be304635a25e",
+            index: 0
+        });
+
+        await schedule.save();
+        /*await interaction.deferReply({ ephemeral: true });
 
         const buffer = JSON.parse(readFileSync("data/schedule.json", { encoding: 'utf-8' })) as { [key: string]: string };
 
@@ -31,6 +43,6 @@ export const MakeSchedule: Command = {
         buffer[(day - 1).toString()] = user.id;
 
         writeFileSync("data/schedule.json", JSON.stringify(buffer, undefined, "    "), { encoding: 'utf-8' });
-        await interaction.followUp(`Assigned ${user.nickname} to day ${day}`);
+        await interaction.followUp(`Assigned ${user.nickname} to day ${day}`);*/
     }
 }
