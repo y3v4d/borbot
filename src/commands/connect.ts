@@ -52,6 +52,5 @@ export const Connect: Command = {
 
         await (new MemberModel(schema)).save();
         await interaction.followUp(`Assigned ${guild_user} to ${clan_name}!`);
-        //await UpdateUsers.run(client); too expensive
     }
 }

@@ -9,13 +9,14 @@ export const SetupSchedule: Command = {
     data: new SlashCommandBuilder()
         .setName('setup-schedule')
         .setDescription('Setup schedule date and length!')
+        .setDefaultPermission(false)
         .addStringOption(input => input
             .setName('date')
             .setDescription("Date of the beginning of the most recent cycle.")
             .setRequired(true)),
 
     run: async function(client: Bot, interaction: BaseCommandInteraction) {
-        const guildDB = await GuildModel.findOne({ guild_id: interaction.guildId! });//.populate<{ schedule: ISchedule }>('schedule');
+        const guildDB = await GuildModel.findOne({ guild_id: interaction.guildId! });
         if(!guildDB) {
             await interaction.reply(`This guild wasn't setuped!`);
             return;
@@ -38,5 +39,7 @@ export const SetupSchedule: Command = {
                 start_day: date
             });
         }
+
+        await interaction.reply(`Setuped schedule!`);
     }
 };

@@ -9,6 +9,7 @@ export const Setup: Command = {
     data: new SlashCommandBuilder()
         .setName("setup")
         .setDescription("Setup the Mighty Borb!")
+        .setDefaultPermission(false)
         .addStringOption(input => input
             .setName('user_uid')
             .setDescription('User UID used to connect to the clicker heroes server.')
