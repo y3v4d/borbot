@@ -21,7 +21,8 @@ var CH;
                     body += d;
                 });
                 res.on('end', () => {
-                    resolve(body);
+                    body = body.replaceAll('\\', '/');
+                    resolve(JSON.parse(body));
                 });
             });
             req.on('error', error => reject(error));
@@ -31,12 +32,14 @@ var CH;
     }
     async function getGuildInfo(uid, passwordHash) {
         const data = await post('getGuildInfo', { uid: uid, passwordHash: passwordHash });
-        return JSON.parse(data).result;
+        if (!data.success)
+            throw new Error(`getGuildInfo failed: ${data.reason}`);
+        return data.result;
     }
     CH.getGuildInfo = getGuildInfo;
     async function getNewRaid(uid, passwordHash, guildName) {
         const data = await post('getNewRaid', { uid: uid, passwordHash: passwordHash, guildName: guildName });
-        return JSON.parse(data).result.raid;
+        return data.result.raid;
     }
     CH.getNewRaid = getNewRaid;
 })(CH || (CH = {}));

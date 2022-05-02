@@ -70,6 +70,11 @@ export class ClanManager {
         });
     }
 
+    async getRaidInfo() {
+        await this.update();
+        return await CH.getNewRaid(this.uid, this.passwordHash, this.name);
+    }
+
     getMemberByName(name: string) {
         for(const m of this._members) {
             if(m[1].nickname === name) return m[1];

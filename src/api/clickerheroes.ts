@@ -95,8 +95,7 @@ namespace CH {
 
     export async function getNewRaid(uid: string, passwordHash: string, guildName: string) {
         const data = await post('getNewRaid', { uid: uid, passwordHash: passwordHash, guildName: guildName });
-
-        return JSON.parse(data).result.raid as NewRaidResult;
+        return data.result.raid as NewRaidResult;
     }
 }
 

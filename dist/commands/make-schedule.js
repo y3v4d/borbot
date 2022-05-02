@@ -1,8 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MakeSchedule = void 0;
+const tslib_1 = require("tslib");
 const builders_1 = require("@discordjs/builders");
-const fs_1 = require("fs");
+const schedule_1 = tslib_1.__importDefault(require("../models/schedule"));
+const guild_1 = tslib_1.__importDefault(require("../models/guild"));
+const member_1 = tslib_1.__importDefault(require("../models/member"));
 exports.MakeSchedule = {
     data: new builders_1.SlashCommandBuilder()
         .setName("make-schedule")
@@ -14,17 +17,46 @@ exports.MakeSchedule = {
         .setMinValue(1)
         .setMaxValue(10)
         .setRequired(true))
-        .addUserOption(input => input
-        .setName("user")
-        .setDescription("User that will be assigned to that day.")
+        .addStringOption(input => input
+        .setName("clan_user")
+        .setDescription("Clan user name that will be assigned to that day.")
         .setRequired(true)),
     run: async function (client, interaction) {
         await interaction.deferReply({ ephemeral: true });
-        const buffer = JSON.parse((0, fs_1.readFileSync)("data/schedule.json", { encoding: 'utf-8' }));
-        const day = interaction.options.get("day", true).value;
-        const user = interaction.options.getMember("user");
-        buffer[(day - 1).toString()] = user.id;
-        (0, fs_1.writeFileSync)("data/schedule.json", JSON.stringify(buffer, undefined, "    "), { encoding: 'utf-8' });
-        await interaction.followUp(`Assigned ${user.nickname} to day ${day}`);
+        await client.clan.update();
+        const clan_user = interaction.options.get('clan_user', true).value;
+        const day = interaction.options.get('day', true).value;
+        const dbGuild = await guild_1.default.findOne({ guild_id: interaction.guildId });
+        if (!dbGuild) {
+            await interaction.followUp("Guild wasn't setuped!");
+            return;
+        }
+        if (!dbGuild.schedule) {
+            await interaction.followUp("Schedule wasn't setuped!");
+            return;
+        }
+        const dbSchedule = (await schedule_1.default.findById(dbGuild.schedule));
+        const clanMember = client.clan.getMemberByName(clan_user);
+        if (!clanMember) {
+            await interaction.followUp(`Clan member with ${clan_user} name doesn't exists!`);
+            return;
+        }
+        const dbMember = await member_1.default.findOne({ clan_uid: clanMember.uid });
+        if (!dbMember) {
+            await interaction.followUp(`Clan member is not connected to any discord user!`);
+            return;
+        }
+        const dbEntry = dbSchedule.map.find(o => o.index === day);
+        if (!dbEntry) {
+            dbSchedule.map.push({
+                member: dbMember._id,
+                index: day
+            });
+        }
+        else {
+            dbEntry.member = dbMember.id;
+        }
+        await dbSchedule.save();
+        await interaction.followUp(`Assigned <@${dbMember.guild_uid}> to ${day} day of the cycle!`);
     }
 };
