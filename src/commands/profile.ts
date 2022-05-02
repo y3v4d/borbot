@@ -56,6 +56,6 @@ export const Profile: Command = {
             default: break;
         }
 
-        interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
     }
 }

@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Profile = void 0;
+const tslib_1 = require("tslib");
 const builders_1 = require("@discordjs/builders");
 const discord_js_1 = require("discord.js");
-const fs_1 = require("fs");
 const clan_1 = require("../shared/clan");
+const member_1 = tslib_1.__importDefault(require("../models/member"));
 exports.Profile = {
     data: new builders_1.SlashCommandBuilder()
         .setName("profile")
@@ -15,16 +16,13 @@ exports.Profile = {
         .setRequired(false)),
     run: async function (client, interaction) {
         await client.clan.update();
-        let userMap = {};
-        try {
-            userMap = JSON.parse((0, fs_1.readFileSync)("data/userMap.json", { encoding: 'utf-8' }));
-        }
-        catch (e) {
-            await interaction.reply({ content: "Users aren't mapped! Contact **y3v4d** :)", ephemeral: true });
+        const user = interaction.options.getUser("user", false);
+        const dbMember = await member_1.default.findOne({ guild_uid: (user ? user.id : interaction.user.id) });
+        if (!dbMember) {
+            await interaction.reply("You aren't mapped! Contact **y3v4d** :)");
             return;
         }
-        const user = interaction.options.getUser("user", false);
-        const member = client.clan.getMemberByUid(userMap[(user ? user.id : interaction.user.id)]);
+        const member = client.clan.getMemberByUid(dbMember.clan_uid);
         if (!member) {
             await interaction.reply({ content: "You're not defined as a clan member! Contact **y3v4d** :)", ephemeral: true });
             return;
@@ -48,6 +46,6 @@ exports.Profile = {
                 break;
             default: break;
         }
-        interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
     }
 };
