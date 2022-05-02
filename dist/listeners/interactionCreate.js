@@ -8,7 +8,7 @@ exports.default = (client) => {
         const cmd = commands_1.Commands.find(c => c.data.name === interaction.commandName);
         if (!cmd) {
             interaction.reply({
-                content: "An error has occurred...",
+                content: "Couldn't find command runner...",
                 ephemeral: true
             });
             return;

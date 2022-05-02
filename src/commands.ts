@@ -5,6 +5,9 @@ import { Connect } from "./commands/connect";
 import { Connected } from "./commands/connected";
 import { Schedule } from "./commands/schedule";
 import { Profile } from "./commands/profile";
+import { Setup } from "./commands/setup";
+import { MakeSchedule } from "./commands/make-schedule";
+import { SetupSchedule } from "./commands/setup-schedule";
 
 export const Commands: Command[] = [
     TypeScript,
@@ -12,5 +15,8 @@ export const Commands: Command[] = [
     Connect,
     Connected,
     Schedule,
-    Profile
+    Profile,
+    MakeSchedule,
+    Setup,
+    SetupSchedule
 ];

@@ -35,6 +35,16 @@ export class ClanManager {
         this.passwordHash = passwordHash;
     }
 
+    static async test(uid: string, passwordHash: string) {
+        try {
+            await CH.getGuildInfo(uid, passwordHash);
+            return true;
+        } catch(error) {
+            console.warn(error);
+            return false;
+        }
+    }
+
     async update() {
         const info = await CH.getGuildInfo(this.uid, this.passwordHash);
     
@@ -58,6 +68,11 @@ export class ClanManager {
                 lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
             } as ClanMember);
         });
+    }
+
+    async getRaidInfo() {
+        await this.update();
+        return await CH.getNewRaid(this.uid, this.passwordHash, this.name);
     }
 
     getMemberByName(name: string) {

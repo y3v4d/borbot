@@ -24,6 +24,16 @@ class ClanManager {
         this.uid = uid;
         this.passwordHash = passwordHash;
     }
+    static async test(uid, passwordHash) {
+        try {
+            await clickerheroes_1.default.getGuildInfo(uid, passwordHash);
+            return true;
+        }
+        catch (error) {
+            console.warn(error);
+            return false;
+        }
+    }
     async update() {
         const info = await clickerheroes_1.default.getGuildInfo(this.uid, this.passwordHash);
         this._name = info.guild.name;
@@ -44,6 +54,10 @@ class ClanManager {
                 lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
             });
         });
+    }
+    async getRaidInfo() {
+        await this.update();
+        return await clickerheroes_1.default.getNewRaid(this.uid, this.passwordHash, this.name);
     }
     getMemberByName(name) {
         for (const m of this._members) {

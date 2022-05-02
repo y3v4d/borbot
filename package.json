@@ -4,6 +4,7 @@
   "description": "Bot for managing clicker heroes server",
   "main": "dist/index.js",
   "scripts": {
+    "deploy": "ts-node src/deploy-commands.ts",
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js"
   },
@@ -16,9 +17,6 @@
   "bugs": {
     "url": "https://github.com/y3v4d/clicker-heroes-bot/issues"
   },
-  "engines": {
-    "node": "16.x"
-  },
   "homepage": "https://github.com/y3v4d/clicker-heroes-bot#readme",
   "dependencies": {
     "@discordjs/builders": "^0.11.0",
@@ -27,6 +25,7 @@
     "discord-api-types": "^0.26.1",
     "discord.js": "^13.5.1",
     "dotenv": "^15.0.0",
+    "mongoose": "^6.3.1",
     "text-table": "^0.2.0"
   },
   "devDependencies": {

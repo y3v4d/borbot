@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, SlashCommandSubcommandGroupBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
 import { readFileSync } from "fs";
+import MemberModel from "../models/member";
 import Bot from "../core/bot";
 import Command from "../core/command";
 
@@ -14,7 +15,22 @@ export const Connected: Command = {
         await interaction.deferReply({ ephemeral: true });
         await client.clan.update();
 
-        const guild = await client.guilds.fetch(process.env.GUILD_ID!)!;
+        const guild = interaction.guild!;
+        const results = await MemberModel.find({
+            guild_id: guild.id
+        });
+
+        let msg = "**Connected users**:\n";
+        for(const result of results) {
+            msg += "**";
+            msg += (await guild.members.fetch(result.guild_uid))!.nickname;
+            msg += ` -> ${client.clan.getMemberByUid(result.clan_uid)!.nickname}`;
+            msg += "**\n";
+        }
+
+        await interaction.followUp(msg);
+
+        /*const guild = await client.guilds.fetch(process.env.GUILD_ID!)!;
         const userMap = JSON.parse(
             readFileSync('data/userMap.json', { encoding: 'utf-8' })
         ) as { [key: string]: string };
@@ -36,6 +52,6 @@ export const Connected: Command = {
             }
         }
 
-        interaction.followUp(msg);
+        interaction.followUp(msg);*/
     }
 }
