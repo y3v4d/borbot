@@ -8,6 +8,7 @@ export interface IScheduleMember {
 }
 
 export interface ISchedule {
+    _id: mongoose.ObjectId,
     start_day: string,
     length: number,
 

@@ -8,6 +8,7 @@ import { Profile } from "./commands/profile";
 import { Setup } from "./commands/setup";
 import { MakeSchedule } from "./commands/make-schedule";
 import { SetupSchedule } from "./commands/setup-schedule";
+import { RemoveSchedule } from "./commands/remove-schedule";
 
 export const Commands: Command[] = [
     TypeScript,
@@ -18,5 +19,6 @@ export const Commands: Command[] = [
     Profile,
     MakeSchedule,
     Setup,
-    SetupSchedule
+    SetupSchedule,
+    RemoveSchedule
 ];

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { BaseCommandInteraction, GuildMember } from "discord.js";
+import { BaseCommandInteraction, GuildMember } from 'discord.js';
 import ScheduleModel from "../models/schedule";
 import Bot from "../core/bot";
 import Command from "../core/command";
@@ -53,7 +53,7 @@ export const MakeSchedule: Command = {
             return;
         }
 
-        const dbEntry = dbSchedule.map.find(o => o.index === day);
+        const dbEntry = dbSchedule.map.find((o: any) => o.index === day);
         if(!dbEntry) {
             dbSchedule.map.push({
                 member: dbMember._id,
