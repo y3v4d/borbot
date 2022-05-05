@@ -46,7 +46,7 @@ exports.MakeSchedule = {
             await interaction.followUp(`Clan member is not connected to any discord user!`);
             return;
         }
-        const dbEntry = dbSchedule.map.find(o => o.index === day);
+        const dbEntry = dbSchedule.map.find((o) => o.index === day);
         if (!dbEntry) {
             dbSchedule.map.push({
                 member: dbMember._id,

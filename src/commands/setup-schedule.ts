@@ -32,7 +32,7 @@ export const SetupSchedule: Command = {
             });
 
             await dbSchedule.save();
-            guildDB.schedule = dbSchedule._id;
+            (guildDB as any).schedule = dbSchedule._id;
             await guildDB.save();
         } else {
             await ScheduleModel.findByIdAndUpdate(guildDB.schedule!._id, {

@@ -10,6 +10,7 @@ const profile_1 = require("./commands/profile");
 const setup_1 = require("./commands/setup");
 const make_schedule_1 = require("./commands/make-schedule");
 const setup_schedule_1 = require("./commands/setup-schedule");
+const remove_schedule_1 = require("./commands/remove-schedule");
 exports.Commands = [
     typescript_1.TypeScript,
     clan_1.Clan,
@@ -19,5 +20,6 @@ exports.Commands = [
     profile_1.Profile,
     make_schedule_1.MakeSchedule,
     setup_1.Setup,
-    setup_schedule_1.SetupSchedule
+    setup_schedule_1.SetupSchedule,
+    remove_schedule_1.RemoveSchedule
 ];
