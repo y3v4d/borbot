@@ -1,6 +1,6 @@
 {
   "name": "clicker-heroes-bot",
-  "version": "0.6.0D",
+  "version": "0.7.0",
   "description": "Bot for managing clicker heroes server",
   "main": "dist/index.js",
   "scripts": {
