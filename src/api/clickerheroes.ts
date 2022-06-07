@@ -20,7 +20,7 @@ namespace CH {
                 });
 
                 res.on('end', () => {
-                    body = body.replaceAll('\\', '/');
+                    //body = body.replaceAll('\\', '/');
                     resolve(JSON.parse(body));
                 });
             });
