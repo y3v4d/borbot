@@ -86,6 +86,21 @@ namespace CH {
         isBonusSuccessful: boolean
     }
 
+    interface RawGuildMessages {
+        [key: string]: string
+    }
+
+    export interface GuildMessage {
+        uid: string,
+        content: string,
+        timestamp: number
+    }
+
+    export interface GuildMessagesResult {
+        guildName: string,
+        messages: GuildMessage[]
+    }
+
     export async function getGuildInfo(uid: string, passwordHash: string) {
         const data = await post('getGuildInfo', { uid: uid, passwordHash: passwordHash });
 
@@ -96,6 +111,23 @@ namespace CH {
     export async function getNewRaid(uid: string, passwordHash: string, guildName: string) {
         const data = await post('getNewRaid', { uid: uid, passwordHash: passwordHash, guildName: guildName });
         return data.result.raid as NewRaidResult;
+    }
+
+    export async function getGuildMessages(uid: string, passwordHash: string, guildName: string) {
+        const data = await post('getGuildMessages', { uid: uid, passwordHash: passwordHash, guildName: guildName, timestamp: (Date.now() / 1000) });
+        const messages = data.result.messages as RawGuildMessages;
+
+        const result: GuildMessagesResult = {
+            guildName: data.result.guildName,
+            messages: []
+        };
+
+        for(const key in messages) {
+            const split = messages[key].split(';', 2);
+            result.messages.push({ timestamp: parseFloat(key), uid: split[0], content: split[1] });
+        }
+
+        return result;
     }
 }
 

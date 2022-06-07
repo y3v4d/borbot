@@ -30,6 +30,8 @@ export class ClanManager {
     private uid: string;
     private passwordHash: string;
 
+    private _messages: CH.GuildMessage[] = [];
+
     constructor(uid: string, passwordHash: string) {
         this.uid = uid;
         this.passwordHash = passwordHash;
@@ -70,6 +72,10 @@ export class ClanManager {
         });
     }
 
+    async fetchMessages() {
+        this._messages = (await CH.getGuildMessages(this.uid, this.passwordHash, this.name)).messages;
+    }
+
     async getRaidInfo() {
         await this.update();
         return await CH.getNewRaid(this.uid, this.passwordHash, this.name);
@@ -97,4 +103,5 @@ export class ClanManager {
     get newRaidLevel() { return this._newRaidLevel; }
     get autoJoin() { return this._autoJoin; }
     get newRaidLocked() { return this._newRaidLocked; }
+    get messages() { return this._messages; }
 }

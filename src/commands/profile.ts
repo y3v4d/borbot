@@ -1,6 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, MessageEmbed } from "discord.js";
-import { readFileSync } from "fs";
 import { ClanClass } from "../shared/clan";
 import Bot from "../core/bot";
 import Command from "../core/command";
