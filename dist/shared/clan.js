@@ -20,6 +20,7 @@ class ClanManager {
     _newRaidLocked = false;
     uid;
     passwordHash;
+    _messages = [];
     constructor(uid, passwordHash) {
         this.uid = uid;
         this.passwordHash = passwordHash;
@@ -55,6 +56,9 @@ class ClanManager {
             });
         });
     }
+    async fetchMessages() {
+        this._messages = (await clickerheroes_1.default.getGuildMessages(this.uid, this.passwordHash, this.name)).messages;
+    }
     async getRaidInfo() {
         await this.update();
         return await clickerheroes_1.default.getNewRaid(this.uid, this.passwordHash, this.name);
@@ -78,5 +82,6 @@ class ClanManager {
     get newRaidLevel() { return this._newRaidLevel; }
     get autoJoin() { return this._autoJoin; }
     get newRaidLocked() { return this._newRaidLocked; }
+    get messages() { return this._messages; }
 }
 exports.ClanManager = ClanManager;

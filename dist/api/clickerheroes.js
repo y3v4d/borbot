@@ -42,5 +42,19 @@ var CH;
         return data.result.raid;
     }
     CH.getNewRaid = getNewRaid;
+    async function getGuildMessages(uid, passwordHash, guildName) {
+        const data = await post('getGuildMessages', { uid: uid, passwordHash: passwordHash, guildName: guildName, timestamp: (Date.now() / 1000) });
+        const messages = data.result.messages;
+        const result = {
+            guildName: data.result.guildName,
+            messages: []
+        };
+        for (const key in messages) {
+            const split = messages[key].split(';', 2);
+            result.messages.push({ timestamp: parseFloat(key), uid: split[0], content: split[1] });
+        }
+        return result;
+    }
+    CH.getGuildMessages = getGuildMessages;
 })(CH || (CH = {}));
 exports.default = CH;

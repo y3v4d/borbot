@@ -6,6 +6,7 @@ const GuildSchema = new mongoose_1.default.Schema({
     guild_id: { type: String, required: true },
     user_uid: { type: String, required: true },
     password_hash: { type: String, required: true },
+    last_chat_update: { type: Number, required: false },
     schedule: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Schedule', required: false }
 });
 const GuildModel = mongoose_1.default.model('Guild', GuildSchema);
