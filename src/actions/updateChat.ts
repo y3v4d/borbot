@@ -85,5 +85,5 @@ export const UpdateChat: Action = {
     startOnInit: true,
     repeat: true,
 
-    timeout: 60000 * 5 // 5 minutes
+    timeout: 60000 * 1 // 1 minute
 }
