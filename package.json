@@ -6,6 +6,7 @@
   "scripts": {
     "deploy": "ts-node src/deploy-commands.ts",
     "dev": "ts-node src/index.ts",
+    "compile": "ncc build src/index.ts -m",
     "start": "NODE_ENV=production node dist/index.js"
   },
   "repository": {
