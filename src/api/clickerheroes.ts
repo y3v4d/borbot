@@ -80,7 +80,7 @@ namespace CH {
         bonusScores: {
             [key:string]: string
         },
-        weaknes: number,
+        weakness: number,
         isSuccessful: boolean,
         isBonusAvailable: boolean,
         isBonusSuccessful: boolean

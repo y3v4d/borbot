@@ -7,6 +7,7 @@ export interface IGuild {
     password_hash: string,
 
     last_chat_update?: number,
+    last_reminded?: string,
 
     schedule?: mongoose.Types.ObjectId
 }
@@ -18,6 +19,7 @@ const GuildSchema = new mongoose.Schema<IGuild>({
     password_hash: { type: String, required: true },
 
     last_chat_update: { type: Number, required: false },
+    last_reminded: { type: String, required: false },
 
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'Schedule', required: false }
 });

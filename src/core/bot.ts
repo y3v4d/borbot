@@ -39,6 +39,16 @@ export default class Bot extends Client {
             return;
         }
 
+        try {
+            await this.user.setUsername(`Borb ${process.env.npm_package_version + (this.isDevelopment ? "D" : "")}`);
+        } catch(error) {
+            console.warn("Couldn't update bot username!");
+        }
+
+        if(this.isDevelopment) {
+            this.user.setStatus('dnd');
+        }
+
         Actions.forEach(action => {
             if(action.repeat) setInterval(() => action.run(this), action.timeout);
             else setTimeout(() => action.run(this), action.timeout);
@@ -70,5 +80,9 @@ export default class Bot extends Client {
                 }
             }
         }
+    }
+
+    get isDevelopment(): boolean {
+        return process.env.NODE_ENV != "production";
     }
 }
