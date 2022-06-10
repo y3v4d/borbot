@@ -1,3 +1,4 @@
+import { Guild } from "discord.js";
 import Bot from "../core/bot";
 import Action from "../core/action";
 import GuildModel, { IGuild } from "../models/guild";
@@ -13,6 +14,68 @@ function composeDate(date: Date) {
             `${date.getUTCHours().toString().padStart(2, '0')}:` +
             `${date.getUTCMinutes().toString().padStart(2, '0')}:` +
             `${date.getUTCSeconds().toString().padStart(2, '0')}`; 
+}
+
+async function processMentions(msg: string, guild: Guild, clan: ClanManager) {
+    const splits = msg.split(/(@\w*)/g);
+    if(splits.length === 0) return msg;
+
+    let ret = "";
+    for(const split of splits) {
+        if(!split.startsWith('@')) {
+            ret += split;
+            continue;
+        }
+
+        const name = split.slice(1);
+        const clanMember = clan.getMemberByName(name);
+        if(!clanMember) {
+            ret += split;
+            continue;
+        }
+
+        const dbMember = await MemberModel.findOne({ clan_uid: clanMember.uid });
+        if(!dbMember) {
+            ret += split;
+            continue;
+        }
+
+        const guildMember = await guild.members.fetch(dbMember.guild_uid);
+        if(!guildMember) {
+            ret += split;
+            continue;
+        }
+
+        ret += `${guildMember}`;
+    }
+
+    return ret;
+}
+
+async function processEmoji(msg: string, guild: Guild) {
+    const splits = msg.split(/(:\b[^:]*\b:)/g);
+    if(splits.length === 0) return msg;
+    
+    let ret = "";
+    for(const split of splits) {
+        if(!split.startsWith(':') || !split.endsWith(':')) {
+            ret += split;
+            continue;
+        }
+
+        const name = split.replaceAll(':', '');
+        const emoji = await guild.emojis.cache.find(o => o.name === name);
+        if(!emoji) {
+            console.log(`Didn't find emoji ${split}`);
+            ret += split;
+
+            continue;
+        }
+
+        ret += `${emoji}`;
+    }
+
+    return ret;
 }
 
 export const UpdateChat: Action = {
@@ -43,34 +106,12 @@ export const UpdateChat: Action = {
 
             for(let msg of clan.messages) {
                 if(msg.timestamp > timestamp) {
-                    let content = msg.content;
-                    const chunks = content.split('@');
-
-                    chunks.splice(0, (msg.content.startsWith('@') ? 0 : 1));
-                    for(const chunk of chunks) {
-                        console.log(`Chunk: ${chunk}`);
-
-                        const word = chunk.split(' ', 1)[0];
-                        if(word.length === 0) continue;
-                        if(word === "everyone" || word === "here") continue;
-
-                        console.log(`Word: ${word}`);
-                        const clanMember = clan.getMemberByName(word);
-                        if(!clanMember) continue;
-
-                        const memberModel = await MemberModel.findOne({ clan_uid: clanMember.uid });
-                        if(!memberModel) continue;
-
-                        const guildMember = await fetched.members.fetch(memberModel.guild_uid);
-                        if(!guildMember) continue;
-
-                        console.log("Fetched mention of " + guildMember.displayName);
-                        content = content.replace('@' + word, `${guildMember}`);
-                    }
+                    let processed = await processMentions(msg.content, fetched, clan);
+                    processed = await processEmoji(processed, fetched);
 
                     const date = new Date(msg.timestamp * 1000);
                     await channel.send({
-                        content: `**${clan.getMemberByUid(msg.uid)?.nickname} ${composeDate(date)}**\n${content}`
+                        content: `**${clan.getMemberByUid(msg.uid)?.nickname} ${composeDate(date)}**\n${processed}`
                     });
 
                     timestamp = msg.timestamp;
