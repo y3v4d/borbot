@@ -13,12 +13,12 @@ import { RemoveSchedule } from "./commands/remove-schedule";
 export const Commands: Command[] = [
     TypeScript,
     Clan,
-    //Connect,
-    //Connected,
-    //Schedule,
+    Connect,
+    Connected,
+    Schedule,
     Profile,
-    //MakeSchedule,
-    //Setup,
-    //SetupSchedule,
-    //RemoveSchedule
+    MakeSchedule,
+    Setup,
+    SetupSchedule,
+    RemoveSchedule
 ];
