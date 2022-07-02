@@ -38,7 +38,7 @@ export default function logger(msg: string, type = LoggerType.NORMAL) {
         firstWrite = false;
     }
 
-    const file = openSync(filename, 'a', 0o666);
+    const file = openSync(filename, 'a+', 0o666);
     writeFileSync(file, `${finalMsg}\n`, 'utf-8');
     closeSync(file);
 }
