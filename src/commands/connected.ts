@@ -1,6 +1,5 @@
-import { SlashCommandBuilder, SlashCommandSubcommandGroupBuilder } from "@discordjs/builders";
+import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
-import { readFileSync } from "fs";
 import MemberModel from "../models/member";
 import Bot from "../core/bot";
 import Command from "../core/command";

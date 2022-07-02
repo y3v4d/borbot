@@ -4,6 +4,7 @@ import { ClanClass } from "../shared/clan";
 import Bot from "../core/bot";
 import Command from "../core/command";
 import MemberModel from "../models/member";
+import logger, { LoggerType } from "../shared/logger";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -20,12 +21,14 @@ export const Profile: Command = {
         const user = interaction.options.getUser("user", false);
         const dbMember = await MemberModel.findOne({ guild_uid: (user ? user.id : interaction.user.id) });
         if(!dbMember) {
+            logger(`/profile Couldn't find member with guild uid: ${user!.id}`, LoggerType.ERROR);
             await interaction.reply("You aren't mapped! Contact **y3v4d** :)");
             return;
         }
 
         const member = client.clan.getMemberByUid(dbMember!.clan_uid);
         if(!member) {
+            logger(`/profile Couldn't find clan member with guild uid: ${user!.id}`, LoggerType.ERROR);
             await interaction.reply({ content: "You're not defined as a clan member! Contact **y3v4d** :)", ephemeral: true });
             return;
         }
