@@ -3,6 +3,7 @@ import { ClanClass, ClanManager, ClanMember } from "../shared/clan";
 import Action from "../core/action";
 import MemberModel from "../models/member";
 import GuildModel from "../models/guild";
+import logger from "../shared/logger";
 
 const REMIND = "908335160171331596";
 const REMIND_TEST = "931475713146621983";
@@ -34,19 +35,19 @@ function differenceBetweenDays(self: string, other: string) {
 
 export const RemindClaim: Action = {
     run: async function(client: Bot) {
-        console.log("#remindClaim action");
-
         const allGuilds = await GuildModel.find();
         for(const dbGuild of allGuilds) {
+            const fetchedGuild = await client.guilds.fetch(dbGuild.guild_id);
+            if(!fetchedGuild) continue;
+
+            logger(`#remindClaim in ${fetchedGuild.name}`);
+
             const lastReminded = (dbGuild.last_reminded === undefined ? "2000-01-01" : dbGuild.last_reminded);
             const currentDate = new Date(Date.now());
 
             // return if the same day or isn't past 11pm
             if(differenceBetweenDays(dateToString(currentDate), lastReminded) === 0 || currentDate.getUTCHours() !== 23) return;
             dbGuild.last_reminded = dateToString(currentDate);
-
-            const fetchedGuild = await client.guilds.fetch(dbGuild.guild_id);
-            if(!fetchedGuild) continue;
 
             if(!(await ClanManager.test(dbGuild.user_uid, dbGuild.password_hash))) {
                 console.error("Couldn't find clan with assigned credentials...");

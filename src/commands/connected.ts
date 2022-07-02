@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import MemberModel from "../models/member";
 import Bot from "../core/bot";
 import Command from "../core/command";
+import logger, { LoggerType } from "../shared/logger";
 
 export const Connected: Command = {
     data: new SlashCommandBuilder()
@@ -22,10 +23,20 @@ export const Connected: Command = {
 
         let msg = "**Connected users**:\n";
         for(const result of results) {
-            msg += "**";
-            msg += (await guild.members.fetch(result.guild_uid))!.nickname;
-            msg += ` -> ${client.clan.getMemberByUid(result.clan_uid)!.nickname}`;
-            msg += "**\n";
+            const member = await guild.members.fetch(result.guild_uid);
+            if(!member) {
+                logger(`/connected Guild member ${result.guild_uid} doesn't exist`, LoggerType.ERROR);
+                continue;
+            }
+
+            const clanMember = client.clan.getMemberByUid(result.clan_uid);
+            if(!clanMember) {
+                logger(`/connected Guild member ${result.clan_uid} doesn't exist`, LoggerType.ERROR);
+                continue;
+            }
+
+
+            msg += `**${member.nickname} -> ${clanMember.nickname}**\n`;
         }
 
         await interaction.followUp(msg);

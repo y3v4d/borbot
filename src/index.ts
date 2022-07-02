@@ -3,10 +3,11 @@ import { Intents } from "discord.js";
 
 import Bot from './core/bot';
 import mongoose from 'mongoose';
+import logger, { LoggerType } from './shared/logger';
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
-    console.log("MongoDB Conncted!");
-    console.log("Bot is starting...");
+    logger("MongoDB Conncted!");
+    logger("Bot is starting...");
 
     const client = new Bot({
         intents: [
@@ -17,4 +18,4 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
         ]}, process.env.USER_UID!, process.env.HASH!);
 
     client.login(process.env.TOKEN);
-}).catch(error => console.error(error));
+}).catch(error => logger(error, LoggerType.ERROR));

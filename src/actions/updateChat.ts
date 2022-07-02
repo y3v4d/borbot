@@ -4,6 +4,7 @@ import Action from "../core/action";
 import GuildModel, { IGuild } from "../models/guild";
 import { ClanManager } from "../shared/clan";
 import MemberModel from "../models/member";
+import logger, { LoggerType } from "../shared/logger";
 
 const CHAT = '983503510479990785';
 
@@ -80,15 +81,13 @@ async function processEmoji(msg: string, guild: Guild) {
 
 export const UpdateChat: Action = {
     run: async function(client: Bot) {
-        console.log("#updateChat action");
-
         const allGuilds = await GuildModel.find();
         for(const guild of allGuilds) {
             const fetched = await client.guilds.fetch(guild.guild_id)!;
-            console.log(`---- Updating in ${fetched.name} ----`);
+            logger(`#updateChat in ${fetched.name}`);
 
             if(!(await ClanManager.test(guild.user_uid, guild.password_hash))) {
-                console.error("Couldn't find clan with assigned credentials...");
+                logger("#updateChat Couldn't find clan with assigned credentials...", LoggerType.ERROR);
                 continue;
             }
 
@@ -100,7 +99,7 @@ export const UpdateChat: Action = {
 
             const channel = await fetched.channels.fetch(CHAT);
             if(!channel || !channel.isText()) {
-                console.error("Couldn't find valid chat channel!");
+                logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
                 continue;
             }
 

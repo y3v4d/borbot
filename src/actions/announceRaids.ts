@@ -4,6 +4,7 @@ import GuildModel from "../models/guild";
 import ScheduleModel, { ISchedule } from "../models/schedule";
 import { ClanManager } from "../shared/clan";
 import MemberModel from "../models/member";
+import logger, { LoggerType } from "../shared/logger";
 
 function dateToString(date: Date) {
     return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
@@ -32,15 +33,13 @@ const T_HUNTERS = '953631155117248552';
 
 export const AnnounceRaids: Action = {
     run: async function(client: Bot) {
-        console.log("#announceRaids action");
-
         const allGuilds = await GuildModel.find();
         for(const guild of allGuilds) {
             const fetched = await client.guilds.fetch(guild.guild_id)!;
-            console.log(`---- Updating in ${fetched.name} ----`);
+            logger(`#announceRaids in ${fetched.name}`);
             
             if(!(await ClanManager.test(guild.user_uid, guild.password_hash))) {
-                console.error("Couldn't find clan with assigned credentials...");
+                logger("#announceRaids Couldn't find clan with assigned credentials...", LoggerType.ERROR);
                 continue;
             }
 
@@ -49,13 +48,13 @@ export const AnnounceRaids: Action = {
 
             const channel = await fetched.channels.fetch(ANNOUNCEMENTS);
             if(!channel) {
-                console.warn("Couldn't find announcements channel!");
+                logger("#announceRaids Couldn't find announcements channel!", LoggerType.WARN);
                 continue;
             }
 
             const schedule = (await guild.populate<{ schedule: ISchedule }>('schedule')).schedule;
             if(!schedule) {
-                console.warn("Schedule wasn't setup!");
+                logger("#announceRaids Schedule wasn't setup!", LoggerType.WARN);
                 continue;
             }
 
@@ -70,7 +69,7 @@ export const AnnounceRaids: Action = {
                     const newCycleTimestamp = new Date(schedule.start_day).getTime() + (cycles * 86400000);
                     schedule.start_day = dateToString(new Date(newCycleTimestamp));
 
-                    console.log("New cycle start: " + schedule.start_day);
+                    logger("#announceRaids New cycle start: " + schedule.start_day);
                 }
 
                 // reset all values if didn't check today
