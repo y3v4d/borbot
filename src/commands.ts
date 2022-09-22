@@ -14,13 +14,13 @@ import { Disconnect } from "./commands/disconnect";
 export const Commands: Command[] = [
     TypeScript,
     Clan,
-    Connect,
-    Disconnect,
-    Connected,
-    Schedule,
+    //Connect,
+    //Disconnect,
+    //Connected,
+    //Schedule,
     Profile,
-    MakeSchedule,
-    Setup,
-    SetupSchedule,
-    RemoveSchedule
+    //MakeSchedule,
+    //Setup,
+    //SetupSchedule,
+    //RemoveSchedule
 ];
