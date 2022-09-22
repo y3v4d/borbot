@@ -4,9 +4,6 @@ import { Intents } from "discord.js";
 import Bot from './core/bot';
 import mongoose from 'mongoose';
 import logger, { LoggerType } from './shared/logger';
-import { AddressInfo } from 'net';
-import MemberModel from './models/member';
-import { request } from 'https';
 
 import express from "express";
 import bodyparser from "body-parser";
