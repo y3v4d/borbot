@@ -7,8 +7,9 @@ import logger, { LoggerType } from './shared/logger';
 
 import express from "express";
 import bodyparser from "body-parser";
-import TestRouter from './routes/test';
-import MembersRoute from './routes/members';
+import cors from 'cors';
+import MainRouter from './routes/mainRoutes';
+import GuildRouter from './routes/guildRoutes';
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
@@ -24,13 +25,15 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     client.login(process.env.TOKEN);
 
-    /*const rest = express();
-    rest.use(bodyparser.json());
+    const api = express();
 
-    rest.use('/test', TestRouter);
-    rest.use('/members', MembersRoute(client));
+    api.use(cors());
+    api.use(bodyparser.json());
 
-    rest.listen(3000, () => {
-        console.log("Started REST API on port 3000");
-    });*/
+    api.use('/api', MainRouter);
+    api.use('/api/guilds', GuildRouter);
+
+    api.listen(3010, () => {
+        logger("Started REST API on port 3010.");
+    });
 }).catch(error => logger(error, LoggerType.ERROR));
