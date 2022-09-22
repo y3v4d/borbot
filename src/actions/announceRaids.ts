@@ -46,7 +46,7 @@ export const AnnounceRaids: Action = {
             const clan = new ClanManager(guild.user_uid, guild.password_hash);
             const raidInfo = await clan.getRaidInfo();
 
-            const channel = await fetched.channels.fetch(ANNOUNCEMENTS);
+            const channel = await fetched.channels.cache.get(ANNOUNCEMENTS);
             if(!channel) {
                 logger("#announceRaids Couldn't find announcements channel!", LoggerType.WARN);
                 continue;
