@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { getGuildIconURL } from "../shared/utils";
+import { getGuildIconURL, getUserIconURL } from "../shared/utils";
 import GuildModel, { IGuild } from "../models/guild";
 import { ClanManager } from "../shared/clan";
 import DC from "../api/discord";
 import MemberModel, { IMember } from "../models/member";
 import ScheduleModel from "../models/schedule";
+import CH from "../api/clickerheroes";
 
 const GuildRouter = Router();
 
@@ -66,7 +67,7 @@ GuildRouter.post('/:id/unsetup', async (req, res) => {
 });
 
 GuildRouter.get('/:id/schedule', async (req, res) => {
-    const guild_id = (req.params as any).id;
+    const guild_id = req.params.id;
     const db_guild = await GuildModel.findOne({ guild_id: guild_id });
     if(!db_guild) {
         res.send({ code: 301, msg: "Guild isn't setup" });
@@ -159,6 +160,113 @@ GuildRouter.post('/:id/schedule', async (req, res) => {
     }
 
     await dbSchedule.save();
+    res.send({ code: 200 });
+});
+
+GuildRouter.get('/:id/clanMembers', async (req, res) => {
+    const guild_id = req.params.id;
+    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+    if(!db_guild) {
+        res.send({ code: 301, msg: "Didn't find guild" });
+        return;
+    }
+
+    try {
+        const data = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
+        const members = Object.values(data.guildMembers).map(member => {
+            return {
+                uid: member.uid,
+                highestZone: parseInt(member.highestZone),
+                nickname: member.nickname,
+                class: parseInt(member.chosenClass),
+                level: parseInt(member.classLevel),
+
+                lastRewardTimestamp: member.lastRewardTimestamp,
+                lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
+            }
+        });
+
+        res.send({ code: 200, members: members });
+    } catch(error) {
+        res.send({ code: 301, msg: `Error: Couldn't get clan information` });
+    }
+});
+
+GuildRouter.get('/:id/guildMembers', async (req, res) => {
+    const guild_id = req.params.id;
+
+    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+    if(!db_guild) {
+        res.send({ code: 301, msg: "Didn't gind guild" });
+        return;
+    }
+
+    const data: any[] = await DC.request(`guilds/${guild_id}/members?limit=100`);
+    const members = data.map(o => {
+        return {
+            id: o.user.id,
+            disc: o.user.discriminator,
+            username: o.user.username,
+            avatar: getUserIconURL(o.user, 48),
+            nickname: o.nick
+        };
+    });
+
+    res.send({ code: 200, members: members });
+});
+
+GuildRouter.get('/:id/connected', async (req, res) => {
+    const guild_id = req.params.id;
+    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+    if(!db_guild) {
+        res.send({ code: 301, msg: "Didn't find guild" });
+        return;
+    }
+
+    const db_members = await MemberModel.find({ guild_id: guild_id });
+    const items: any[] = [];
+    
+    for(const db_member of db_members) {
+        items.push({
+            guild_uid: db_member.guild_uid, 
+            clan_uid: db_member.clan_uid
+        });
+    }
+
+    res.send({ code: 200, members: items });
+});
+
+GuildRouter.post('/:id/connected', async (req, res) => {
+    const guild_id = req.params.id;
+    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+    if(!db_guild) {
+        res.send({ code: 301, msg: "Didn't find guild." });
+        return;
+    }
+
+    const clanInfo = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
+    const members: any[] = await DC.request(`guilds/${guild_id}/members?limit=100`);
+    const clanMembers = Object.values(clanInfo.guildMembers);
+
+    const data: { clan_uid: string, guild_uid: string }[] = req.body.data;
+    for(const connector of data) {
+        if(clanMembers.find(o => o.uid === connector.clan_uid)) {
+            if(connector.guild_uid == "none") {
+                await MemberModel.findOneAndDelete({ clan_uid: connector.clan_uid, guild_id: guild_id });
+            } else if(members.find(o => o.user.id === connector.guild_uid)) {
+                await MemberModel.findOneAndUpdate(
+                    { clan_uid: connector.clan_uid, guild_id: guild_id }, 
+                    { guild_uid: connector.guild_uid },
+                    { upsert: true }
+                );
+            } else {
+                console.warn(`Invalid information (guild_uid: ${connector.guild_uid})`);
+            }
+        } else {
+            console.warn(`Invalid information (clan_uid: ${connector.clan_uid})`);
+        }
+    }
+
     res.send({ code: 200 });
 });
 
