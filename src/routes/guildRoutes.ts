@@ -74,32 +74,11 @@ GuildRouter.get('/:id/schedule', async (req, res) => {
         return;
     }
 
-    const dbMembers = await MemberModel.find({ guild_id: guild_id });
-    if(!dbMembers) {
-        res.send({ code: 301, msg: "Error retreiving members!" });
-        return;
-    }
-
     const dbSchedule = await ScheduleModel.findOne({ guild_id: guild_id })
         .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
     if(!dbSchedule) {
         res.send({ code: 301, msg: "Error retrieving schedule!" });
         return;
-    }
-
-    const users: any[] = await DC.request(`guilds/${guild_id}/members?limit=100`);
-    const members: any[] = [];
-    for(const entry of dbMembers) {
-        const guildUser = users.find(o => o.user.id === entry.guild_uid);
-        if(!guildUser) {
-            res.send({ code: 301, msg: "Error retreiving guild user!" });
-            return;
-        }
-
-        members.push({ 
-            uid: guildUser.user.id,
-            name: guildUser.nick || guildUser.user.username
-        });
     }
 
     const entries: any[] = [];
@@ -116,8 +95,7 @@ GuildRouter.get('/:id/schedule', async (req, res) => {
         id: guild_id,
         start: dbSchedule.start_day,
         next_cycle: new Date(new Date(dbSchedule.start_day).getTime() + 10 * MS_IN_DAY),
-        entries: entries,
-        members: members
+        entries: entries
     });
 });
 
@@ -268,6 +246,25 @@ GuildRouter.post('/:id/connected', async (req, res) => {
     }
 
     res.send({ code: 200 });
+});
+
+GuildRouter.get('/:id/channels', async (req, res) => {
+    const guild_id = req.params.id;
+    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+    if(!db_guild) {
+        res.send({ code: 301, msg: "Didn't find guild." });
+        return;
+    }
+
+    const data: any[] = await DC.request(`guilds/${guild_id}/channels`);
+    const channels: any[] = [];
+    for(const channel of data) {
+        if(!channel.parent_id) continue;
+
+        channels.push(channel);
+    }
+
+    res.send({ code: 200, channels: channels });
 });
 
 export default GuildRouter;
