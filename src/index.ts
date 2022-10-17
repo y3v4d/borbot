@@ -10,6 +10,7 @@ import bodyparser from "body-parser";
 import cors from 'cors';
 import MainRouter from './routes/mainRoutes';
 import GuildRouter from './routes/guildRoutes';
+import session from 'express-session';
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
@@ -27,8 +28,13 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     const api = express();
 
-    api.use(cors());
+    api.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
     api.use(bodyparser.json());
+    api.use(session({
+        secret: process.env.SESSION_SECRET!,
+        saveUninitialized: true,
+        resave: true
+    }));
 
     api.use('/api', MainRouter);
     api.use('/api/guilds', GuildRouter);

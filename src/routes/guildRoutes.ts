@@ -20,10 +20,12 @@ GuildRouter.get('/:id', async (req, res) => {
     const db_guild = await GuildModel.findOne({ guild_id: guild_id });
     res.send({
         code: 200,
-        id: guild_info.id,
-        name: guild_info.name,
-        icon: getGuildIconURL(guild_info),
-        is_setup: db_guild != null
+        data: {
+            id: guild_info.id,
+            name: guild_info.name,
+            icon: getGuildIconURL(guild_info),
+            is_setup: db_guild != null
+        }
     });
 });
 
