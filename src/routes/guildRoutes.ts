@@ -116,20 +116,22 @@ GuildRouter.post('/:id/schedule', async (req, res) => {
             continue;
         }
 
+        const dbMember = await MemberModel.findOne({ guild_uid: guild_uid });
+        if(!dbMember) {
+            res.send({ code: 301, msg: `Couldn't retrieve member with guild uid: ${guild_uid}` });
+            continue;
+        }
+
         const entry = dbSchedule.map.find(o => o.index === i + 1);
         if(!entry) {
-            console.warn(`Didn't find entry with index ${i + 1}`);
+            console.warn(`Didn't find entry with index ${i + 1}. Creating...`);
+            dbSchedule.map.push({ member: dbMember, index: i + 1 });
+            await dbSchedule.save();
             continue;
         }
 
         if(entry.member.guild_uid === guild_uid) {
             console.log(`${i + 1} doesn't change, skipping...`);
-            continue;
-        }
-
-        const dbMember = await MemberModel.findOne({ guild_uid: guild_uid });
-        if(!dbMember) {
-            res.send({ code: 301, msg: `Couldn't retrieve member with guild uid: ${guild_uid}` });
             continue;
         }
 
