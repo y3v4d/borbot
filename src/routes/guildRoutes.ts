@@ -6,27 +6,60 @@ import DC from "../api/discord";
 import MemberModel, { IMember } from "../models/member";
 import ScheduleModel from "../models/schedule";
 import CH from "../api/clickerheroes";
+import axios from "axios";
+
+const API_ENDPOINT = "https://discord.com/api/v10";
 
 const GuildRouter = Router();
 
 GuildRouter.get('/:id', async (req, res) => {
     const guild_id = req.params.id;
-    const guild_info = await DC.request(`guilds/${guild_id}`);
-    if(guild_info.code != undefined) {
-        res.send({ code: 301, msg: "Didn't find guild" });
-        return;
+    const token = req.session.token;
+
+    const tryThis = async () => {
+        try {
+            const guildsResponse = await axios.get(`${API_ENDPOINT}/users/@me/guilds`, {
+                params: { limit: 200 },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+    
+            const guild_info = guildsResponse.data.find((o: any) => o.id === guild_id);
+            if(!guild_info) {
+                res.send({ code: 400, msg: "Couldn't find the guild" });
+                return;
+            }
+
+            const botGuildResponse = await axios.get(`${API_ENDPOINT}/users/@me/guilds`, {
+                headers: {
+                    'Authorization': `Bot ${process.env.TOKEN}`
+                }
+            });
+    
+            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+            res.send({
+                code: 200,
+                data: {
+                    id: guild_info.id,
+                    name: guild_info.name,
+                    icon: getGuildIconURL(guild_info),
+                    is_setup: db_guild != null,
+                    is_joined: botGuildResponse.data.findIndex((o: any) => o.id === guild_id) != -1
+                }
+            });
+        } catch(error: any) {
+            if(error.response.status == 429) {
+                setTimeout(async () => await tryThis(), 1000); 
+            } else {
+                res.status(parseInt(error.response.status));
+                res.send({ code: error.response.status, msg: error.response.statusText });
+            }
+            
+        }
     }
 
-    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-    res.send({
-        code: 200,
-        data: {
-            id: guild_info.id,
-            name: guild_info.name,
-            icon: getGuildIconURL(guild_info),
-            is_setup: db_guild != null
-        }
-    });
+    await tryThis();
 });
 
 GuildRouter.post('/:id/setup', async (req, res) => {
@@ -144,76 +177,138 @@ GuildRouter.post('/:id/schedule', async (req, res) => {
 });
 
 GuildRouter.get('/:id/clanMembers', async (req, res) => {
+    const token = req.session.token;
     const guild_id = req.params.id;
-    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-    if(!db_guild) {
-        res.send({ code: 301, msg: "Didn't find guild" });
-        return;
-    }
 
-    try {
-        const data = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
-        const members = Object.values(data.guildMembers).map(member => {
-            return {
-                uid: member.uid,
-                highestZone: parseInt(member.highestZone),
-                nickname: member.nickname,
-                class: parseInt(member.chosenClass),
-                level: parseInt(member.classLevel),
+    const tryThis = async () => {
+        try {
+            await axios.get(`${API_ENDPOINT}/users/@me`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-                lastRewardTimestamp: member.lastRewardTimestamp,
-                lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
+            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+            if(!db_guild) {
+                res.status(400);
+                res.send({ code: 400, msg: "Didn't gind guild" });
+                return;
             }
-        });
 
-        res.send({ code: 200, members: members });
-    } catch(error) {
-        res.send({ code: 301, msg: `Error: Couldn't get clan information` });
+            const data = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
+            const members = Object.values(data.guildMembers).map(member => {
+                return {
+                    uid: member.uid,
+                    highestZone: parseInt(member.highestZone),
+                    nickname: member.nickname,
+                    class: parseInt(member.chosenClass),
+                    level: parseInt(member.classLevel),
+
+                    lastRewardTimestamp: member.lastRewardTimestamp,
+                    lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
+                }
+            });
+
+            res.send({ code: 200, members: members });
+        } catch(error: any) {
+            if(error.response.status == 429) {
+                setTimeout(async () => await tryThis(), 1000); 
+            } else {
+                res.status(parseInt(error.response.status));
+                res.send({ code: error.response.status, msg: error.response.statusText });
+            }
+        }
     }
+
+    await tryThis();
 });
 
 GuildRouter.get('/:id/guildMembers', async (req, res) => {
+    const token = req.session.token;
     const guild_id = req.params.id;
 
-    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-    if(!db_guild) {
-        res.send({ code: 301, msg: "Didn't gind guild" });
-        return;
+    const tryThis = async () => {
+        try {
+            await axios.get(`${API_ENDPOINT}/users/@me`, {
+                params: { limit: 200 },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+            if(!db_guild) {
+                res.status(400);
+                res.send({ code: 400, msg: "Didn't gind guild" });
+                return;
+            }
+
+            const data: any[] = await DC.request(`guilds/${guild_id}/members?limit=100`);
+            const members = data.map(o => {
+                return {
+                    id: o.user.id,
+                    disc: o.user.discriminator,
+                    username: o.user.username,
+                    avatar: getUserIconURL(o.user, 48),
+                    nickname: o.nick
+                };
+            });
+
+            res.send({ code: 200, members: members });
+        } catch(error: any) {
+            if(error.response.status == 429) {
+                setTimeout(async () => await tryThis(), 1000); 
+            } else {
+                res.status(parseInt(error.response.status));
+                res.send({ code: error.response.status, msg: error.response.statusText });
+            }
+        }
     }
 
-    const data: any[] = await DC.request(`guilds/${guild_id}/members?limit=100`);
-    const members = data.map(o => {
-        return {
-            id: o.user.id,
-            disc: o.user.discriminator,
-            username: o.user.username,
-            avatar: getUserIconURL(o.user, 48),
-            nickname: o.nick
-        };
-    });
-
-    res.send({ code: 200, members: members });
+    await tryThis();
 });
 
 GuildRouter.get('/:id/connected', async (req, res) => {
+    const token = req.session.token;
     const guild_id = req.params.id;
-    const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-    if(!db_guild) {
-        res.send({ code: 301, msg: "Didn't find guild" });
-        return;
+
+    const tryThis = async () => {
+        try {
+            await axios.get(`${API_ENDPOINT}/users/@me`, {
+                params: { limit: 200 },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
+            if(!db_guild) {
+                res.send({ code: 400, msg: "Didn't find guild" });
+                return;
+            }
+
+            const db_members = await MemberModel.find({ guild_id: guild_id });
+            const items: any[] = [];
+            
+            for(const db_member of db_members) {
+                items.push({
+                    guild_uid: db_member.guild_uid, 
+                    clan_uid: db_member.clan_uid
+                });
+            }
+
+            res.send({ code: 200, members: items });
+        } catch(error: any) {
+            if(error.response.status == 429) {
+                setTimeout(async () => await tryThis(), 1000); 
+            } else {
+                res.status(parseInt(error.response.status));
+                res.send({ code: error.response.status, msg: error.response.statusText });
+            }
+        }
     }
 
-    const db_members = await MemberModel.find({ guild_id: guild_id });
-    const items: any[] = [];
-    
-    for(const db_member of db_members) {
-        items.push({
-            guild_uid: db_member.guild_uid, 
-            clan_uid: db_member.clan_uid
-        });
-    }
-
-    res.send({ code: 200, members: items });
+    await tryThis();
 });
 
 GuildRouter.post('/:id/connected', async (req, res) => {

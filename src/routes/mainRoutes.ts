@@ -19,23 +19,36 @@ const MainRouter = Router();
 MainRouter.get('/guilds', async (req, res) => {
     const token = req.session.token;
 
-    try {
-        const guildsResponse = await axios.get(`${API_ENDPOINT}/users/@me/guilds`, {
-            params: { limit: 100 },
-            headers: {
-                'Authorization': `Bearer ${token}`
+    const tryThis = async () => {
+        try {
+            const guildsResponse = await axios.get(`${API_ENDPOINT}/users/@me/guilds`, {
+                params: { limit: 200 },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+    
+            const items: any[] = [];
+            for(const guild of guildsResponse.data) {
+                items.push({ name: guild.name, id: guild.id, icon: getGuildIconURL(guild), permissions: guild.permissions });
             }
-        });
-
-        const items: any[] = [];
-        for(const guild of guildsResponse.data) {
-            items.push({ name: guild.name, id: guild.id, icon: getGuildIconURL(guild), permissions: guild.permissions });
+            console.log('sending items');
+    
+            res.send({ code: 200, items: items });
+        } catch(error: any) {
+            if(error.response.status == 429) {
+                setTimeout(async () => await tryThis(), 1000); 
+            } else {
+                console.error(error);
+                res.status(parseInt(error.response.status));
+                res.send({ code: error.response.status, msg: error.response.statusText });
+            }
         }
-
-        res.send({ code: 200, items: items });
-    } catch(error: any) {
-        res.send({ code: 301, msg: error.message });
     }
+
+    await tryThis();
+
+    
 });
 
 MainRouter.get('/auth', async (req, res) => {
@@ -59,7 +72,8 @@ MainRouter.post('/auth', async (req, res) => {
         const tokenResponse = await axios.post(`${API_ENDPOINT}/oauth2/token`, new URLSearchParams(params));
 
         req.session.token = tokenResponse.data.access_token;
-        req.session.save();
+        await req.session.save();
+        console.log(`Access token: ${req.session.token}`);
         res.send({ code: 200 });
     } catch(error) {
         res.send({ code: 301, msg: error });
