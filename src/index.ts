@@ -16,6 +16,7 @@ import MeRouter from './routes/meRouter';
 declare module 'express-session' {
     interface SessionData {
         token: string;
+        guilds?: any[];
     }
 }
 

@@ -1,7 +1,6 @@
 import axios from "axios";
 import { Router } from "express";
-
-const API_ENDPOINT = "https://discord.com/api/v10";
+import DC from "../api/discord";
 
 const AuthRouter = Router();
 
@@ -13,29 +12,24 @@ AuthRouter.get('/', async (req, res) => {
 });
 
 AuthRouter.post('/login', async (req, res) => {
-    const code = req.body.code;
-    const params: any = {
-        'client_id': process.env.APP_ID,
-        'client_secret': process.env.APP_SECRET,
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': 'http://127.0.0.1:3010/api/auth'
-    };
+    const clientID = process.env.APP_ID as string;
+    const clientSecret = process.env.APP_SECRET as string;
+    const clientCode = req.body.code as string;
 
     try {
-        const tokenResponse = await axios.post(`${API_ENDPOINT}/oauth2/token`, new URLSearchParams(params));
+        const data = await DC.getAuthToken(clientID, clientSecret, clientCode);
 
-        req.session.token = tokenResponse.data.access_token;
-        console.log(`Access token: ${req.session.token}`);
-        res.send({ code: 200 });
-    } catch(error) {
-        res.send({ code: 301, msg: error });
+        req.session.token = data.access_token;
+        res.send({});
+    } catch(error: any) {
+        res.status(error.status)
+        res.send({ code: error.data.code, message: error.data.message });
     }
 });
 
 AuthRouter.post('/logout', async (req, res) => {
     req.session.token = '';
-    res.send({ code: 200 });
+    res.send({});
 });
 
 export default AuthRouter;
