@@ -8,9 +8,16 @@ import logger, { LoggerType } from './shared/logger';
 import express from "express";
 import bodyparser from "body-parser";
 import cors from 'cors';
-import MainRouter from './routes/mainRoutes';
 import GuildRouter from './routes/guildRoutes';
 import session from 'express-session';
+import AuthRouter from './routes/authRouter';
+import MeRouter from './routes/meRouter';
+
+declare module 'express-session' {
+    interface SessionData {
+        token: string;
+    }
+}
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
@@ -36,7 +43,8 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
         resave: true
     }));
 
-    api.use('/api', MainRouter);
+    api.use('/api/auth', AuthRouter);
+    api.use('/api/me', MeRouter);
     api.use('/api/guilds', GuildRouter);
 
     api.listen(3010, () => {
