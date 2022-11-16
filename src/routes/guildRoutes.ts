@@ -314,13 +314,6 @@ GuildRouter.post('/:id/schedule', isInGuild, async (req, res) => {
             continue;
         }
 
-        const dbMember = await MemberModel.findOne({ guild_uid: guild_uid });
-        if(!dbMember) {
-            res.status(400);
-            res.send({ code: 0, msg: `Couldn't retrieve member with guild uid: ${guild_uid}` });
-            continue;
-        }
-
         entry.member = dbMember;
     }
 
