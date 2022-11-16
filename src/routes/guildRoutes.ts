@@ -150,8 +150,7 @@ GuildRouter.post('/:id/connected', isInGuild, async (req, res) => {
     const guild_id = req.params.id;
     const db_guild = await GuildModel.findOne({ guild_id: guild_id });
     if(!db_guild) {
-        res.status(404);
-        res.send({ code: 0, message: "Didn't find guild." });
+        res.status(404).send({ code: 0, message: "Didn't find guild." });
         return;
     }
 
@@ -178,7 +177,7 @@ GuildRouter.post('/:id/connected', isInGuild, async (req, res) => {
         }
     }
 
-    res.send();
+    res.send({ msg: 'OK' });
 });
 
 GuildRouter.get('/:id/channels', isInGuild, async (req, res) => {
@@ -289,7 +288,7 @@ GuildRouter.post('/:id/schedule', isInGuild, async (req, res) => {
     }
 
     for(let i = 0; i < dbSchedule.length; ++i) {
-        const guild_uid = req.body[`${i + 1}`];
+        const guild_uid = req.body.data.find((o: any) => o.index == i + 1).uid;
         if(!guild_uid) {
             console.warn("Didn't find index, skipping...");
             continue;
@@ -305,7 +304,6 @@ GuildRouter.post('/:id/schedule', isInGuild, async (req, res) => {
         if(!entry) {
             console.warn(`Didn't find entry with index ${i + 1}. Creating...`);
             dbSchedule.map.push({ member: dbMember, index: i + 1 });
-            await dbSchedule.save();
             continue;
         }
 
@@ -318,7 +316,7 @@ GuildRouter.post('/:id/schedule', isInGuild, async (req, res) => {
     }
 
     await dbSchedule.save();
-    res.send();
+    res.send({ msg: "OK" });
 });
 
 export default GuildRouter;
