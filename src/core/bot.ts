@@ -77,6 +77,7 @@ export default class Bot extends Client {
 
         try {
             await this.user.setUsername(`Borb ${process.env.npm_package_version + (this.isDevelopment ? "D" : "")}`);
+            await this.user.setAvatar(this.isDevelopment ? "https://i.imgur.com/1xMiyWX.png" : "https://i.imgur.com/eC0cR2X.png");
         } catch(error) {
             console.warn("Couldn't update bot username!");
         }

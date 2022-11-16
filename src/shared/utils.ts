@@ -34,3 +34,8 @@ export function getUserIconURL(user: any, size = 64) {
         return `${UI_ENDPOINT}?${new URLSearchParams(params).toString()}`;
     }
 }
+
+export function isAdmin(permissions: string) {
+    const ADMINISTRATOR_FLAG = (1 << 3);
+    return (parseInt(permissions) & ADMINISTRATOR_FLAG) == ADMINISTRATOR_FLAG;
+}

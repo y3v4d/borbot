@@ -8,8 +8,19 @@ import logger, { LoggerType } from './shared/logger';
 import express from "express";
 import bodyparser from "body-parser";
 import cors from 'cors';
-import MainRouter from './routes/mainRoutes';
 import GuildRouter from './routes/guildRoutes';
+import session from 'express-session';
+import AuthRouter from './routes/authRouter';
+import MeRouter from './routes/meRouter';
+import cookieParser from 'cookie-parser';
+
+declare module 'express-session' {
+    interface SessionData {
+        token: string;
+        user_id: string;
+        guilds?: any[];
+    }
+}
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
@@ -23,14 +34,22 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             Intents.FLAGS.GUILD_MEMBERS
         ]}, process.env.USER_UID!, process.env.HASH!);
 
-    client.login(process.env.TOKEN);
+    await client.login(process.env.TOKEN);
 
     const api = express();
+    api.set('bot', client);
 
-    api.use(cors());
+    api.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
     api.use(bodyparser.json());
+    api.use(cookieParser());
+    api.use(session({
+        secret: process.env.SESSION_SECRET!,
+        saveUninitialized: true,
+        resave: true
+    }));
 
-    api.use('/api', MainRouter);
+    api.use('/api/auth', AuthRouter);
+    api.use('/api/me', MeRouter);
     api.use('/api/guilds', GuildRouter);
 
     api.listen(3010, () => {
