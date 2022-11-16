@@ -1,9 +1,5 @@
-import axios from "axios";
-
 const CDN_ENDPOINT = 'https://cdn.discordapp.com';
 const UI_ENDPOINT = 'https://ui-avatars.com/api';
-
-const API_ENDPOINT = "https://discord.com/api/v10";
 
 export function getGuildIconURL(guild: any, size = 64) {
     if(guild.icon) {
@@ -39,11 +35,7 @@ export function getUserIconURL(user: any, size = 64) {
     }
 }
 
-export async function getValidGuilds(token: string) {
-    const res = await axios.get(`${API_ENDPOINT}/users/@me/guilds`, {
-        params: { limit: 200 },
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+export function isAdmin(permissions: string) {
+    const ADMINISTRATOR_FLAG = (1 << 3);
+    return (parseInt(permissions) & ADMINISTRATOR_FLAG) == ADMINISTRATOR_FLAG;
 }

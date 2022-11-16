@@ -12,10 +12,12 @@ import GuildRouter from './routes/guildRoutes';
 import session from 'express-session';
 import AuthRouter from './routes/authRouter';
 import MeRouter from './routes/meRouter';
+import cookieParser from 'cookie-parser';
 
 declare module 'express-session' {
     interface SessionData {
         token: string;
+        user_id: string;
         guilds?: any[];
     }
 }
@@ -32,12 +34,14 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             Intents.FLAGS.GUILD_MEMBERS
         ]}, process.env.USER_UID!, process.env.HASH!);
 
-    client.login(process.env.TOKEN);
+    await client.login(process.env.TOKEN);
 
     const api = express();
+    api.set('bot', client);
 
     api.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
     api.use(bodyparser.json());
+    api.use(cookieParser());
     api.use(session({
         secret: process.env.SESSION_SECRET!,
         saveUninitialized: true,

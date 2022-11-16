@@ -1,8 +1,7 @@
-import axios, { AxiosResponse } from 'axios';
-import https from 'https';
+import axios from 'axios';
 
 namespace DC {
-    function request<T>(method: 'get' | 'post', path: string, data: { params?: any, headers?: any }) {
+    export function request<T>(method: 'get' | 'post', path: string, data: { params?: any, headers?: any }) {
         return new Promise<T>((resolve, reject) => {
             axios({
                 method: method,
@@ -21,7 +20,7 @@ namespace DC {
         });
     }
 
-    type AuthTokenResponse = { 
+    export type AuthTokenResponse = { 
         access_token: string,
         token_type: string,
         expires_in: number,
@@ -29,12 +28,21 @@ namespace DC {
         scope: string
     }
 
-    type UserInformationResponse = {
+    export type UserInformationResponse = {
         id: string,
         username: string,
         discriminator: string,
         avatar: string
     }
+
+    export type UserGuildResponse = {
+        id: string,
+        name: string,
+        icon: string,
+        owner: boolean,
+        permissions: string,
+        features: string[]
+    }[]
 
     export async function getAuthToken(clientID: string, clientSecret: string, clientCode: string) {
         const params: any = {
@@ -51,7 +59,7 @@ namespace DC {
     }
 
     export async function getUserInformation(token: string) {
-        return await request<any>('get', 'users/@me', {
+        return await request<UserInformationResponse>('get', 'users/@me', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -59,10 +67,28 @@ namespace DC {
     }
 
     export async function getUserGuilds(token: string) {
-        return await request<any>('get', 'users/@me/guilds', {
+        return await request<UserGuildResponse>('get', 'users/@me/guilds', {
             params: { limit: 100 },
             headers: {
                 'Authorization': `Bearer ${token}`
+            }
+        });
+    }
+
+    export async function getUserInGuild(token: string, guildID: string) {
+        return await request<any>('get', `users/@me/guilds/${guildID}/member`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+    }
+
+    export async function getGuild(guildID: string) {
+        const token = process.env.TOKEN as string;
+
+        return await request<any>('get', `guilds/${guildID}`, {
+            headers: {
+                'Authorization': `Bot ${token}`
             }
         });
     }

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Router } from "express";
 import DC from "../api/discord";
 
@@ -19,8 +18,7 @@ AuthRouter.post('/login', async (req, res) => {
     try {
         const data = await DC.getAuthToken(clientID, clientSecret, clientCode);
 
-        req.session.token = data.access_token;
-        res.send({});
+        res.cookie('token', data.access_token).send({ code: 0, msg: "OK" });
     } catch(error: any) {
         res.status(error.status)
         res.send({ code: error.data.code, message: error.data.message });
@@ -28,8 +26,7 @@ AuthRouter.post('/login', async (req, res) => {
 });
 
 AuthRouter.post('/logout', async (req, res) => {
-    req.session.token = '';
-    res.send({});
+    res.clearCookie('token').send({ msg: "OK" });
 });
 
 export default AuthRouter;
