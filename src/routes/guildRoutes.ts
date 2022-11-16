@@ -54,7 +54,6 @@ function isInGuild(req: CustomRequest, res: Response, next: NextFunction) {
 }
 
 const GuildRouter = Router();
-
 GuildRouter.get('/:id', isInGuild, async (req: CustomRequest, res) => {
     const bot = req.app.get('bot') as Bot;
 
@@ -76,18 +75,17 @@ GuildRouter.get('/:id', isInGuild, async (req: CustomRequest, res) => {
     }
 });
 
-GuildRouter.get('/:id/clanMembers', isInGuild, async (req, res) => {
+GuildRouter.get('/:id/members', isInGuild, async (req, res) => {
     const guild_id = req.params.id;
     try {
         const db_guild = await GuildModel.findOne({ guild_id: guild_id });
         if(!db_guild) {
-            res.status(404);
-            res.send({ code: 0, message: "Didn't find guild" });
+            res.status(404).send({ code: 0, message: "Didn't find guild" });
             return;
         }
 
-        const data = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
-        const members = Object.values(data.guildMembers).map(member => {
+        const clanInfo = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
+        const clanMembers = Object.values(clanInfo.guildMembers).map(member => {
             return {
                 uid: member.uid,
                 highestZone: parseInt(member.highestZone),
@@ -100,25 +98,8 @@ GuildRouter.get('/:id/clanMembers', isInGuild, async (req, res) => {
             }
         });
 
-        res.send(members);
-    } catch(error: any) {
-        res.status(error.status);
-        res.send({ code: error.data.code, msg: error.data.message });
-    }
-});
-
-GuildRouter.get('/:id/guildMembers', isInGuild, async (req, res) => {
-    const guild_id = req.params.id;
-    try {
-        const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-        if(!db_guild) {
-            res.status(404);
-            res.send({ code: 0, message: "Didn't find guild" });
-            return;
-        }
-
         const data = await DC.getGuildMembers(guild_id);
-        const members = data.map((o: any) => {
+        const guildMembers = data.map((o: any) => {
             return {
                 id: o.user.id,
                 disc: o.user.discriminator,
@@ -128,10 +109,13 @@ GuildRouter.get('/:id/guildMembers', isInGuild, async (req, res) => {
             };
         });
 
-        res.send(members);
+        res.send({
+            clan: clanMembers,
+            guild: guildMembers
+        })
     } catch(error: any) {
         res.status(error.status);
-        res.send({ code: error.data.code, message: error.data.message });
+        res.send({ code: error.data.code, msg: error.data.message });
     }
 });
 
