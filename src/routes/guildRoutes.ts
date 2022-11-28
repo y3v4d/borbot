@@ -237,7 +237,7 @@ GuildRouter.post('/:id/unsetup', isInGuild, async (req, res) => {
     }
 
     await db_guild.delete();
-    res.send();
+    res.send({ msg: "OK" });
 });
 
 GuildRouter.get('/:id/schedule', isInGuild, async (req, res) => {
