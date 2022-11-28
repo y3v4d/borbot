@@ -28,22 +28,6 @@ namespace DC {
         scope: string
     }
 
-    export type UserInformationResponse = {
-        id: string,
-        username: string,
-        discriminator: string,
-        avatar: string
-    }
-
-    export type UserGuildResponse = {
-        id: string,
-        name: string,
-        icon: string,
-        owner: boolean,
-        permissions: string,
-        features: string[]
-    }[]
-
     export async function getAuthToken(clientID: string, clientSecret: string, clientCode: string) {
         const params: any = {
             client_id: clientID,
@@ -58,6 +42,13 @@ namespace DC {
         });
     }
 
+    export type UserInformationResponse = {
+        id: string,
+        username: string,
+        discriminator: string,
+        avatar: string
+    }
+
     export async function getUserInformation(token: string) {
         return await request<UserInformationResponse>('get', 'users/@me', {
             headers: {
@@ -65,6 +56,15 @@ namespace DC {
             }
         });
     }
+
+    export type UserGuildResponse = {
+        id: string,
+        name: string,
+        icon: string,
+        owner: boolean,
+        permissions: string,
+        features: string[]
+    }[]
 
     export async function getUserGuilds(token: string) {
         return await request<UserGuildResponse>('get', 'users/@me/guilds', {

@@ -10,6 +10,11 @@ AuthRouter.get('/', async (req, res) => {
     res.send(Buffer.from(`<script>window.opener.postMessage("${code}", "http://localhost:3000");window.close();</script>`));
 });
 
+AuthRouter.get('/back', async (req, res) => {
+    res.set('Content-Type', 'text/html');
+    res.send(Buffer.from(`<script>window.opener.postMessage("OK", "http://localhost:3000");window.close();</script>`));
+});
+
 AuthRouter.post('/login', async (req, res) => {
     const clientID = process.env.APP_ID as string;
     const clientSecret = process.env.APP_SECRET as string;
