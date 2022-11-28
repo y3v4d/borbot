@@ -20,7 +20,7 @@ namespace CH {
                 });
 
                 res.on('end', () => {
-                    //body = body.replaceAll('\\', '/');
+                    if(request !== "getGuildMessages") body = body.replaceAll('\\', '/');
                     resolve(JSON.parse(body));
                 });
             });

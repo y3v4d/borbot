@@ -4,7 +4,7 @@ import GuildModel, { IGuild } from "../models/guild";
 import { ClanManager } from "../shared/clan";
 import DC from "../api/discord";
 import MemberModel, { IMember } from "../models/member";
-import ScheduleModel from "../models/schedule";
+import ScheduleModel, { ISchedule } from "../models/schedule";
 import CH from "../api/clickerheroes";
 import Bot from "../core/bot";
 import { Guild, GuildMember } from "discord.js";
@@ -204,8 +204,7 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
     const guild_id = req.params.id;
     const db_guild = await GuildModel.findOne({ guild_id: guild_id });
     if(db_guild) {
-        res.status(400);
-        res.send({ code: 0, messsage: "Already setup."});
+        res.status(400).send({ code: 0, messsage: "Already setup."});
         return;
     }
 
@@ -214,8 +213,7 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
     
     const isValid = await ClanManager.test(uid, password_hash);
     if(!isValid) {
-        res.status(400);
-        res.send({ code: 0, message: "Invalid data."});
+        res.status(400).send({ code: 0, message: "Invalid data."});
         return;
     }
 
@@ -226,7 +224,7 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
     };
 
     await (new GuildModel(schema)).save();
-    res.send();
+    res.send({ msg: "OK" });
 });
 
 GuildRouter.post('/:id/unsetup', isInGuild, async (req, res) => {
@@ -251,7 +249,7 @@ GuildRouter.get('/:id/schedule', isInGuild, async (req, res) => {
         return;
     }
 
-    const dbSchedule = await ScheduleModel.findOne({ guild_id: guild_id })
+    const dbSchedule = await ScheduleModel.findOne({ _id: db_guild.schedule })
         .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
     if(!dbSchedule) {
         res.status(400);
