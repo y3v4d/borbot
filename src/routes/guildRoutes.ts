@@ -209,9 +209,9 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
     }
 
     const uid = req.body.uid;
-    const password_hash = req.body.pwd;
-    
-    const isValid = await ClanManager.test(uid, password_hash);
+    const password = req.body.pwd;
+
+    const isValid = await ClanManager.test(uid, password);
     if(!isValid) {
         res.status(400).send({ code: 0, message: "Invalid data."});
         return;
@@ -220,10 +220,11 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
     const schema: IGuild = {
         guild_id: guild_id,
         user_uid: uid,
-        password_hash: password_hash
+        password_hash: password
     };
 
     await (new GuildModel(schema)).save();
+
     res.send({ msg: "OK" });
 });
 
