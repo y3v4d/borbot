@@ -208,6 +208,12 @@ GuildRouter.post('/:id/setup', isInGuild, async (req, res) => {
         return;
     }
 
+    const bot = req.app.get('bot') as Bot;
+    if(!bot.guilds.cache.get(guild_id)) {
+        res.status(400).send({ code: 0, message: 'Setup requires bot in the guild.' });
+        return;
+    }
+
     const uid = req.body.uid;
     const password = req.body.pwd;
 
