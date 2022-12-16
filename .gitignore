@@ -1,7 +1,5 @@
 node_modules
 .env
-old/
-data/
 _dumps/
 logs/
 dist/
