@@ -265,12 +265,10 @@ GuildRouter.get('/:id/schedule', isInGuild, async (req, res) => {
     }
 
     const entries: any[] = [];
-    for(const entry of dbSchedule.map) {
-        entries.push({ uid: entry.member.guild_uid, index: entry.index });
+    for(let i = 1; i <= 10; ++i) {
+        const entry = dbSchedule.map.find(o => o.index == i);
+        entries.push({ uid: entry ? entry.member.guild_uid : '', index: i });
     }
-    entries.sort((self, other) => {
-        return self.index - other.index;
-    });
 
     const MS_IN_DAY = 86400000;
     res.send({
@@ -302,7 +300,7 @@ GuildRouter.post('/:id/schedule', isInGuild, async (req, res) => {
         const dbMember = await MemberModel.findOne({ guild_uid: guild_uid });
         if(!dbMember) {
             res.send({ code: 301, msg: `Couldn't retrieve member with guild uid: ${guild_uid}` });
-            continue;
+            return;
         }
 
         const entry = dbSchedule.map.find(o => o.index === i + 1);
