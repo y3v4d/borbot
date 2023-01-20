@@ -1,5 +1,5 @@
 import { Router } from "express";
-import DC from "../api/discord";
+import DiscordAPI from "../api/discord";
 
 const AuthRouter = Router();
 
@@ -21,7 +21,7 @@ AuthRouter.post('/login', async (req, res) => {
     const clientCode = req.body.code as string;
 
     try {
-        const data = await DC.getAuthToken(clientID, clientSecret, clientCode);
+        const data = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode);
 
         res.cookie('token', data.access_token).send({ code: 0, msg: "OK" });
     } catch(error: any) {

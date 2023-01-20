@@ -14,14 +14,6 @@ import AuthRouter from './routes/authRouter';
 import MeRouter from './routes/meRouter';
 import cookieParser from 'cookie-parser';
 
-declare module 'express-session' {
-    interface SessionData {
-        token: string;
-        user_id: string;
-        guilds?: any[];
-    }
-}
-
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
     logger("Bot is starting...");

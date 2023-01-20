@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-namespace DC {
+namespace DiscordAPI {
     export function request<T>(method: 'get' | 'post', path: string, data: { params?: any, headers?: any }) {
         return new Promise<T>((resolve, reject) => {
             axios({
@@ -93,10 +93,40 @@ namespace DC {
         });
     }
 
+    export type GuildMember = {
+        user?: {
+            id: string,
+            username: string,
+            discriminator: string,
+            avatar?: string,
+            bot?: boolean,
+            system?: boolean,
+            mfa_enabled?: boolean,
+            banner?: string,
+            accent_color?: number,
+            locale?: string,
+            verified?: boolean,
+            email?: string,
+            flags?: number,
+            premium_type?: number,
+            public_flags?: number
+        },
+        nick?: string,
+        avatar?: string,
+        roles: string[],
+        joined_at: string,
+        premium_since?: string,
+        deaf: boolean,
+        mute: boolean,
+        pending?: boolean,
+        permissions?: string,
+        communication_disabled_until?: string
+    }
+
     export async function getGuildMembers(guildID: string, limit = 100) {
         const token = process.env.TOKEN as string;
 
-        return await request<any>('get', `guilds/${guildID}/members`, {
+        return await request<GuildMember[]>('get', `guilds/${guildID}/members`, {
             params: { limit: limit },
             headers: {
                 'Authorization': `Bot ${token}`
@@ -115,4 +145,4 @@ namespace DC {
     }
 }
 
-export default DC;
+export default DiscordAPI;

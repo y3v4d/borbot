@@ -2,7 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { getGuildIconURL, getUserIconURL, isAdmin } from "../shared/utils";
 import GuildModel, { IGuild } from "../models/guild";
 import { ClanManager } from "../shared/clan";
-import DC from "../api/discord";
+import DiscordAPI from "../api/discord";
 import MemberModel, { IMember } from "../models/member";
 import ScheduleModel, { ISchedule } from "../models/schedule";
 import CH from "../api/clickerheroes";
@@ -24,7 +24,7 @@ function isInGuild(req: CustomRequest, res: Response, next: NextFunction) {
 
     const call = async () => {
         try {
-            const data = await DC.getUserGuilds(token);
+            const data = await DiscordAPI.getUserGuilds(token);
             const guild = data.find(o => o.id === guild_id);
             if(!guild) {
                 res.status(404).send({ code: 0, message: "Not in the guild" });
@@ -66,6 +66,8 @@ GuildRouter.get('/:id', isInGuild, async (req: CustomRequest, res) => {
             id: req.guild?.id,
             name: req.guild?.name,
             icon: getGuildIconURL(req.guild),
+            permissions: req.guild?.permissions,
+            isAdmin: isAdmin(req.guild?.permissions),
             is_setup: db_guild != null,
             is_joined: botJoined
         });
@@ -98,12 +100,12 @@ GuildRouter.get('/:id/members', isInGuild, async (req, res) => {
             }
         });
 
-        const data = await DC.getGuildMembers(guild_id);
-        const guildMembers = data.map((o: any) => {
+        const data = await DiscordAPI.getGuildMembers(guild_id);
+        const guildMembers = data.map(o => {
             return {
-                id: o.user.id,
-                disc: o.user.discriminator,
-                username: o.user.username,
+                id: o.user?.id,
+                disc: o.user?.discriminator,
+                username: o.user?.username,
                 avatar: getUserIconURL(o.user, 48),
                 nickname: o.nick
             };
@@ -155,7 +157,7 @@ GuildRouter.post('/:id/connected', isInGuild, async (req, res) => {
     }
 
     const clanInfo = await CH.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
-    const members: any[] = await DC.getGuildMembers(guild_id);
+    const members: any[] = await DiscordAPI.getGuildMembers(guild_id);
     const clanMembers = Object.values(clanInfo.guildMembers);
 
     const data: { clan_uid: string, guild_uid: string }[] = req.body.data;
@@ -189,7 +191,7 @@ GuildRouter.get('/:id/channels', isInGuild, async (req, res) => {
         return;
     }
 
-    const data: any[] = await DC.getGuildChannels(guild_id);
+    const data: any[] = await DiscordAPI.getGuildChannels(guild_id);
     const channels: any[] = [];
     for(const channel of data) {
         if(!channel.parent_id) continue;

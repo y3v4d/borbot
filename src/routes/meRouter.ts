@@ -1,5 +1,5 @@
 import { Router } from "express";
-import DC from "../api/discord";
+import DiscordAPI from "../api/discord";
 import { getGuildIconURL, isAdmin } from "../shared/utils";
 
 const MeRouter = Router();
@@ -11,7 +11,7 @@ MeRouter.get('/', async (req, res) => {
     }
 
     try {
-        const data = await DC.getUserInformation(token);
+        const data = await DiscordAPI.getUserInformation(token);
         
         res.send({
             id: data.id,
@@ -34,7 +34,7 @@ MeRouter.get('/guilds', async (req, res) => {
 
     const call = async () => {
         try {
-            const data = await DC.getUserGuilds(token);
+            const data = await DiscordAPI.getUserGuilds(token);
 
             const items: any[] = [];
             for(const guild of data) {
