@@ -39,3 +39,9 @@ export function isAdmin(permissions: string) {
     const ADMINISTRATOR_FLAG = (1 << 3);
     return (parseInt(permissions) & ADMINISTRATOR_FLAG) == ADMINISTRATOR_FLAG;
 }
+
+export function addCommas(n: number | string) {
+    const temp = n.toString();
+    
+    return temp.length < 5 ? temp : temp.replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+}

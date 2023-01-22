@@ -9,12 +9,12 @@ import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
 
 export default class Bot extends Client {
-    readonly clan: ClanManager;
+    //readonly clan: ClanManager;
 
-    constructor(options: ClientOptions, uid: string, passwordHash: string) {
+    constructor(options: ClientOptions) {
         super(options);
 
-        this.clan = new ClanManager(uid, passwordHash);
+        //this.clan = new ClanManager(uid, passwordHash);
 
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));

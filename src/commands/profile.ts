@@ -5,6 +5,11 @@ import Bot from "../core/bot";
 import Command from "../core/command";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import GuildModel from "../models/guild";
+import CH from "../api/clickerheroes";
+import { addCommas } from "../shared/utils";
+
+
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -16,36 +21,56 @@ export const Profile: Command = {
             .setRequired(false)),
 
     run: async function(client: Bot, interaction: BaseCommandInteraction) {
-        await client.clan.update();
+        const guildId = interaction.guildId!;
 
-        const user = interaction.options.getUser("user", false);
-        const dbMember = await MemberModel.findOne({ guild_uid: (user ? user.id : interaction.user.id) });
-        if(!dbMember) {
-            logger(`/profile Couldn't find member with guild uid: ${user!.id}`, LoggerType.ERROR);
-            await interaction.reply("You aren't mapped! Contact **y3v4d** :)");
+        const dbGuild = await GuildModel.findOne({ guild_id: guildId });
+        if(!dbGuild) {
+            await interaction.reply({ 
+                content: "Couldn't find guild in database...", 
+                ephemeral: true 
+            });
+
             return;
         }
 
-        const member = client.clan.getMemberByUid(dbMember!.clan_uid);
+        const clan = await CH.getGuildInfo(dbGuild.user_uid, dbGuild.password_hash);
+
+        const user = interaction.options.getUser("user", false) || interaction.user;
+        const dbMember = await MemberModel.findOne({ guild_uid: user.id });
+        if(!dbMember) {
+            logger(`/profile Couldn't find member with guild uid: ${user.id}`, LoggerType.ERROR);
+            await interaction.reply({
+                content: "You're not connected! Contact the guild administrator :)",
+                ephemeral: true
+            });
+
+            return;
+        }
+
+        const member = Object.values(clan.guildMembers).find(o => o.uid === dbMember.clan_uid);
         if(!member) {
-            logger(`/profile Couldn't find clan member with guild uid: ${user!.id}`, LoggerType.ERROR);
-            await interaction.reply({ content: "You're not defined as a clan member! Contact **y3v4d** :)", ephemeral: true });
+            logger(`/profile Couldn't find clan member with guild uid: ${user.id}`, LoggerType.ERROR);
+            await interaction.reply({ 
+                content: "You're not a clan member! Contact the guild administrator :)", 
+                ephemeral: true 
+            });
+
             return;
         }
 
         const embed = new MessageEmbed()
-            .setColor("#0099ff")
+            .setColor("#5E81AC")
             .setTitle(`Profile`)
             .setAuthor({ name: member.nickname, iconURL: (user ? user.avatarURL()! : interaction.user!.avatarURL()!) })
             .addFields(
-                { name: "Class", value: ClanClass[member.class], inline: true },
-                { name: "Level", value: member.level.toString(), inline: true },
-                { name: "Highest Zone", value: member.highestZone.toLocaleString('en-US'), inline: true }
+                { name: "Class", value: ClanClass[parseInt(member.chosenClass)], inline: true },
+                { name: "Level", value: member.classLevel, inline: true },
+                { name: "Highest Zone", value: addCommas(member.highestZone), inline: true }
             )
             .setImage('https://i.imgur.com/glzDw4P.gif')
             .setFooter({ text: "Composed by Mighty Borb", iconURL: client.user!.avatarURL()! });
 
-        switch(member.class) {
+        switch(parseInt(member.chosenClass)) {
             case ClanClass.Mage:
                 embed.setThumbnail("https://i.imgur.com/WR0ZE4i.png");
                 break;

@@ -24,7 +24,7 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             Intents.FLAGS.GUILD_MESSAGES,
             Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
             Intents.FLAGS.GUILD_MEMBERS
-        ]}, process.env.USER_UID!, process.env.HASH!);
+        ]});
 
     await client.login(process.env.TOKEN);
 
