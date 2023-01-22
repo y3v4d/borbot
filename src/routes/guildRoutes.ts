@@ -107,7 +107,8 @@ GuildRouter.get('/:id/members', isInGuild, async (req, res) => {
                 disc: o.user?.discriminator,
                 username: o.user?.username,
                 avatar: getUserIconURL(o.user, 48),
-                nickname: o.nick
+                nickname: o.nick,
+                isBot: o.user?.bot || false
             };
         });
 
