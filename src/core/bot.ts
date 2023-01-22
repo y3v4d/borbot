@@ -2,19 +2,15 @@ import { Client, ClientOptions, GuildMember, Interaction, Message, PartialGuildM
 import { Actions } from "../actions";
 import { Commands } from "../commands";
 import Emoji from "../shared/emojis";
-import { ClanManager } from "../shared/clan";
 import GuildModel from "../models/guild";
 import MemberModel from "../models/member";
 import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
 
 export default class Bot extends Client {
-    //readonly clan: ClanManager;
 
     constructor(options: ClientOptions) {
         super(options);
-
-        //this.clan = new ClanManager(uid, passwordHash);
 
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
@@ -29,25 +25,25 @@ export default class Bot extends Client {
             return;
         }
 
-        const dbSchedule = (await dbGuild.populate<{ schedule: ISchedule }>('schedule')).schedule;
-        if(!dbSchedule) {
-            console.warn("Couldn't find schedule in guild " + dbGuild.guild_id);
-            return;
-        }
-
         const dbMember = await MemberModel.findOne({ guild_id: dbGuild.guild_id, guild_uid: member.id });
         if(!dbMember) {
             console.warn(`Couldn't find guild member with id ${member.id}`);
             return;
         }
 
-        const scheduleIndex = dbSchedule.map.findIndex(o => o.member.equals(dbMember._id));
-        if(scheduleIndex !== -1) {
+        const dbSchedule = (await dbGuild.populate<{ schedule: ISchedule }>('schedule')).schedule;
+        if(!dbSchedule) {
+            console.warn("Couldn't find schedule in guild " + dbGuild.guild_id);
+        } else {
+            const scheduleIndex = dbSchedule.map.findIndex(o => o.member.equals(dbMember._id));
+            if(scheduleIndex === -1) return;
+
             dbSchedule.map.splice(scheduleIndex, 1);
             await ScheduleModel.updateOne(dbSchedule);
 
             console.log(`Removed ${dbMember._id} user from schedule.`);
         }
+        
 
         await dbMember.delete();
         console.log(`Removed member with guild id ${member.id} from the database.`);
