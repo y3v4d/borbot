@@ -28,7 +28,7 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     await client.login(process.env.TOKEN);
 
-    const api = express();
+    /*const api = express();
     api.set('bot', client);
 
     api.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
@@ -46,5 +46,5 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     api.listen(3010, () => {
         logger("Started REST API on port 3010.");
-    });
+    });*/
 }).catch(error => logger(error, LoggerType.ERROR));
