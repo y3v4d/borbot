@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
+        "target": "ES2022",
         "module": "CommonJS",
         "strict": true,
         "moduleResolution": "Node",
@@ -8,6 +8,13 @@
         "skipLibCheck": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
-        "removeComments": true
-    }
+        "removeComments": true,
+        "outDir": "dist"
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
 }
