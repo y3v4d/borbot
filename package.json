@@ -1,7 +1,7 @@
 {
-  "name": "clicker-heroes-bot",
+  "name": "borbot",
   "version": "0.10.0",
-  "description": "Bot for managing clicker heroes server",
+  "description": "Bot for managing Clicker Heroes clan in Discord server",
   "main": "dist/index.js",
   "scripts": {
     "deploy": "ts-node src/deploy-commands.ts",
