@@ -5,7 +5,7 @@ import Command from "../core/command";
 import table from "text-table";
 import { ClanClass } from "../shared/clan";
 import GuildModel from "../models/guild";
-import CH from "../api/clickerheroes";
+import ClickerHeroesAPI from "../api/clickerheroes";
 import { addCommas } from "../shared/utils";
 
 export const Clan: Command = {
@@ -26,7 +26,7 @@ export const Clan: Command = {
             return;
         }
 
-        const clan = await CH.getGuildInfo(dbGuild.user_uid, dbGuild.password_hash);
+        const clan = await ClickerHeroesAPI.getGuildInfo(dbGuild.user_uid, dbGuild.password_hash);
 
         // clan name and immortal levels as a header
         let response = `**${clan.guild.name}**\n**Immortals** [New: ${clan.guild.currentNewRaidLevel - 1}, Legacy: ${clan.guild.currentRaidLevel}]\n`;

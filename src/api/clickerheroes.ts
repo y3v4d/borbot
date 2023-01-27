@@ -1,6 +1,6 @@
 import * as https from 'https';
 
-namespace CH {
+namespace ClickerHeroesAPI {
     function post(request: string, params: any) {
         const options: https.RequestOptions = {
             hostname: 'ClickerHeroes-SavedGames3-747864888.us-east-1.elb.amazonaws.com',
@@ -131,4 +131,4 @@ namespace CH {
     }
 }
 
-export default CH;
+export default ClickerHeroesAPI;

@@ -8,10 +8,10 @@ import logger, { LoggerType } from './shared/logger';
 import express from "express";
 import bodyparser from "body-parser";
 import cors from 'cors';
-import GuildRouter from './routes/guildRoutes';
+import GuildRouter from './server/routes/guildRoutes';
 import session from 'express-session';
-import AuthRouter from './routes/authRouter';
-import MeRouter from './routes/meRouter';
+import AuthRouter from './server/routes/authRouter';
+import MeRouter from './server/routes/meRouter';
 import cookieParser from 'cookie-parser';
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {

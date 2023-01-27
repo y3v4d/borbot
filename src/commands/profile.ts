@@ -6,7 +6,7 @@ import Command from "../core/command";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
 import GuildModel from "../models/guild";
-import CH from "../api/clickerheroes";
+import ClickerHeroesAPI from "../api/clickerheroes";
 import { addCommas } from "../shared/utils";
 
 
@@ -33,7 +33,7 @@ export const Profile: Command = {
             return;
         }
 
-        const clan = await CH.getGuildInfo(dbGuild.user_uid, dbGuild.password_hash);
+        const clan = await ClickerHeroesAPI.getGuildInfo(dbGuild.user_uid, dbGuild.password_hash);
 
         const user = interaction.options.getUser("user", false) || interaction.user;
         const dbMember = await MemberModel.findOne({ guild_uid: user.id });

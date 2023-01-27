@@ -1,4 +1,4 @@
-import CH from "../api/clickerheroes";
+import ClickerHeroesAPI from "../api/clickerheroes";
 
 export enum ClanClass {
     Rogue = 1,
@@ -49,7 +49,7 @@ export class ClanManager {
     private uid: string;
     private passwordHash: string;
 
-    private _messages: CH.GuildMessage[] = [];
+    private _messages: ClickerHeroesAPI.GuildMessage[] = [];
     private _newRaid?: ClanNewRaidInfo;
 
     constructor(uid: string, passwordHash: string) {
@@ -59,7 +59,7 @@ export class ClanManager {
 
     static async test(uid: string, passwordHash: string) {
         try {
-            await CH.getGuildInfo(uid, passwordHash);
+            await ClickerHeroesAPI.getGuildInfo(uid, passwordHash);
             return true;
         } catch(error) {
             console.warn(error);
@@ -68,7 +68,7 @@ export class ClanManager {
     }
 
     async update() {
-        const info = await CH.getGuildInfo(this.uid, this.passwordHash);
+        const info = await ClickerHeroesAPI.getGuildInfo(this.uid, this.passwordHash);
     
         this._name = info.guild.name;
         this._masterUID = info.guild.guildMasterUid;
@@ -93,12 +93,12 @@ export class ClanManager {
     }
 
     async fetchMessages() {
-        this._messages = (await CH.getGuildMessages(this.uid, this.passwordHash, this.name)).messages;
+        this._messages = (await ClickerHeroesAPI.getGuildMessages(this.uid, this.passwordHash, this.name)).messages;
     }
 
     async fetchNewRaid() {
         await this.update();
-        const result = await CH.getNewRaid(this.uid, this.passwordHash, this.name);
+        const result = await ClickerHeroesAPI.getNewRaid(this.uid, this.passwordHash, this.name);
         this._newRaid = {
             level: parseInt(result.level),
             date: result.date,
@@ -121,7 +121,7 @@ export class ClanManager {
 
     async getRaidInfo() {
         await this.update();
-        return await CH.getNewRaid(this.uid, this.passwordHash, this.name);
+        return await ClickerHeroesAPI.getNewRaid(this.uid, this.passwordHash, this.name);
     }
 
     getMemberByName(name: string) {
