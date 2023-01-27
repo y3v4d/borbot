@@ -11,20 +11,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/y3v4d/clicker-heroes-bot.git"
+    "url": "git+https://github.com/y3v4d/borbot.git"
   },
   "author": "y3v4d",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/y3v4d/clicker-heroes-bot/issues"
+    "url": "https://github.com/y3v4d/borbot/issues"
   },
-  "homepage": "https://github.com/y3v4d/clicker-heroes-bot#readme",
+  "homepage": "https://github.com/y3v4d/borbot#readme",
   "dependencies": {
     "@discordjs/builders": "^0.11.0",
     "@discordjs/rest": "^0.2.0-canary.0",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
-    "canvas": "^2.9.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "discord-api-types": "^0.26.1",
