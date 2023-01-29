@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import DiscordAPI from "../../api/discord";
 import { getGuildIconURL, isAdmin } from "../../shared/utils";
+import UserService from "../services/userService";
 
 const UserController = {
     getUserInformation: async function(req: Request, res: Response) {
@@ -11,13 +12,13 @@ const UserController = {
         }
     
         try {
-            const data = await DiscordAPI.getUserInformation(token);
+            const user = await UserService.fetchUser(token);
             
             res.send({
-                id: data.id,
-                username: data.username,
-                avatar: data.avatar,
-                discriminator: data.discriminator
+                id: user.id,
+                username: user.username,
+                avatar: user.avatar,
+                discriminator: user.discriminator
             });
         } catch(error: any) {
             res.status(error.status);
@@ -34,20 +35,10 @@ const UserController = {
     
         const call = async () => {
             try {
-                const data = await DiscordAPI.getUserGuilds(token);
+                const user = await UserService.fetchUser(token);
+                const guilds = await user.fetchGuilds();
     
-                const items: any[] = [];
-                for(const guild of data) {
-                    items.push({ 
-                        name: guild.name, 
-                        id: guild.id, 
-                        icon: getGuildIconURL(guild), 
-                        permissions: guild.permissions,
-                        isAdmin: isAdmin(guild.permissions)
-                    });
-                }
-    
-                res.send(items);
+                res.send(guilds);
             } catch(error: any) {
                 if(error.status == 429) {
                     const retry_after = error.data.retry_after;
