@@ -97,7 +97,6 @@ export const UpdateChat: Action = {
             await clan.update();
             await clan.fetchMessages();
 
-
             const channel = await fetched.channels.cache.get(CHAT);
             if(!channel || !channel.isText()) {
                 logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);

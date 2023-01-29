@@ -25,7 +25,6 @@ function composeBonusMessage(date: string, id: string, msg: string) {
     return `<@${id}> **${date}\n${msg}**`;
 }
 
-const TEST_ANNOUNCEMENTS = '931475713146621983';
 const ANNOUNCEMENTS = '953688933609394217';
 
 const IM_FIGHTERS = '953630949789274154';

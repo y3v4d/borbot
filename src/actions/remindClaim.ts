@@ -6,7 +6,6 @@ import GuildModel from "../models/guild";
 import logger from "../shared/logger";
 
 const REMIND = "908335160171331596";
-const REMIND_TEST = "931475713146621983";
 
 async function composeRemainder(client: Bot, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;

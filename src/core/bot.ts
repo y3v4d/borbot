@@ -72,10 +72,15 @@ export default class Bot extends Client {
         }
 
         try {
-            await this.user.setUsername(`Borb ${process.env.npm_package_version + (this.isDevelopment ? "D" : "")}`);
+            if(!this.isDevelopment) {
+                await this.user.setUsername(`Borbot ${process.env.npm_package_version}`);
+            } else {
+                await this.user.setUsername(`Borbot In Development`);
+            }
+            
             await this.user.setAvatar(this.isDevelopment ? "https://i.imgur.com/1xMiyWX.png" : "https://i.imgur.com/eC0cR2X.png");
         } catch(error) {
-            console.warn("Couldn't update bot username!");
+            console.warn("Couldn't update bot username or avatar!");
         }
 
         if(this.isDevelopment) {

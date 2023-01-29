@@ -1,4 +1,3 @@
-import { readFileSync } from "fs";
 import Bot from "../core/bot";
 import Action from "../core/action";
 import MemberModel from "../models/member";

@@ -34,7 +34,15 @@ const GuildController = {
     },
     
     getGuildMembers: async function(req: IsInGuildRequest, res: Response) {
+        const client = req.app.get('bot') as Bot;
         const guild_id = req.params.id;
+
+        const guild = client.guilds.cache.get(guild_id);
+        if(!guild) {
+            res.status(404).send({ code: 0, message: `No bot in guild ${guild_id}` });
+            return;
+        }
+
         try {
             const db_guild = await GuildModel.findOne({ guild_id: guild_id });
             if(!db_guild) {
@@ -56,16 +64,16 @@ const GuildController = {
                 }
             });
     
-            const data = await DiscordAPI.getGuildMembers(guild_id);
-            const guildMembers = data.map(o => {
+            const fetchedMembers = await guild.members.fetch();
+            const guildMembers = fetchedMembers.map(o => {
                 return {
-                    id: o.user?.id,
-                    disc: o.user?.discriminator,
-                    username: o.user?.username,
+                    id: o.user.id,
+                    disc: o.user.discriminator,
+                    username: o.user.username,
                     avatar: getUserIconURL(o.user, 48),
-                    nickname: o.nick,
-                    isBot: o.user?.bot || false
-                };
+                    nickname: o.nickname,
+                    isBot: o.user.bot || false
+                }
             });
     
             res.send({
