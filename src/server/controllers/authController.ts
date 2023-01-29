@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import DiscordAPI from "../../api/discord";
+import UserService from "../../services/userService";
 
 const AuthController = {
     login: async function(req: Request, res: Response) {
@@ -8,16 +9,19 @@ const AuthController = {
         const clientCode = req.body.code as string;
     
         try {
-            const data = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode);
-    
-            res.cookie('token', data.access_token).send({ code: 0, msg: "OK" });
+            const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode);
+            const user = await DiscordAPI.getUserInformation(oauth.access_token);
+
+            await UserService.createUser({ id: user.id, token: oauth.access_token });
+
+            res.cookie('token', oauth.access_token).send({ code: 0, msg: "OK" });
         } catch(error: any) {
             res.status(error.status)
             res.send({ code: error.data.code, message: error.data.message });
         }
     },
     
-    logout: function(req: Request, res: Response) {
+    logout: async function(req: Request, res: Response) {
         res.clearCookie('token').send({ msg: "OK" });
     },
 
