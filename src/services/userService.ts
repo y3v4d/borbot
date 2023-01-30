@@ -1,5 +1,6 @@
 import DiscordAPI from "../api/discord";
 import UserModel, { IUser, IUserGuild } from "../models/user";
+import Code from "../shared/code";
 import logger from "../shared/logger";
 import { getGuildIconURL, isAdmin } from "../shared/utils";
 
@@ -32,41 +33,59 @@ namespace UserService {
         }
     }
 
+    export async function getUserInformation(token: string) {
+        const user = await UserModel.findOne({ token: token });
+        if(!user) {
+            throw {
+                code: Code.USER_NOT_REGISTERED, 
+                message: `User doesn't exist` 
+            };
+        }
+
+        const info = await DiscordAPI.getUserInformation(token);
+        return info;
+    }
+
     export async function getUserById(id: string) {
-        return await UserModel.find({ id: id });
+        return await UserModel.findOne({ id: id });
     }
 
     export async function getUserByToken(token: string) {
-        return await UserModel.find({ token: token });
+        return await UserModel.findOne({ token: token });
     }
 
     export async function getUserGuilds(token: string) {
         const user = await UserModel.findOne({ token: token });
         if(!user) {
-            throw new Error(`Couldn't get user with token ${token}.`);
+            throw {
+                code: Code.USER_NOT_REGISTERED, 
+                message: `User doesn't exist` 
+            };
         }
 
-        if(!user.last_update_guilds || Date.now() - user.last_update_guilds >= 60000) {
-            logger(`Fetching guilds for user ${user.id}`);
-
-            const data = await DiscordAPI.getUserGuilds(user.token);
-
-            const list: IUserGuild[] = [];
-            for(const guild of data) {
-                list.push({ 
-                    name: guild.name, 
-                    id: guild.id, 
-                    icon: getGuildIconURL(guild), 
-                    permissions: guild.permissions,
-                    isAdmin: isAdmin(guild.permissions)
-                });
-            }
-
-            await user.updateOne({ guilds: list, last_update_guilds: Date.now() });
-            return list;
+        const isLastUpdated = user.last_update_guilds && Date.now() - user.last_update_guilds < 60000
+        if(isLastUpdated) {
+            return user.guilds as IUserGuild[];
         }
+
+        logger(`Fetching guilds for user ${user.id}`);
+
+        const data = await DiscordAPI.getUserGuilds(user.token);
+        const list: IUserGuild[] = [];
+        for(const guild of data) {
+            list.push({ 
+                name: guild.name, 
+                id: guild.id, 
+                icon: getGuildIconURL(guild), 
+                permissions: guild.permissions,
+                isAdmin: isAdmin(guild.permissions)
+            });
+        }
+
+        await user.updateOne({ guilds: list, last_update_guilds: Date.now() });
+        return list;
         
-        return user.guilds as IUserGuild[];
+        
     }
 }
 

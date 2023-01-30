@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import ClickerHeroesAPI from "../../api/clickerheroes";
 import DiscordAPI from "../../api/discord";
 import Bot from "../../core/bot";
@@ -6,26 +6,31 @@ import { IsInGuildRequest } from "../middlewares/isInGuild";
 import GuildModel, { IGuild } from "../../models/guild";
 import MemberModel, { IMember } from "../../models/member";
 import ScheduleModel from "../../models/schedule";
-import { ClanManager } from "../../shared/clan";
-import { getGuildIconURL, getUserIconURL, isAdmin } from "../../shared/utils";
+import { getGuildIconURL } from "../../shared/utils";
+import GuildService from "../../services/guildService";
+import ClanService from "../../services/clanService";
+import Code from "../../shared/code";
 
 const GuildController = {
     getGuildInformation: async function(req: IsInGuildRequest, res: Response) {
-        const bot = req.app.get('bot') as Bot;
-    
+        const GuildService = req.app.get('guildService') as GuildService;
+        
+        const userGuild = req.guild!;
         const guild_id = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+        
         try {
-            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-            const botJoined = bot.guilds.cache.get(guild_id) !== undefined;
+            const is_setup = await GuildService.isGuildSetup(guild_id);
+            const is_joined = bot.guilds.cache.get(guild_id) !== undefined;
             
             res.send({
-                id: req.guild?.id,
-                name: req.guild?.name,
-                icon: getGuildIconURL(req.guild),
-                permissions: req.guild?.permissions,
-                isAdmin: isAdmin(req.guild?.permissions),
-                is_setup: db_guild != null,
-                is_joined: botJoined
+                id: userGuild.id,
+                name: userGuild.name,
+                icon: getGuildIconURL(userGuild),
+                permissions: userGuild.permissions,
+                isAdmin: userGuild.isAdmin,
+                is_setup: is_setup,
+                is_joined: is_joined
             });
         } catch(error: any) {
             res.status(parseInt(error.status));
@@ -33,80 +38,45 @@ const GuildController = {
         }
     },
     
-    getGuildMembers: async function(req: IsInGuildRequest, res: Response) {
-        const client = req.app.get('bot') as Bot;
-        const guild_id = req.params.id;
+    getGuildMembers: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
 
-        const guild = client.guilds.cache.get(guild_id);
-        if(!guild) {
-            res.status(404).send({ code: 0, message: `No bot in guild ${guild_id}` });
-            return;
-        }
-
+        const ClanService = req.app.get('clanService') as ClanService;
+        const GuildService = req.app.get('guildService') as GuildService;
+        
         try {
-            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-            if(!db_guild) {
-                res.status(404).send({ code: 0, message: "Didn't find guild" });
+            const dbGuild = await GuildModel.findOne({ guild_id: GUILD_ID });
+            if(!dbGuild) {
+                res.status(404).send({ code: Code.GUILD_NOT_SETUP, message: "Guild not setup" });
                 return;
             }
-    
-            const clanInfo = await ClickerHeroesAPI.getGuildInfo(db_guild.user_uid, db_guild.password_hash);
-            const clanMembers = Object.values(clanInfo.guildMembers).map(member => {
-                return {
-                    uid: member.uid,
-                    highestZone: parseInt(member.highestZone),
-                    nickname: member.nickname,
-                    class: parseInt(member.chosenClass),
-                    level: parseInt(member.classLevel),
-    
-                    lastRewardTimestamp: member.lastRewardTimestamp,
-                    lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
-                }
-            });
-    
-            const fetchedMembers = await guild.members.fetch();
-            const guildMembers = fetchedMembers.map(o => {
-                return {
-                    id: o.user.id,
-                    disc: o.user.discriminator,
-                    username: o.user.username,
-                    avatar: getUserIconURL(o.user, 48),
-                    nickname: o.nickname,
-                    isBot: o.user.bot || false
-                }
-            });
-    
+
+            const clanMembers = await ClanService.getClanMembers(dbGuild.user_uid, dbGuild.password_hash);
+            const guildMembers = await GuildService.getGuildMembers(GUILD_ID);
+
             res.send({
                 clan: clanMembers,
                 guild: guildMembers
-            })
+            });
         } catch(error: any) {
-            res.status(error.status);
-            res.send({ code: error.data.code, msg: error.data.message });
+            if(error.code === Code.GUILD_REQUIRES_BOT) {
+                res.status(404).send(error);
+            } else if(error.code === Code.CLAN_INVALID_CREDENTIALS) {
+                res.status(404).send(error);
+            } else {
+                next(error);
+            }
         }
     },
     
     getConnectedUsers: async function(req: IsInGuildRequest, res: Response) {
-        const guild_id = req.params.id;
+        const GUILD_ID = req.params.id;
+        const GuildService = req.app.get('guildService') as GuildService;
+        
         try {
-            const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-            if(!db_guild) {
-                res.status(404);
-                res.send({ code: 0, message: "Didn't find guild" });
-                return;
-            }
+            const connected = await GuildService.getGuildConnectedMembers(GUILD_ID);
     
-            const db_members = await MemberModel.find({ guild_id: guild_id });
-            const items: any[] = [];
-            
-            for(const db_member of db_members) {
-                items.push({
-                    guild_uid: db_member.guild_uid, 
-                    clan_uid: db_member.clan_uid
-                });
-            }
-    
-            res.send(items);
+            res.send(connected);
         } catch(error: any) {
             res.status(error.status);
             res.send({ code: error.data.code, message: error.data.message });
@@ -167,51 +137,38 @@ const GuildController = {
         res.send(channels);
     },
     
-    setup: async function(req: IsInGuildRequest, res: Response) {
-        const guild_id = req.params.id;
-        const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-        if(db_guild) {
-            res.status(400).send({ code: 0, messsage: "Already setup."});
-            return;
+    setup: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const { uid: USER_ID, pwd: USER_PWD } = req.body;
+
+        const GuildService = req.app.get('guildService') as GuildService;
+
+        try {
+            await GuildService.createSetupGuild(GUILD_ID, USER_ID, USER_PWD);
+
+            res.send({ msg: "OK" });
+        } catch(error: any) {
+            const { code } = error;
+            if(code === Code.GUILD_REQUIRES_BOT || Code.GUILD_ALREADY_SETUP || Code.CLAN_INVALID_CREDENTIALS) {
+                res.status(404).send(error);
+                return;
+            }
+            
+            next(error);
         }
-    
-        const bot = req.app.get('bot') as Bot;
-        if(!bot.guilds.cache.get(guild_id)) {
-            res.status(400).send({ code: 0, message: 'Setup requires bot in the guild.' });
-            return;
-        }
-    
-        const uid = req.body.uid;
-        const password = req.body.pwd;
-    
-        const isValid = await ClanManager.test(uid, password);
-        if(!isValid) {
-            res.status(400).send({ code: 0, message: "Invalid data."});
-            return;
-        }
-    
-        const schema: IGuild = {
-            guild_id: guild_id,
-            user_uid: uid,
-            password_hash: password
-        };
-    
-        await (new GuildModel(schema)).save();
-    
-        res.send({ msg: "OK" });
     },
     
     unsetup: async function(req: IsInGuildRequest, res: Response) {
-        const guild_id = req.params.id;
-        const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-        if(!db_guild) {
-            res.status(404);
-            res.send({ code: 0, message: "Didn't find guild." });
-            return;
+        const GUILD_ID = req.params.id;
+
+        const { removeSetupGuild } = req.app.get('guildService') as GuildService;
+
+        try {
+            await removeSetupGuild(GUILD_ID);
+            res.send({ msg: "OK" });
+        } catch(error) {
+            res.status(400).send(error);
         }
-    
-        await db_guild.delete();
-        res.send({ msg: "OK" });
     },
     
     getSchedule: async function(req: IsInGuildRequest, res: Response) {

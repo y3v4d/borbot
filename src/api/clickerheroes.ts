@@ -1,34 +1,58 @@
+import axios from 'axios';
 import * as https from 'https';
+import Code from '../shared/code';
 
 namespace ClickerHeroesAPI {
-    function post(request: string, params: any) {
-        const options: https.RequestOptions = {
-            hostname: 'ClickerHeroes-SavedGames3-747864888.us-east-1.elb.amazonaws.com',
-            path: `/clans/${request}.php`,
-            method: 'POST',
-            headers: {
-                'Content-type': 'application/x-www-form-urlencoded'
-            },
-            rejectUnauthorized: false
-        }
+    type Response<T> = {
+        success: boolean
 
-        return new Promise<any>((resolve, reject) => {
-            const req = https.request(options, res => {
-                let body = '';
-                res.on('data', d => {
-                    body += d;
-                });
+        reason?: string
+        result?: T
+    }
 
-                res.on('end', () => {
-                    if(request !== "getGuildMessages") body = body.replaceAll('\\', '/');
-                    resolve(JSON.parse(body));
-                });
+    async function request<T>(request: string, params: any) {
+        const ENDPOINT = 'http://ClickerHeroes-SavedGames3-747864888.us-east-1.elb.amazonaws.com';
+        
+        try {
+            const response = await axios({
+                method: 'post',
+                url: `${ENDPOINT}/clans/${request}.php`,
+                params: params,
+                headers: {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
             });
 
-            req.on('error', error => reject(error));
-            req.write(new URLSearchParams(params).toString());
-            req.end();
-        });
+            const data = response.data as Response<T>;
+            if(!data.success) {
+                throw {
+                    code: Code.CLICKERHEROES_API_FAILED,
+                    message: data.reason!
+                }
+            }
+
+            return data.result!;
+        } catch(error: any) {
+            if(error.code === Code.CLICKERHEROES_API_FAILED) {
+                throw error;
+            } else if (error.response) {
+                throw ({
+                    code: Code.CLICKERHEROES_API_ERROR,
+
+                    data: error.response.data,
+                    status: error.response.status
+                });
+            } else if (error.request) {
+                throw ({
+                    code: Code.NO_RESPONSE
+                });
+            } else {
+                throw ({
+                    code: Code.INTERNAL_SERVER_ERROR,
+                    message: error.message
+                });
+            }
+        }
     }
 
     export interface GuildInfoResultMember {
@@ -70,7 +94,7 @@ namespace ClickerHeroesAPI {
         }
     }
 
-    export interface NewRaidResult {
+    export interface NewRaid {
         guildName: string,
         level: string,
         date: string,
@@ -86,6 +110,10 @@ namespace ClickerHeroesAPI {
         isBonusSuccessful: boolean
     }
 
+    export interface NewRaidResult {
+        raid: NewRaid
+    }
+
     interface RawGuildMessages {
         [key: string]: string
     }
@@ -96,29 +124,31 @@ namespace ClickerHeroesAPI {
         timestamp: number
     }
 
+    export interface RawGuildMessagesResult {
+        guildName: string,
+        messages: RawGuildMessages
+    }
+
     export interface GuildMessagesResult {
         guildName: string,
         messages: GuildMessage[]
     }
 
-    export async function getGuildInfo(uid: string, passwordHash: string) {
-        const data = await post('getGuildInfo', { uid: uid, passwordHash: passwordHash });
-
-        if(!data.success) throw new Error(`getGuildInfo failed: ${data.reason}`);
-        return data.result as GuildInfoResult;
+    export async function getGuildInfo(uid: string, pwd: string) {
+        return await request<GuildInfoResult>('getGuildInfo', { uid: uid, passwordHash: pwd });
     }
 
-    export async function getNewRaid(uid: string, passwordHash: string, guildName: string) {
-        const data = await post('getNewRaid', { uid: uid, passwordHash: passwordHash, guildName: guildName });
-        return data.result.raid as NewRaidResult;
+    export async function getNewRaid(uid: string, pwd: string, guildName: string) {
+        const data = await request<NewRaidResult>('getNewRaid', { uid: uid, passwordHash: pwd, guildName: guildName });
+        return data.raid;
     }
 
-    export async function getGuildMessages(uid: string, passwordHash: string, guildName: string) {
-        const data = await post('getGuildMessages', { uid: uid, passwordHash: passwordHash, guildName: guildName, timestamp: (Date.now() / 1000) });
-        const messages = data.result.messages as RawGuildMessages;
+    export async function getGuildMessages(uid: string, pwd: string, guildName: string) {
+        const data = await request<RawGuildMessagesResult>('getGuildMessages', { uid: uid, passwordHash: pwd, guildName: guildName, timestamp: (Date.now() / 1000) });
+        const messages = data.messages;
 
         const result: GuildMessagesResult = {
-            guildName: data.result.guildName,
+            guildName: data.guildName,
             messages: []
         };
 

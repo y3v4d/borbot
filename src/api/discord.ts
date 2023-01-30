@@ -1,23 +1,37 @@
 import axios from 'axios';
+import Code from '../shared/code';
 
 namespace DiscordAPI {
-    export function request<T>(method: 'get' | 'post', path: string, data: { params?: any, headers?: any }) {
-        return new Promise<T>((resolve, reject) => {
-            axios({
+    export async function request<T>(method: 'get' | 'post', path: string, data: { params?: any, headers?: any }) {
+        try {
+            const response = await axios({
                 method: method,
                 url: `https://discord.com/api/v10/${path}`,
                 params: method === 'get' ? data.params : undefined,
                 data: method === 'post' ? data.params : undefined,
                 headers: data.headers
-            }).then(res => {
-                resolve(res.data);
-            }).catch(err => {
-                reject({
-                    data: err.response.data,
-                    status: err.response.status
-                });
             });
-        });
+
+            return response.data as T;
+        } catch(error: any) {
+            if (error.response) {
+                throw ({
+                    code: Code.DISCORD_API_ERROR,
+
+                    data: error.response.data,
+                    status: error.response.status
+                });
+            } else if (error.request) {
+                throw ({
+                    code: Code.NO_RESPONSE
+                });
+            } else {
+                throw ({
+                    code: Code.INTERNAL_SERVER_ERROR,
+                    message: error.message
+                });
+            }
+        }
     }
 
     export type AuthTokenResponse = { 

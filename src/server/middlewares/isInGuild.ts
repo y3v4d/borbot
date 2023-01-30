@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { GuildMember } from "discord.js";
-import DiscordAPI from "../../api/discord";
-import { isAdmin } from "../../shared/utils";
 import UserService from "../../services/userService";
+import { IUserGuild } from "../../models/user";
+import Code from "../../shared/code";
 
 export interface IsInGuildRequest extends Request {
-    guild?: any,
+    guild?: IUserGuild,
     member?: GuildMember
 }
 
@@ -13,21 +13,31 @@ export default async function IsInGuild(req: IsInGuildRequest, res: Response, ne
     const guild_id = req.params.id;
     const token = req.headers.authorization;
     if(!token) {
-        res.status(403).send({ message: "Path required authorization"});
+        res.status(401).send({ code: Code.USER_NO_TOKEN, message: "Path required authorization"});
         return;
     }
 
-    const guilds = await UserService.getUserGuilds(token);
-    const guild = guilds.find(o => o.id === guild_id);
-    if(!guild) {
-        res.status(404).send({ code: 0, message: "Not in the guild" });
-        return;
-    } else if(!guild.isAdmin) {
-        res.status(404).send({ code: 0, message: "Required admin permissions" });
-        return;
+    try {
+        const guilds = await UserService.getUserGuilds(token);
+        
+        const guild = guilds.find(o => o.id === guild_id);
+        if(!guild) {
+            res.status(404).send({ code: Code.USER_NOT_IN_GUILD, message: "Not in the guild" });
+            return;
+        } else if(!guild.isAdmin) {
+            res.status(404).send({ code: Code.USER_NOT_AN_ADMIN, message: "Required admin permissions" });
+            return;
+        }
+
+        req.guild = guild;
+
+        next();
+    } catch(error: any) {
+        if(error.code === Code.USER_NOT_REGISTERED) {
+            res.status(401).send(error);
+            return;
+        }
+
+        next(error);
     }
-
-    req.guild = guild;
-
-    next();
 }

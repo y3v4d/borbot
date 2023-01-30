@@ -1,44 +1,38 @@
-import { Request, Response } from "express";
-import DiscordAPI from "../../api/discord";
+import { NextFunction, Request, Response } from "express";
 import UserService from "../../services/userService";
+import Code from "../../shared/code";
 
 const UserController = {
-    getUserInformation: async function(req: Request, res: Response) {
-        const token = req.headers.authorization;
-        if(!token) {
-            res.status(401).send({ code: 0, message: "Authorization required" });
-            return;
-        }
+    async getUserInformation(req: Request, res: Response, next: NextFunction) {
+        const TOKEN = req.headers.authorization!;
     
         try {
-            const data = await DiscordAPI.getUserInformation(token);
-            
-            res.send({
-                id: data.id,
-                username: data.username,
-                avatar: data.avatar,
-                discriminator: data.discriminator
-            });
+            const data = await UserService.getUserInformation(TOKEN);
+            res.send(data);
         } catch(error: any) {
-            res.status(error.status);
-            res.send({ code: error.data.code, message: error.data.message });
+            if(error.code === Code.USER_NOT_REGISTERED) {
+                res.status(401).send(error);
+                return;
+            }
+
+            next(error);
         }
     },
     
-    getUserGuilds: async function (req: Request, res: Response) {
-        const token = req.headers.authorization;
-        if(!token) {
-            res.status(401).send({ code: 0, message: "Authorization required" });
-            return;
-        }
+    async getUserGuilds(req: Request, res: Response, next: NextFunction) {
+        const TOKEN = req.headers.authorization!;
 
         try {
-            const guilds = await UserService.getUserGuilds(token);
+            const guilds = await UserService.getUserGuilds(TOKEN);
 
             res.send(guilds);
         } catch(error: any) {
-            res.status(error.status);
-            res.send({ code: error.data.code, message: error.data.message });
+            if(error.code === Code.USER_NOT_REGISTERED) {
+                res.status(401).send(error);
+                return;
+            }
+
+            next(error);
         }
     }
 }
