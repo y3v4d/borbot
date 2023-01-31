@@ -51,13 +51,11 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
         if(err.code === undefined) {
-            logger(`Unknown error: `, err);
+            logger(`Unknown error: ${err.message}`, LoggerType.ERROR);
 
             res.status(500).send({ code: -1, message: 'Unknown error' });
             return;
-        }
-        
-        if(err.code === Code.DISCORD_API_ERROR) {
+        } else if(err.code === Code.DISCORD_API_ERROR) {
             logger(`Discord call failed with status ${err.status}, code ${err.data.code}, message: ${err.data.message}`, LoggerType.ERROR);
             
             if(err.status === 401) {
@@ -72,6 +70,10 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             return;
         } else if(err.code === Code.INTERNAL_SERVER_ERROR) {
             logger(`Internal error: ${err.message}`, LoggerType.ERROR);
+
+            res.status(500).send({ code: Code.INTERNAL_SERVER_ERROR, message: "Internal server error" });
+        } else {
+            res.status(404).send(err);
         }
     };
 

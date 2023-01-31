@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as https from 'https';
 import Code from '../shared/code';
 
 namespace ClickerHeroesAPI {
@@ -35,13 +34,6 @@ namespace ClickerHeroesAPI {
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
                 throw error;
-            } else if (error.response) {
-                throw ({
-                    code: Code.CLICKERHEROES_API_ERROR,
-
-                    data: error.response.data,
-                    status: error.response.status
-                });
             } else if (error.request) {
                 throw ({
                     code: Code.NO_RESPONSE

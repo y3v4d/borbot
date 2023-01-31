@@ -2,6 +2,23 @@ import ClickerHeroesAPI from "../api/clickerheroes";
 import Code from "../shared/code";
 
 class ClanService {
+    async getClanInformation(uid: string, pwd: string) {
+        try {
+            const data = await ClickerHeroesAPI.getGuildInfo(uid, pwd);
+
+            return data;
+        } catch(error: any) {
+            if(error.code === Code.CLICKERHEROES_API_FAILED) {
+                throw {
+                    code: Code.CLAN_INVALID_CREDENTIALS,
+                    message: "Invalid clan credentials"
+                }
+            }
+
+            throw error;
+        }
+    }
+
     async getClanMembers(uid: string, password_hash: string) {
         try {
             const data = await ClickerHeroesAPI.getGuildInfo(uid, password_hash);

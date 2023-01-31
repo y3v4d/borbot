@@ -6,11 +6,18 @@ import GuildModel from "../models/guild";
 import MemberModel from "../models/member";
 import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
+import GuildService from "../services/guildService";
+import ClanService from "../services/clanService";
 
 export default class Bot extends Client {
+    private _guildService: GuildService;
+    private _clanService: ClanService;
 
     constructor(options: ClientOptions) {
         super(options);
+
+        this._guildService = new GuildService(this);
+        this._clanService = new ClanService();
 
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
@@ -118,6 +125,14 @@ export default class Bot extends Client {
                 }
             }
         }
+    }
+
+    get guildService() {
+        return this._guildService;
+    }
+
+    get clanService() {
+        return this._clanService;
     }
 
     get isDevelopment(): boolean {
