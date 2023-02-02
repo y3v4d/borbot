@@ -9,8 +9,6 @@ import GuildModel from "../models/guild";
 import ClickerHeroesAPI from "../api/clickerheroes";
 import { addCommas } from "../shared/utils";
 
-
-
 export const Profile: Command = {
     data: new SlashCommandBuilder()
         .setName("profile")
