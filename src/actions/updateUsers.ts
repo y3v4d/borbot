@@ -1,8 +1,7 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
 import MemberModel from "../models/member";
-import GuildModel from "../models/guild";
-import { ClanManager } from "../shared/clan";
+import GuildModel, { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import { addCommas } from "../shared/utils";
 
@@ -47,52 +46,53 @@ function getZoneFromMilestone(index: number) {
 }
 
 export const UpdateUsers: Action = {
-    timeout: 60000 * 30, // 30 minutes
+    timeout: 10,
 
     startOnInit: true,
     repeat: true,
 
-    async run(client: Bot) {
-        const allGuilds = await GuildModel.find();
-        for(const guild of allGuilds) {
-            const fetched = await client.guilds.fetch(guild.guild_id)!;
-            
-            const clanManager = new ClanManager(guild.user_uid, guild.password_hash);
-            await clanManager.update();
+    async run(client: Bot, guild: IGuild) {
+        const fetched = await client.guilds.cache.get(guild.guild_id);
+        if(!fetched) {
+            logger(`#updateUsers Couldn't find guild ${guild.guild_id}`);
+            return;
+        }
+        
+        const clanMembers = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
 
-            const members = await MemberModel.find({ guild_id: guild.guild_id });
-            for(const member of members) {
-                const clanMember = clanManager.getMemberByUid(member.clan_uid)!;
-                if(!clanMember) {
-                    logger(`#updateUsers Clan member ${member.clan_uid} doesn't exist!`, LoggerType.ERROR);
-                    continue;
-                }
+        const members = await MemberModel.find({ guild_id: guild.guild_id });
+        const fetchedMembers = await fetched.members.fetch();
+        for(const member of members) {
+            const clanMember = clanMembers.find(o => o.uid === member.clan_uid);
+            if(!clanMember) {
+                logger(`#updateUsers Clan member ${member.clan_uid} doesn't exist!`, LoggerType.ERROR);
+                continue;
+            }
 
-                const lastMilestone = member.highest_milestone || -1;
-                const currentMilestone = getMilestoneFromZone(clanMember.highestZone);
+            const lastMilestone = member.highest_milestone || -1;
+            const currentMilestone = getMilestoneFromZone(clanMember.highestZone);
 
-                if(lastMilestone < currentMilestone) {
-                    member.highest_milestone = currentMilestone;
-                    await member.save();
+            if(lastMilestone < currentMilestone) {
+                member.highest_milestone = currentMilestone;
+                member.save();
 
-                    if(lastMilestone !== -1) {
-                        const channel = await fetched.channels.cache.get(MILESTONE_CHANNEL);
-                        if(!channel?.isText()) {
-                            logger("#updateUsers Couldn't find announcement channel!", LoggerType.ERROR);
-                        } else {
-                            const prettyZone = addCommas(getZoneFromMilestone(currentMilestone));
+                if(lastMilestone !== -1) {
+                    const channel = fetched.channels.cache.get(MILESTONE_CHANNEL);
+                    if(!channel?.isText()) {
+                        logger("#updateUsers Couldn't find announcement channel!", LoggerType.ERROR);
+                    } else {
+                        const prettyZone = addCommas(getZoneFromMilestone(currentMilestone));
 
-                            await channel.send(`**${clanMember.nickname}** just reached a new milestone of **${prettyZone}!** :crossed_swords:`);
-                        }
+                        channel.send(`**${clanMember.nickname}** just reached a new milestone of **${prettyZone}!** :crossed_swords:`);
                     }
                 }
+            }
 
-                const dcMember = await fetched.members.fetch(member.guild_uid)!;
-                if(dcMember.manageable) {
-                    await dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
-                } else {
-                    logger(`#updateUsers User ${dcMember.nickname} couldn't be updated!`, LoggerType.WARN);
-                }
+            const dcMember = fetchedMembers.get(member.guild_uid);
+            if(dcMember && dcMember.manageable) {
+                dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
+            } else {
+                logger(`#updateUsers User ${dcMember?.nickname} couldn't be updated!`, LoggerType.WARN);
             }
         }
     }

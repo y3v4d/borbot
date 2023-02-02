@@ -3,10 +3,10 @@ import { BaseCommandInteraction } from "discord.js";
 import Bot from "../core/bot";
 import Command from "../core/command";
 import table from "text-table";
-import { ClanClass } from "../shared/clan";
 import GuildModel from "../models/guild";
 import ClickerHeroesAPI from "../api/clickerheroes";
 import { addCommas } from "../shared/utils";
+import { ClanClass } from "../services/clanService";
 
 export const Clan: Command = {
     data: new SlashCommandBuilder()

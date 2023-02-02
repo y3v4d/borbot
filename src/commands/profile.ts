@@ -1,6 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, MessageEmbed } from "discord.js";
-import { ClanClass } from "../shared/clan";
 import Bot from "../core/bot";
 import Command from "../core/command";
 import MemberModel from "../models/member";
@@ -8,6 +7,7 @@ import logger, { LoggerType } from "../shared/logger";
 import GuildModel from "../models/guild";
 import ClickerHeroesAPI from "../api/clickerheroes";
 import { addCommas } from "../shared/utils";
+import { ClanClass } from "../services/clanService";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()

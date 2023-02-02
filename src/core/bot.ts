@@ -8,10 +8,19 @@ import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
 import GuildService from "../services/guildService";
 import ClanService from "../services/clanService";
+import Action from "./action";
+import logger from "../shared/logger";
+
+interface OngoingAction {
+    action: Action,
+    ticks: number
+}
 
 export default class Bot extends Client {
     private _guildService: GuildService;
     private _clanService: ClanService;
+
+    private _actions: OngoingAction[] = [];
 
     constructor(options: ClientOptions) {
         super(options);
@@ -94,12 +103,33 @@ export default class Bot extends Client {
             this.user.setStatus('dnd');
         }
 
-        Actions.forEach(action => {
-            if(action.repeat) setInterval(() => action.run(this), action.timeout);
-            else setTimeout(() => action.run(this), action.timeout);
+        this.intializeActions(Actions);
+    }
 
-            if(action.startOnInit) action.run(this);
-        });
+    protected intializeActions(actions: Action[]) {
+        this._actions = actions.map(o => ({
+            action: o,
+            ticks: o.startOnInit ? 0 : o.timeout
+        }));
+
+        const execute = () => {
+            const list = this._actions.filter(o => {
+                return --o.ticks <= 0;
+            });
+            if(list.length === 0) return;
+            
+            GuildModel.find().then(guilds => {
+                for(const guild of guilds) {
+                    list.forEach(o => {
+                        o.action.run(this, guild);
+                        o.ticks = o.action.timeout;
+                    });
+                }
+            }).catch(error => logger(`ActionRunner: Couldn't fetch guilds, error: `, error));
+        }
+
+        execute();
+        setInterval(execute, 60000);
     }
 
     protected async onMessageCreate(msg: Message) {

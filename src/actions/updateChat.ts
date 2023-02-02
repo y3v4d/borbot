@@ -2,9 +2,9 @@ import { Guild } from "discord.js";
 import Bot from "../core/bot";
 import Action from "../core/action";
 import GuildModel, { IGuild } from "../models/guild";
-import { ClanManager } from "../shared/clan";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import { ClanMember } from "../services/clanService";
 
 const CHAT = '983503510479990785';
 
@@ -17,7 +17,7 @@ function composeDate(date: Date) {
             `${date.getUTCSeconds().toString().padStart(2, '0')}`; 
 }
 
-async function processMentions(msg: string, guild: Guild, clan: ClanManager) {
+async function processMentions(msg: string, guild: Guild, members: ClanMember[]) {
     const splits = msg.split(/(@\w*)/g);
     if(splits.length === 0) return msg;
 
@@ -29,7 +29,7 @@ async function processMentions(msg: string, guild: Guild, clan: ClanManager) {
         }
 
         const name = split.slice(1);
-        const clanMember = clan.getMemberByName(name);
+        const clanMember = members.find(o => o.nickname === name);
         if(!clanMember) {
             ret += split;
             continue;
@@ -80,50 +80,47 @@ async function processEmoji(msg: string, guild: Guild) {
 }
 
 export const UpdateChat: Action = {
-    run: async function(client: Bot) {
-        const allGuilds = await GuildModel.find();
-        for(const guild of allGuilds) {
-            const fetched = await client.guilds.fetch(guild.guild_id)!;
-            logger(`#updateChat in ${fetched.name}`);
-
-            if(!(await ClanManager.test(guild.user_uid, guild.password_hash))) {
-                logger("#updateChat Couldn't find clan with assigned credentials...", LoggerType.ERROR);
-                continue;
-            }
-
-            const clan = new ClanManager(guild.user_uid, guild.password_hash);
-            let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
-
-            await clan.update();
-            await clan.fetchMessages();
-
-            const channel = await fetched.channels.cache.get(CHAT);
-            if(!channel || !channel.isText()) {
-                logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
-                continue;
-            }
-
-            for(let msg of clan.messages) {
-                if(msg.timestamp > timestamp) {
-                    let processed = await processMentions(msg.content, fetched, clan);
-                    processed = await processEmoji(processed, fetched);
-
-                    const date = new Date(msg.timestamp * 1000);
-                    await channel.send({
-                        content: `**${clan.getMemberByUid(msg.uid)?.nickname} ${composeDate(date)}**\n${processed}`
-                    });
-
-                    timestamp = msg.timestamp;
-                }
-            }
-
-            guild.last_chat_update = timestamp;
-            await guild.save();
+    run: async function(client: Bot, guild: IGuild) {
+        const fetched = await client.guilds.cache.get(guild.guild_id);
+        if(!fetched) {
+            logger(`#updateChat Couldn't get guild ${guild.guild_id}`);
+            return;
         }
+        
+        logger(`#updateChat in ${fetched.name}`);
+
+        let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
+
+        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const members = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
+        const messages = await client.clanService.getClanMessages(guild.user_uid, guild.password_hash, clan.guild.name);
+
+        const channel = await fetched.channels.cache.get(CHAT);
+        if(!channel || !channel.isText()) {
+            logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
+            return;
+        }
+
+        for(let msg of messages) {
+            if(msg.timestamp > timestamp) {
+                let processed = await processMentions(msg.content, fetched, members);
+                processed = await processEmoji(processed, fetched);
+
+                const date = new Date(msg.timestamp * 1000);
+                await channel.send({
+                    content: `**${members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n${processed}`
+                });
+
+                timestamp = msg.timestamp;
+            }
+        }
+
+        guild.last_chat_update = timestamp;
+        await GuildModel.updateOne(guild);
     },
 
     startOnInit: true,
     repeat: true,
 
-    timeout: 60000 * 1 // 1 minute
+    timeout: 1
 }
