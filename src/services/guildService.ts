@@ -4,6 +4,7 @@ import GuildModel, { IGuild } from "../models/guild";
 import MemberModel, { IMember } from "../models/member";
 import ScheduleModel from "../models/schedule";
 import Code from "../shared/code";
+import logger, { LoggerType } from "../shared/logger";
 import { getUserIconURL } from "../shared/utils";
 
 export interface GuildConnectedMember {
@@ -14,6 +15,11 @@ export interface GuildConnectedMember {
 export interface GuildScheduleEntry {
     uid: string,
     index: number
+}
+
+export interface GuildTextChannel {
+    id: string,
+    name: string
 }
 
 class GuildService {
@@ -89,6 +95,30 @@ class GuildService {
     async isGuildSetup(id: string) {
         const guild = await GuildModel.exists({ guild_id: id });
         return guild !== null;
+    }
+
+    async getGuildChannels(id: string) {
+        const dbGuild = await this.getGuildById(id);
+        const cached = this.client.guilds.cache.get(id);
+        if(!cached) {
+            throw {
+                code: Code.GUILD_REQUIRES_BOT,
+                message: 'Bot required in guild'
+            }
+        }
+
+        const channels = cached.channels.cache.values();
+        const list: GuildTextChannel[] = [];
+        for(const channel of channels) {
+            if(!channel.parentId || !channel.isText()) continue;
+
+            list.push({
+                id: channel.id,
+                name: channel.name
+            });
+        }
+
+        return list;
     }
 
     async getGuildMembers(id: string) {
@@ -180,11 +210,20 @@ class GuildService {
             id: id,
             start: dbSchedule.start_day,
             next_cycle: new Date(new Date(dbSchedule.start_day).getTime() + 10 * MS_IN_DAY),
-            entries: entries
+            entries: entries,
+            schedule_channel: dbSchedule.schedule_channel || ""
         };
     }
 
-    async updateGuildSchedule(id: string, list: GuildScheduleEntry[]) {
+    async updateGuildSchedule(id: string, list: GuildScheduleEntry[], schedule_channel?: string) {
+        const cached = this.client.guilds.cache.get(id);
+        if(!cached) {
+            throw {
+                code: Code.GUILD_REQUIRES_BOT,
+                message: "Guild required bot"
+            }
+        }
+        
         const dbSchedule = await ScheduleModel.findOne({ guild_id: id })
             .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
         if(!dbSchedule) {
@@ -221,6 +260,19 @@ class GuildService {
             }
     
             entry.member = dbMember;
+        }
+
+        if(schedule_channel && schedule_channel.length > 0) {
+            const hasChannel = cached.channels.cache.has(schedule_channel);
+            if(!hasChannel) {
+                logger("Invalid schedule channel", LoggerType.WARN);
+
+                dbSchedule.schedule_channel = "";
+            } else {
+                dbSchedule.schedule_channel = schedule_channel;
+            }
+        } else {
+            dbSchedule.schedule_channel = "";
         }
     
         await dbSchedule.save();

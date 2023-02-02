@@ -1,7 +1,7 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
-import GuildModel, { IGuild } from "../models/guild";
-import ScheduleModel, { ISchedule } from "../models/schedule";
+import GuildModel from "../models/guild";
+import ScheduleModel from "../models/schedule";
 import { ClanManager } from "../shared/clan";
 import { IMember } from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
@@ -14,11 +14,12 @@ export const UpdateSchedule: Action = {
     run: async function(client: Bot) {
         const allGuilds = await GuildModel.find();
         for(const guild of allGuilds) {
-            const message_id = guild.schedule_message_id;
-            const channel_id = guild.schedule_channel;
-            if(!channel_id) continue;
+            const fetched = await client.guilds.cache.get(guild.guild_id);
+            if(!fetched) {
+                logger(`#updateSchedule Couldn't get guild with id: ${guild.guild_id}`);
+                continue;
+            }
 
-            const fetched = await client.guilds.fetch(guild.guild_id)!;
             logger(`#updateSchedule in ${fetched.name}`);
 
             const schedule = await ScheduleModel.findOne({ _id: guild.schedule })
@@ -27,13 +28,20 @@ export const UpdateSchedule: Action = {
                 logger("#updateSchedule Schedule wasn't setup!", LoggerType.WARN);
                 continue;
             }
+
+            const channel_message_id = schedule.schedule_message_id || "";
+            const channel_id = schedule.schedule_channel || "";
+            if(!channel_id || channel_id.length === 0) {
+                logger(`#updateSchedule No schedule channel assigned`);
+                continue;
+            }
             
             if(!(await ClanManager.test(guild.user_uid, guild.password_hash))) {
                 logger("#updateSchedule Couldn't find clan with assigned credentials...", LoggerType.ERROR);
                 continue;
             }
 
-            const channel = await fetched.channels.cache.get(channel_id)?.fetch();
+            const channel = await fetched.channels.cache.get(channel_id);
             if(!channel || !channel.isText()) {
                 logger("#updateSchedule Couldn't find schedule channel!", LoggerType.WARN);
                 continue;
@@ -77,21 +85,21 @@ export const UpdateSchedule: Action = {
                 message += `${member.nickname}${prefix}\n`;
             }
 
-            if(message_id) {
+            if(channel_message_id && channel_message_id.length > 0) {
                 try {
-                    const fetched_message = await channel.messages.fetch(message_id);
+                    const fetched_message = await channel.messages.fetch(channel_message_id);
                     await fetched_message.edit(message);
 
                     continue;
                 } catch(error: any) {
-                    logger(`No fetched message associated with id ${message_id}`, LoggerType.WARN);
+                    logger(`No fetched message associated with id ${channel_message_id}`, LoggerType.WARN);
                 }
             }
 
             const sent_message = await channel.send(message);
-            guild.schedule_message_id = sent_message.id;
+            schedule.schedule_message_id = sent_message.id;
 
-            await GuildModel.updateOne(guild as IGuild);
+            await schedule.save();
         }
     },
 

@@ -17,6 +17,7 @@ namespace DiscordAPI {
             if (error.response) {
                 throw ({
                     code: Code.DISCORD_API_ERROR,
+                    path: path,
 
                     data: error.response.data,
                     status: error.response.status

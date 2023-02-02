@@ -17,6 +17,9 @@ export interface ISchedule {
     loggedBonusRaidAvailable?: boolean,
     loggedBonusRaidSuccess?: boolean,
 
+    schedule_channel?: string,
+    schedule_message_id?: string,
+
     map: mongoose.Types.DocumentArray<IScheduleMember>
 }
 
@@ -28,6 +31,9 @@ const ScheduleSchema = new mongoose.Schema<ISchedule>({
     loggedRaidSuccess: { type: Boolean, required: false },
     loggedBonusRaidAvailable: { type: Boolean, required: false },
     loggedBonusRaidSuccess: { type: Boolean, required: false },
+
+    schedule_channel: { type: String, required: false },
+    schedule_message_id: { type: String, required: false },
 
     map: { 
         type: [{ 

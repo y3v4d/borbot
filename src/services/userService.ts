@@ -55,27 +55,37 @@ namespace UserService {
             };
         }
 
-        const isLastUpdated = user.last_update_guilds && Date.now() - user.last_update_guilds < 60000
+        const isLastUpdated = user.last_update_guilds && Date.now() - user.last_update_guilds < 60000;
         if(isLastUpdated) {
             return user.guilds as IUserGuild[];
         }
 
-        logger(`Fetching guilds for user ${user.id}`);
+        try {
+            const data = await DiscordAPI.getUserGuilds(user.token);
+            const list: IUserGuild[] = [];
+            for(const guild of data) {
+                list.push({ 
+                    name: guild.name, 
+                    id: guild.id, 
+                    icon: getGuildIconURL(guild), 
+                    permissions: guild.permissions,
+                    isAdmin: isAdmin(guild.permissions)
+                });
+            }
 
-        const data = await DiscordAPI.getUserGuilds(user.token);
-        const list: IUserGuild[] = [];
-        for(const guild of data) {
-            list.push({ 
-                name: guild.name, 
-                id: guild.id, 
-                icon: getGuildIconURL(guild), 
-                permissions: guild.permissions,
-                isAdmin: isAdmin(guild.permissions)
-            });
+            logger(`Fetched guilds for user ${user.id}`);
+
+            await user.updateOne({ guilds: list, last_update_guilds: Date.now() });
+            return list;
+        } catch(error: any) {
+            const { code, status } = error;
+
+            if(code === Code.DISCORD_API_ERROR && status === 429) {
+                return user.guilds as IUserGuild[];
+            }
+
+            throw error;
         }
-
-        await user.updateOne({ guilds: list, last_update_guilds: Date.now() });
-        return list;
     }
 }
 

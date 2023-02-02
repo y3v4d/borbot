@@ -83,24 +83,17 @@ const GuildController = {
         }
     },
     
-    getGuildChannels: async function(req: IsInGuildRequest, res: Response) {
-        const guild_id = req.params.id;
-        const db_guild = await GuildModel.findOne({ guild_id: guild_id });
-        if(!db_guild) {
-            res.status(404);
-            res.send({ code: 0, message: "Didn't find guild." });
-            return;
+    getGuildChannels: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const channels = await bot.guildService.getGuildChannels(GUILD_ID);
+
+            res.send(channels);
+        } catch(error: any) {
+            next(error);
         }
-    
-        const data: any[] = await DiscordAPI.getGuildChannels(guild_id);
-        const channels: any[] = [];
-        for(const channel of data) {
-            if(!channel.parent_id) continue;
-    
-            channels.push(channel);
-        }
-    
-        res.send(channels);
     },
     
     setup: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
@@ -148,7 +141,8 @@ const GuildController = {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
 
-        const list = req.body.data as GuildScheduleEntry[] | undefined;
+        const schedule_channel = req.body.schedule_channel || "";
+        const list = req.body.list as GuildScheduleEntry[] | undefined;
         if(!list) {
             res.status(400).send({
                 code: Code.BAD_REQUEST,
@@ -157,9 +151,9 @@ const GuildController = {
 
             return;
         }
-
+        
         try {
-            await bot.guildService.updateGuildSchedule(GUILD_ID, list);
+            await bot.guildService.updateGuildSchedule(GUILD_ID, list, schedule_channel);
 
             res.send({ code: Code.OK });
         } catch(error: any) {

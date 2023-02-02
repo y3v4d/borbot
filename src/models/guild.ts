@@ -12,9 +12,7 @@ export interface IGuild {
     last_chat_update?: number,
     last_reminded?: string,
 
-    schedule?: mongoose.Types.ObjectId,
-    schedule_channel?: string,
-    schedule_message_id?: string
+    schedule?: mongoose.Types.ObjectId
 }
 
 const GuildSchema = new mongoose.Schema<IGuild>({
@@ -29,9 +27,7 @@ const GuildSchema = new mongoose.Schema<IGuild>({
     last_chat_update: { type: Number, required: false },
     last_reminded: { type: String, required: false },
 
-    schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'Schedule', required: false },
-    schedule_channel: { type: String, required: false },
-    schedule_message_id: { type: String, required: false }
+    schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'Schedule', required: false }
 });
 
 const GuildModel = mongoose.model<IGuild>('Guild', GuildSchema);
