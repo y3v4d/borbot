@@ -1,22 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import UserService from "../../services/userService";
 import Code from "../../shared/code";
+import { AuthenticatedRequest } from "../middlewares/authenticateUser";
 
 const UserController = {
-    async getUserInformation(req: Request, res: Response, next: NextFunction) {
-        const TOKEN = req.headers.authorization!;
-    
-        try {
-            const data = await UserService.getUserInformation(TOKEN);
-            res.send(data);
-        } catch(error: any) {
-            if(error.code === Code.USER_NOT_REGISTERED) {
-                res.status(401).send(error);
-                return;
-            }
+    async getUserInformation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+        const user = req.user!;
 
-            next(error);
-        }
+        res.send(user);
     },
     
     async getUserGuilds(req: Request, res: Response, next: NextFunction) {

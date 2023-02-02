@@ -1,10 +1,10 @@
 import { Router } from "express";
 import UserController from "../controllers/userController";
-import CheckForToken from "../middlewares/checkForToken";
+import AuthenticateUser from "../middlewares/authenticateUser";
 
 const MeRouter = Router();
 
-MeRouter.get('/', CheckForToken, UserController.getUserInformation);
-MeRouter.get('/guilds', CheckForToken, UserController.getUserGuilds);
+MeRouter.get('/', AuthenticateUser, UserController.getUserInformation);
+MeRouter.get('/guilds', AuthenticateUser, UserController.getUserGuilds);
 
 export default MeRouter;

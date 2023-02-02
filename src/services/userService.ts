@@ -46,14 +46,6 @@ namespace UserService {
         return info;
     }
 
-    export async function getUserById(id: string) {
-        return await UserModel.findOne({ id: id });
-    }
-
-    export async function getUserByToken(token: string) {
-        return await UserModel.findOne({ token: token });
-    }
-
     export async function getUserGuilds(token: string) {
         const user = await UserModel.findOne({ token: token });
         if(!user) {
@@ -84,8 +76,6 @@ namespace UserService {
 
         await user.updateOne({ guilds: list, last_update_guilds: Date.now() });
         return list;
-        
-        
     }
 }
 
