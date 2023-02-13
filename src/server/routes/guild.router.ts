@@ -1,6 +1,6 @@
 import { Router } from "express";
-import GuildController from "../controllers/guildController";
-import IsInGuild from "../middlewares/isInGuild";
+import GuildController from "../controllers/guild.controller";
+import IsInGuild from "../middlewares/isInGuild.middleware";
 
 const GuildRouter = Router();
 

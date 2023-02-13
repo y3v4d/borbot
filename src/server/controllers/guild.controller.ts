@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import DiscordAPI from "../../api/discord";
 import Bot from "../../core/bot";
-import { IsInGuildRequest } from "../middlewares/isInGuild";
+import { IsInGuildRequest } from "../middlewares/isInGuild.middleware";
 import GuildModel from "../../models/guild";
 import { getGuildIconURL } from "../../shared/utils";
 import { GuildConnectedMember, GuildScheduleEntry } from "../../services/guildService";

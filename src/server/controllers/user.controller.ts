@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import UserService from "../../services/userService";
 import Code from "../../shared/code";
-import { AuthenticatedRequest } from "../middlewares/authenticateUser";
+import { AuthenticatedRequest } from "../middlewares/authenticateUser.middleware";
 
 const UserController = {
     async getUserInformation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
