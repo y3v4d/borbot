@@ -1,7 +1,6 @@
 import { Client, ClientOptions, GuildMember, Interaction, Message, PartialGuildMember } from "discord.js";
 import { Actions } from "../actions";
 import { Commands } from "../commands";
-import Emoji from "../shared/emojis";
 import GuildModel from "../models/guild";
 import MemberModel from "../models/member";
 import { ISchedule } from "../models/schedule";
@@ -30,7 +29,6 @@ export default class Bot extends Client {
 
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
-        this.on('messageCreate', this.onMessageCreate.bind(this));
         this.on('guildMemberRemove', this.onGuildMemberRemove.bind(this));
     }
 
@@ -130,31 +128,6 @@ export default class Bot extends Client {
 
         execute();
         setInterval(execute, 60000);
-    }
-
-    protected async onMessageCreate(msg: Message) {
-        const PREFIX = "!";
-        if(!msg.content.startsWith(PREFIX) || msg.author.bot) return;
-
-        const cmd = msg.content.slice(PREFIX.length).trim().split(' ', 1)[0];
-        const args = msg.content.slice(PREFIX.length + cmd.length).trim();
-
-        if(cmd === 'send') {
-            await msg.channel.sendTyping();
-
-            const startMsg = `$$**${msg.member!.displayName}** would like to say:$$ \n`;
-            const built = Emoji.makeEmojiMessage(msg.guild!, startMsg + args);
-
-            if(built.length === 0) {
-                await msg.delete();
-                await msg.channel.send(startMsg + args);
-            } else {
-                await msg.delete();
-                for(let i = 0; i < built.length; ++i) {
-                    await msg.channel.send(`${built[i]}`);
-                }
-            }
-        }
     }
 
     get guildService() {
