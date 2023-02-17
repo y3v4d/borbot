@@ -2,6 +2,7 @@ import ClickerHeroesAPI from "../api/clickerheroes";
 import Bot from "../core/bot";
 import GuildModel, { IGuild } from "../models/guild";
 import MemberModel, { IMember } from "../models/member";
+import RaidModel from "../models/raid";
 import ScheduleModel from "../models/schedule";
 import Code from "../shared/code";
 import logger, { LoggerType } from "../shared/logger";
@@ -98,7 +99,8 @@ class GuildService {
     }
 
     async getGuildChannels(id: string) {
-        const dbGuild = await this.getGuildById(id);
+        await this.getGuildById(id);
+
         const cached = this.client.guilds.cache.get(id);
         if(!cached) {
             throw {
@@ -190,7 +192,15 @@ class GuildService {
     async getGuildSchedule(id: string) {
         const dbGuild = await this.getGuildById(id);
 
-        const dbSchedule = await ScheduleModel.findOne({ _id: dbGuild.schedule })
+        const dbRaid = await RaidModel.findById(dbGuild.raid);
+        if(!dbRaid) {
+            throw {
+                code: Code.GUILD_NO_RAID,
+                message: "No raid in guild"
+            }
+        }
+
+        const dbSchedule = await ScheduleModel.findById(dbRaid.schedule)
             .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
         if(!dbSchedule) {
             throw {
@@ -224,7 +234,17 @@ class GuildService {
             }
         }
         
-        const dbSchedule = await ScheduleModel.findOne({ guild_id: id })
+        const dbGuild = await this.getGuildById(id);
+
+        const dbRaid = await RaidModel.findById(dbGuild.raid);
+        if(!dbRaid) {
+            throw {
+                code: Code.GUILD_NO_RAID,
+                message: "No raid in guild"
+            }
+        }
+
+        const dbSchedule = await ScheduleModel.findById(dbRaid.schedule)
             .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
         if(!dbSchedule) {
             throw {
@@ -233,7 +253,7 @@ class GuildService {
             }
         }
     
-        for(let i = 0; i < dbSchedule.length; ++i) {
+        for(let i = 0; i < 10; ++i) {
             const guild_uid = list.find(o => o.index == i + 1)?.uid;
             if(!guild_uid) {
                 console.warn("Didn't find index, skipping...");
@@ -277,7 +297,6 @@ class GuildService {
 
         if(cycle_start) {
             cycle_start.setUTCHours(0, 0, 0, 0);
-
             dbSchedule.cycle_start = cycle_start;
 
             logger(`Changed cycle start to ${cycle_start.toLocaleDateString()}`);

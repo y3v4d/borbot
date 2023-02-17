@@ -4,6 +4,7 @@ import { IGuild } from "../models/guild";
 import ScheduleModel from "../models/schedule";
 import { IMember } from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import RaidModel from "../models/raid";
 
 function dateToString(date: Date) {
     return `${(date.getUTCDate().toString().padStart(2, '0'))}.${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`;
@@ -19,7 +20,13 @@ export const UpdateSchedule: Action = {
 
         logger(`#updateSchedule in ${fetched.name}`);
 
-        const schedule = await ScheduleModel.findOne({ _id: guild.schedule })
+        const raid = await RaidModel.findById(guild.raid);
+        if(!raid) {
+            logger("#updateSchedule Raid isn't setup!", LoggerType.WARN);
+            return;
+        }
+
+        const schedule = await ScheduleModel.findById(raid.schedule)
             .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
         if(!schedule) {
             logger("#updateSchedule Schedule wasn't setup!", LoggerType.WARN);
@@ -40,12 +47,12 @@ export const UpdateSchedule: Action = {
         }
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
+        const clanRaid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
 
         const MS_IN_DAY = 86400000;
 
         const cycle_end = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * 9);
-        const allFightsCompleted = raid.isSuccessful && raid.isBonusSuccessful;
+        const allFightsCompleted = clanRaid.isSuccessful && clanRaid.isBonusSuccessful;
 
         let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
         for(let i = 0; i < 10; ++i) {

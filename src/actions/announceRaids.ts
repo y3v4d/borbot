@@ -4,6 +4,7 @@ import { IGuild } from "../models/guild";
 import ScheduleModel from "../models/schedule";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import RaidModel from "../models/raid";
 
 function dateToString(date: Date) {
     return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
@@ -28,8 +29,6 @@ function getAbsoluteDate() {
     return date;
 }
 
-const ANNOUNCEMENTS = '953688933609394217';
-
 const IM_FIGHTERS = '953630949789274154';
 const T_HUNTERS = '953631155117248552';
 
@@ -41,29 +40,29 @@ export const AnnounceRaids: Action = {
                 logger(`#announceRaids Couldn't find guild with id ${guild.guild_id}`);
                 return;
             }
+
+            const raid = await RaidModel.findOne(guild.raid);
+            if(!raid) {
+                logger("#announceRaids Raid isn't setup!", LoggerType.WARN);
+                return;
+            }
     
             logger(`#announceRaids in ${fetched.name}`);
     
             const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-            const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
+            const clanRaid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
     
-            const channel = fetched.channels.cache.get(ANNOUNCEMENTS);
+            const channel = fetched.channels.cache.get(raid.announcement_channel || "");
             if(!channel || !channel.isText()) {
                 logger("#announceRaids Invalid channel for raid announcements!", LoggerType.WARN);
                 return;
             }
     
-            const schedule = await ScheduleModel.findOne(guild.schedule);
-            if(!schedule) {
-                logger("#announceRaids Schedule wasn't setup!", LoggerType.WARN);
-                return;
-            }
-    
             const currentDate = getAbsoluteDate();
-            const checkedToday = schedule.last_checked && schedule.last_checked.getTime() === currentDate.getTime();
+            const checkedToday = raid.last_announced && raid.last_announced.getTime() === currentDate.getTime();
 
             if(!checkedToday) {
-                const diff = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
+                /*const diff = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
     
                 if(diff >= 10 || diff < 0) {
                     const cycles = Math.floor(diff / 10);
@@ -71,13 +70,13 @@ export const AnnounceRaids: Action = {
                     schedule.cycle_start = new Date(newCycleTimestamp);
     
                     logger("#announceRaids New cycle start: " + schedule.cycle_start);
-                }
+                }*/
     
                 // reset all values if didn't check today
-                schedule.last_checked = currentDate;
-                schedule.loggedRaidSuccess = false;
-                schedule.loggedBonusRaidAvailable = false;
-                schedule.loggedBonusRaidSuccess = false;
+                raid.last_announced = currentDate;
+                raid.currentRaidSuccess = false;
+                raid.currentBonusRaidAvailable = false;
+                raid.currentBonusRaidSuccess = false;
     
                 await channel.send(composeMessage(
                     currentDate,
@@ -86,10 +85,10 @@ export const AnnounceRaids: Action = {
                 ));
             }
     
-            if(!schedule.loggedRaidSuccess && raid.isSuccessful) {
-                schedule.loggedRaidSuccess = true;
+            if(!raid.currentRaidSuccess && clanRaid.isSuccessful) {
+                raid.currentRaidSuccess = true;
     
-                let userToMention = "";
+                /*let userToMention = "";
     
                 const cycleDay = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
                 const scheduleMember = schedule.map.find(o => o.index === (cycleDay + 1));
@@ -106,11 +105,11 @@ export const AnnounceRaids: Action = {
                         userToMention,
                         `You can buy the bonus fight now! :coin:`
                     ));
-                }
+                }*/
             }
     
-            if(!schedule.loggedBonusRaidAvailable && raid.isBonusAvailable) {
-                schedule.loggedBonusRaidAvailable = true;
+            if(!raid.currentBonusRaidAvailable && clanRaid.isBonusAvailable) {
+                raid.currentBonusRaidAvailable = true;
     
                 await channel.send(composeMessage(
                     currentDate,
@@ -119,8 +118,8 @@ export const AnnounceRaids: Action = {
                 ));
             }
     
-            if(!schedule.loggedBonusRaidSuccess && raid.isBonusSuccessful) {
-                schedule.loggedBonusRaidSuccess = true;
+            if(!raid.currentBonusRaidSuccess && clanRaid.isBonusSuccessful) {
+                raid.currentBonusRaidSuccess = true;
     
                 await channel.send(composeMessage(
                     currentDate,
@@ -129,7 +128,7 @@ export const AnnounceRaids: Action = {
                 ));
             }
     
-            await schedule.save();
+            await raid.save();
         } catch(error: any) {
             logger(`#announceRaids Error occurred`, error);
         }

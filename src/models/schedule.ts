@@ -11,13 +11,7 @@ export interface ISchedule {
     _id: mongoose.ObjectId,
 
     cycle_start: Date,
-    last_checked?: Date,
-    
-    length: number,
-
-    loggedRaidSuccess?: boolean,
-    loggedBonusRaidAvailable?: boolean,
-    loggedBonusRaidSuccess?: boolean,
+    length?: number,
 
     schedule_channel?: string,
     schedule_message_id?: string,
@@ -27,13 +21,7 @@ export interface ISchedule {
 
 const ScheduleSchema = new mongoose.Schema<ISchedule>({
     cycle_start: { type: Date, required: true },
-
-    length: { type: Number, required: true },
-
-    last_checked: { type: Date, required: false },
-    loggedRaidSuccess: { type: Boolean, required: false },
-    loggedBonusRaidAvailable: { type: Boolean, required: false },
-    loggedBonusRaidSuccess: { type: Boolean, required: false },
+    length: { type: Number, required: false },
 
     schedule_channel: { type: String, required: false },
     schedule_message_id: { type: String, required: false },

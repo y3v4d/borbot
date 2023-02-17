@@ -1,13 +1,6 @@
 import ClickerHeroesAPI from "../api/clickerheroes";
 import Code from "../shared/code";
 
-export enum ClanClass {
-    Rogue = 1,
-    Mage = 2,
-    Priest = 3,
-    Undefined = -1
-}
-
 export interface Clan {
     name: string,
     masterUid: string,
@@ -21,11 +14,18 @@ export interface Clan {
     autoJoin: boolean
 }
 
+export enum ClanClass {
+    Rogue = 1,
+    Mage = 2,
+    Priest = 3,
+    Undefined = -1
+}
+
 export interface ClanMember {
     uid: string,
     highestZone: number,
     nickname: string,
-    class: number,
+    class: ClanClass,
     level: number,
     lastRewardTimestamp: string,
     lastBonusRewardTimestamp: string
