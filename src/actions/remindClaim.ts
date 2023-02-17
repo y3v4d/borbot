@@ -50,7 +50,7 @@ export const RemindClaim: Action = {
         guild.last_reminded = dateToString(currentDate);
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.name);
+        const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
 
         const channel = await fetchedGuild.channels.fetch(REMIND);
         if(!channel || !channel.isText()) {

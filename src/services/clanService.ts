@@ -98,7 +98,7 @@ class ClanService {
         }
     }
 
-    async getNewRaid(uid: string, pwd: string, clanName: string) {
+    async getClanNewRaid(uid: string, pwd: string, clanName: string) {
         try {
             const data = await ClickerHeroesAPI.getNewRaid(uid, pwd, clanName);
             const raid: ClanNewRaid = {
