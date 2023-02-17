@@ -35,11 +35,11 @@ const GuildController = {
         try {
             const dbGuild = await bot.guildService.getGuildById(GUILD_ID);
 
-            const clanMembers = await bot.clanService.getClanMembers(dbGuild.user_uid, dbGuild.password_hash);
+            const clan = await bot.clanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
             const guildMembers = await bot.guildService.getGuildMembers(GUILD_ID);
 
             res.send({
-                clan: clanMembers,
+                clan: clan.members,
                 guild: guildMembers
             });
         } catch(error: any) {

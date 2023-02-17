@@ -28,13 +28,13 @@ export const Clan: Command = {
         const clan = await client.clanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
 
         // clan name and immortal levels as a header
-        let response = `**${clan.guild.name}**\n**Immortals** [New: ${clan.guild.currentNewRaidLevel - 1}, Legacy: ${clan.guild.currentRaidLevel}]\n`;
+        let response = `**${clan.name}**\n**Immortals** [New: ${clan.currentNewRaidLevel - 1}, Legacy: ${clan.currentRaidLevel}]\n`;
         response += "\`\`\`";
 
         // sort guild members with highest zone and prepare for making table
-        const formatted = Object.values(clan.guildMembers)
-            .sort((a, b) => parseInt(b.highestZone) - parseInt(a.highestZone))
-            .map(x => [x.nickname, addCommas(x.highestZone), ClanClass[parseInt(x.chosenClass)], x.classLevel]);
+        const formatted = clan.members
+            .sort((a, b) => b.highestZone - a.highestZone)
+            .map(x => [x.nickname, addCommas(x.highestZone), ClanClass[x.class], x.level.toString()]);
 
         response += table(
             [['Name', 'Highest Zone', 'Class', 'Level'], []].concat(formatted),

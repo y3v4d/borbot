@@ -92,8 +92,7 @@ export const UpdateChat: Action = {
         let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const members = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
-        const messages = await client.clanService.getClanMessages(guild.user_uid, guild.password_hash, clan.guild.name);
+        const messages = await client.clanService.getClanMessages(guild.user_uid, guild.password_hash, clan.name);
 
         const channel = await fetched.channels.cache.get(CHAT);
         if(!channel || !channel.isText()) {
@@ -103,12 +102,12 @@ export const UpdateChat: Action = {
 
         for(let msg of messages) {
             if(msg.timestamp > timestamp) {
-                let processed = await processMentions(msg.content, fetched, members);
+                let processed = await processMentions(msg.content, fetched, clan.members);
                 processed = await processEmoji(processed, fetched);
 
                 const date = new Date(msg.timestamp * 1000);
                 await channel.send({
-                    content: `> **${members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
+                    content: `> **${clan.members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;

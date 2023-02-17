@@ -44,7 +44,7 @@ export const Profile: Command = {
             return;
         }
 
-        const member = Object.values(clan.guildMembers).find(o => o.uid === dbMember.clan_uid);
+        const member = clan.members.find(o => o.uid === dbMember.clan_uid);
         if(!member) {
             logger(`/profile Couldn't find clan member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({ 
@@ -60,14 +60,14 @@ export const Profile: Command = {
             .setTitle(`Profile`)
             .setAuthor({ name: member.nickname, iconURL: (user ? user.avatarURL()! : interaction.user!.avatarURL()!) })
             .addFields(
-                { name: "Class", value: ClanClass[parseInt(member.chosenClass)], inline: true },
-                { name: "Level", value: member.classLevel, inline: true },
+                { name: "Class", value: ClanClass[member.class], inline: true },
+                { name: "Level", value: member.level.toString(), inline: true },
                 { name: "Highest Zone", value: addCommas(member.highestZone), inline: true }
             )
             .setImage('https://i.imgur.com/glzDw4P.gif')
             .setFooter({ text: "Composed by Mighty Borb", iconURL: client.user!.avatarURL()! });
 
-        switch(parseInt(member.chosenClass)) {
+        switch(member.class) {
             case ClanClass.Mage:
                 embed.setThumbnail("https://i.imgur.com/WR0ZE4i.png");
                 break;

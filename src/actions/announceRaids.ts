@@ -45,7 +45,7 @@ export const AnnounceRaids: Action = {
             logger(`#announceRaids in ${fetched.name}`);
     
             const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-            const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.guild.name);
+            const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.name);
     
             const channel = fetched.channels.cache.get(ANNOUNCEMENTS);
             if(!channel || !channel.isText()) {

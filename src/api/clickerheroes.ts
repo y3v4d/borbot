@@ -47,7 +47,29 @@ namespace ClickerHeroesAPI {
         }
     }
 
-    export interface GuildInfoResultMember {
+    export interface GuildInfoResult {
+        guild: {
+            name: string,
+            guildMasterUid: string,
+            memberUids: {
+                [key: string]: "member"
+            },
+            currentRaidLevel: string,
+            autoJoin: boolean,
+            currentNewRaidLevel: number,
+            newRaidLocked: string
+        },
+        guildMembers: {
+            [key: string]: GuildInfoMember
+        },
+        user: GuildInfoMember | {
+            passwordHash: string,
+            isGuildRequest: boolean,
+            guildName: string,
+        }
+    }
+
+    interface GuildInfoMember {
         uid: string,
         highestZone: string,
         nickname: string,
@@ -57,73 +79,27 @@ namespace ClickerHeroesAPI {
         lastBonusRewardTimestamp: string
     }
 
-    export interface GuildInfoResult {
-        guild: {
-            name: string,
-            guildMasterUid: string,
-            memberUids: {
-                [key: string]: "member"
-            },
-            currentRaidLevel: number,
-            autoJoin: boolean,
-            currentNewRaidLevel: number,
-            newRaidLocked: string
-        },
-        guildMembers: {
-            [key: string]: GuildInfoResultMember
-        },
-        user: {
-            uid: string,
-            passwordHash: string,
-            highestZone: string,
-            nickname: string,
-            isGuildRequest: boolean,
+    export interface GuildNewRaidResult {
+        raid: {
             guildName: string,
-            chosenClass: string,
-            classLevel: string,
-            lastRewardTimestamp: string,
-            lastBonusRewardTimestamp: string
+            level: string,
+            date: string,
+            scores: {
+                [key: string]: string
+            },
+            bonusScores: {
+                [key:string]: string
+            },
+            weakness: number,
+            isSuccessful: boolean,
+            isBonusAvailable: boolean,
+            isBonusSuccessful: boolean
         }
-    }
-
-    export interface NewRaid {
-        guildName: string,
-        level: string,
-        date: string,
-        scores: {
-            [key: string]: string
-        },
-        bonusScores: {
-            [key:string]: string
-        },
-        weakness: number,
-        isSuccessful: boolean,
-        isBonusAvailable: boolean,
-        isBonusSuccessful: boolean
-    }
-
-    export interface NewRaidResult {
-        raid: NewRaid
-    }
-
-    interface RawGuildMessages {
-        [key: string]: string
-    }
-
-    export interface GuildMessage {
-        uid: string,
-        content: string,
-        timestamp: number
-    }
-
-    export interface RawGuildMessagesResult {
-        guildName: string,
-        messages: RawGuildMessages
     }
 
     export interface GuildMessagesResult {
         guildName: string,
-        messages: GuildMessage[]
+        messages: { [key: string]: string }
     }
 
     export async function getGuildInfo(uid: string, pwd: string) {
@@ -131,25 +107,11 @@ namespace ClickerHeroesAPI {
     }
 
     export async function getNewRaid(uid: string, pwd: string, guildName: string) {
-        const data = await request<NewRaidResult>('getNewRaid', { uid: uid, passwordHash: pwd, guildName: guildName });
-        return data.raid;
+        return await request<GuildNewRaidResult>('getNewRaid', { uid: uid, passwordHash: pwd, guildName: guildName });
     }
 
     export async function getGuildMessages(uid: string, pwd: string, guildName: string) {
-        const data = await request<RawGuildMessagesResult>('getGuildMessages', { uid: uid, passwordHash: pwd, guildName: guildName, timestamp: (Date.now() / 1000) });
-        const messages = data.messages;
-
-        const result: GuildMessagesResult = {
-            guildName: data.guildName,
-            messages: []
-        };
-
-        for(const key in messages) {
-            const split = messages[key].split(';', 2);
-            result.messages.push({ timestamp: parseFloat(key), uid: split[0], content: split[1] });
-        }
-
-        return result;
+        return await request<GuildMessagesResult>('getGuildMessages', { uid: uid, passwordHash: pwd, guildName: guildName, timestamp: (Date.now() / 1000) });
     }
 }
 

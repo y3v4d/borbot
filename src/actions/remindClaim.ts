@@ -50,8 +50,7 @@ export const RemindClaim: Action = {
         guild.last_reminded = dateToString(currentDate);
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const members = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.guild.name);
+        const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.name);
 
         const channel = await fetchedGuild.channels.fetch(REMIND);
         if(!channel || !channel.isText()) {
@@ -59,11 +58,11 @@ export const RemindClaim: Action = {
             return;
         }
 
-        const missing = members.filter(value => 
+        const missing = clan.members.filter(value => 
             raid.scores.findIndex(o => o.uid === value.uid) === -1
         );
 
-        const missingBonus = members.filter(value => 
+        const missingBonus = clan.members.filter(value => 
             raid.bonusScores.findIndex(o => o.uid === value.uid) === -1
         );
 

@@ -40,8 +40,7 @@ export const UpdateSchedule: Action = {
         }
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const members = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.guild.name);
+        const raid = await client.clanService.getNewRaid(guild.user_uid, guild.password_hash, clan.name);
 
         const MS_IN_DAY = 86400000;
 
@@ -66,7 +65,7 @@ export const UpdateSchedule: Action = {
                 continue;
             }
 
-            const member = members.find(o => o.uid === entry.member.clan_uid);
+            const member = clan.members.find(o => o.uid === entry.member.clan_uid);
             if(!member) {
                 message += 'Noone\n';
                 logger(`#updateSchedule Couldn't find clan member with uid ${entry.member.clan_uid}!`, LoggerType.WARN);

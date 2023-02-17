@@ -166,10 +166,10 @@ class GuildService {
         const dbGuild = await this.getGuildById(guild_id);
         
         const guildMembers = await this.getGuildMembers(guild_id);
-        const clanMembers = await this.clanService.getClanMembers(dbGuild.user_uid, dbGuild.password_hash);
+        const clan = await this.clanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
     
         for(const connected of list) {
-            if(clanMembers.find(o => o.uid === connected.clan_uid)) {
+            if(clan.members.find(o => o.uid === connected.clan_uid)) {
                 if(connected.guild_uid == "none") {
                     await MemberModel.findOneAndDelete({ clan_uid: connected.clan_uid, guild_id: guild_id });
                 } else if(guildMembers.find(o => o.id === connected.guild_uid)) {

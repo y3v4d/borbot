@@ -52,18 +52,18 @@ export const UpdateUsers: Action = {
     repeat: true,
 
     async run(client: Bot, guild: IGuild) {
-        const fetched = await client.guilds.cache.get(guild.guild_id);
+        const fetched = client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateUsers Couldn't find guild ${guild.guild_id}`);
             return;
         }
         
-        const clanMembers = await client.clanService.getClanMembers(guild.user_uid, guild.password_hash);
+        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
 
         const members = await MemberModel.find({ guild_id: guild.guild_id });
         const fetchedMembers = await fetched.members.fetch();
         for(const member of members) {
-            const clanMember = clanMembers.find(o => o.uid === member.clan_uid);
+            const clanMember = clan.members.find(o => o.uid === member.clan_uid);
             if(!clanMember) {
                 logger(`#updateUsers Clan member ${member.clan_uid} doesn't exist!`, LoggerType.ERROR);
                 continue;
