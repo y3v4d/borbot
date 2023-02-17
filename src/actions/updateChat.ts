@@ -9,8 +9,8 @@ import { ClanMember } from "../services/clanService";
 const CHAT = '983503510479990785';
 
 function composeDate(date: Date) {
-    return `${date.getUTCDate().toString().padStart(2, '0')}-` +
-            `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-` +
+    return `${date.getUTCDate().toString().padStart(2, '0')}.` +
+            `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}.` +
             `${date.getUTCFullYear()} ` +
             `${date.getUTCHours().toString().padStart(2, '0')}:` +
             `${date.getUTCMinutes().toString().padStart(2, '0')}:` +
@@ -108,7 +108,7 @@ export const UpdateChat: Action = {
 
                 const date = new Date(msg.timestamp * 1000);
                 await channel.send({
-                    content: `**${members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n${processed}`
+                    content: `> **${members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;

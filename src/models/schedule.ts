@@ -9,10 +9,12 @@ export interface IScheduleMember {
 
 export interface ISchedule {
     _id: mongoose.ObjectId,
-    start_day: string,
+
+    cycle_start: Date,
+    last_checked?: Date,
+    
     length: number,
 
-    last_checked?: string,
     loggedRaidSuccess?: boolean,
     loggedBonusRaidAvailable?: boolean,
     loggedBonusRaidSuccess?: boolean,
@@ -24,10 +26,11 @@ export interface ISchedule {
 }
 
 const ScheduleSchema = new mongoose.Schema<ISchedule>({
-    start_day: { type: String, required: true },
+    cycle_start: { type: Date, required: true },
+
     length: { type: Number, required: true },
 
-    last_checked: { type: String, required: false },
+    last_checked: { type: Date, required: false },
     loggedRaidSuccess: { type: Boolean, required: false },
     loggedBonusRaidAvailable: { type: Boolean, required: false },
     loggedBonusRaidSuccess: { type: Boolean, required: false },

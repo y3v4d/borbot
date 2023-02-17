@@ -208,14 +208,14 @@ class GuildService {
         const MS_IN_DAY = 86400000;
         return {
             id: id,
-            start: dbSchedule.start_day,
-            next_cycle: new Date(new Date(dbSchedule.start_day).getTime() + 10 * MS_IN_DAY),
+            start: dbSchedule.cycle_start,
+            next_cycle: new Date(new Date(dbSchedule.cycle_start).getTime() + 10 * MS_IN_DAY),
             entries: entries,
             schedule_channel: dbSchedule.schedule_channel || ""
         };
     }
 
-    async updateGuildSchedule(id: string, list: GuildScheduleEntry[], schedule_channel?: string) {
+    async updateGuildSchedule(id: string, list: GuildScheduleEntry[], schedule_channel?: string, cycle_start?: Date) {
         const cached = this.client.guilds.cache.get(id);
         if(!cached) {
             throw {
@@ -273,6 +273,14 @@ class GuildService {
             }
         } else {
             dbSchedule.schedule_channel = "";
+        }
+
+        if(cycle_start) {
+            cycle_start.setUTCHours(0, 0, 0, 0);
+
+            dbSchedule.cycle_start = cycle_start;
+
+            logger(`Changed cycle start to ${cycle_start.toLocaleDateString()}`);
         }
     
         await dbSchedule.save();

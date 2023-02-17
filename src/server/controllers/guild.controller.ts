@@ -151,9 +151,11 @@ const GuildController = {
 
             return;
         }
+
+        const cycle_start = new Date(req.body.cycle_start) || undefined;
         
         try {
-            await bot.guildService.updateGuildSchedule(GUILD_ID, list, schedule_channel);
+            await bot.guildService.updateGuildSchedule(GUILD_ID, list, schedule_channel, cycle_start);
 
             res.send({ code: Code.OK });
         } catch(error: any) {

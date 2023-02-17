@@ -45,13 +45,12 @@ export const UpdateSchedule: Action = {
 
         const MS_IN_DAY = 86400000;
 
-        const cycle_start = new Date(schedule.start_day);
-        const cycle_end = new Date(cycle_start.getTime() + MS_IN_DAY * 9);
+        const cycle_end = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * 9);
         const allFightsCompleted = raid.isSuccessful && raid.isBonusSuccessful;
 
-        let message = `:calendar_spiral: **SCHEDULE ${dateToString(cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
+        let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
         for(let i = 0; i < 10; ++i) {
-            const date = new Date(cycle_start.getTime() + MS_IN_DAY * i);
+            const date = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * i);
             const time_difference = Date.now() - date.getTime();
 
             const is_past = time_difference >= MS_IN_DAY;
