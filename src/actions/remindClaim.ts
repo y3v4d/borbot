@@ -5,8 +5,6 @@ import GuildModel, { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import { ClanClass, ClanMember } from "../services/clanService";
 
-const REMIND = "908335160171331596";
-
 async function composeRemainder(client: Bot, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
 
@@ -47,12 +45,11 @@ export const RemindClaim: Action = {
 
         // return if the same day or isn't past 11pm
         if(differenceBetweenDays(dateToString(currentDate), lastReminded) === 0 || currentDate.getUTCHours() !== 23) return;
-        guild.last_reminded = dateToString(currentDate);
 
         const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
         const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
 
-        const channel = await fetchedGuild.channels.fetch(REMIND);
+        const channel = await fetchedGuild.channels.fetch(guild.remind_channel || "");
         if(!channel || !channel.isText()) {
             logger(`#remindClaim Couldn't get valid channel`, LoggerType.WARN);
             return;
@@ -66,6 +63,7 @@ export const RemindClaim: Action = {
             raid.bonusScores.findIndex(o => o.uid === value.uid) === -1
         );
 
+        guild.last_reminded = dateToString(currentDate);
         await GuildModel.updateOne(guild);
 
         // return if everyone collected

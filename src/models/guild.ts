@@ -11,8 +11,9 @@ export interface IGuild {
     raid_claim_role?: string,
 
     clan_chat_channel?: string,
-
     last_chat_update?: number,
+
+    remind_channel?: string,
     last_reminded?: string,
 
     schedule?: mongoose.Types.ObjectId
@@ -29,8 +30,9 @@ const GuildSchema = new mongoose.Schema<IGuild>({
     raid_claim_role: { type: String, required: false },
     
     clan_chat_channel: { type: String, required: false },
-
     last_chat_update: { type: Number, required: false },
+
+    remind_channel: { type: String, required: false },
     last_reminded: { type: String, required: false },
 
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'Schedule', required: false }

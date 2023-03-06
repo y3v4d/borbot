@@ -157,9 +157,10 @@ const GuildController = {
         const announcement_channel = req.body.announcement_channel || "";
         const fight_role = req.body.fight_role || "";
         const claim_role = req.body.claim_role || "";
+        const remind_channel = req.body.remind_channel || "";
 
         try {
-            await bot.guildService.updateGuildRaid(GUILD_ID, announcement_channel, fight_role, claim_role);
+            await bot.guildService.updateGuildRaid(GUILD_ID, announcement_channel, fight_role, claim_role, remind_channel);
 
             res.send({ code: 200 });
         } catch(error) {

@@ -222,16 +222,18 @@ class GuildService {
 
             announcement_channel: dbGuild.raid_announcement_channel || "",
             fight_role: dbGuild.raid_fight_role || "",
-            claim_role: dbGuild.raid_claim_role || ""
+            claim_role: dbGuild.raid_claim_role || "",
+            remind_channel: dbGuild.remind_channel || ""
         };
     }
 
-    async updateGuildRaid(id: string, announcementChannel: string, fightRole: string, claimRole: string) {
+    async updateGuildRaid(id: string, announcementChannel: string, fightRole: string, claimRole: string, remindChannel: string) {
         const dbGuild = await this.getGuildById(id);
 
         dbGuild.raid_announcement_channel = announcementChannel;
         dbGuild.raid_fight_role = fightRole;
         dbGuild.raid_claim_role = claimRole;
+        dbGuild.remind_channel = remindChannel;
 
         await dbGuild.save();
     }
