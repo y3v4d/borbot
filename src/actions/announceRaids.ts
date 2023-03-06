@@ -28,11 +28,6 @@ function getAbsoluteDate() {
     return date;
 }
 
-const ANNOUNCEMENTS = '953688933609394217';
-
-const IM_FIGHTERS = '953630949789274154';
-const T_HUNTERS = '953631155117248552';
-
 export const AnnounceRaids: Action = {
     run: async function(client: Bot, guild: IGuild) {
         try {
@@ -47,7 +42,7 @@ export const AnnounceRaids: Action = {
             const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
             const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
     
-            const channel = fetched.channels.cache.get(ANNOUNCEMENTS);
+            const channel = fetched.channels.cache.get(guild.raid_announcement_channel || "");
             if(!channel || !channel.isText()) {
                 logger("#announceRaids Invalid channel for raid announcements!", LoggerType.WARN);
                 return;
@@ -81,7 +76,7 @@ export const AnnounceRaids: Action = {
     
                 await channel.send(composeMessage(
                     currentDate,
-                    IM_FIGHTERS,
+                    guild.raid_fight_role || "",
                     `First raid available! :crossed_swords:`
                 ));
             }
@@ -114,7 +109,7 @@ export const AnnounceRaids: Action = {
     
                 await channel.send(composeMessage(
                     currentDate,
-                    IM_FIGHTERS,
+                    guild.raid_fight_role || "",
                     `Second raid available! :crossed_swords:`
                 ));
             }
@@ -124,7 +119,7 @@ export const AnnounceRaids: Action = {
     
                 await channel.send(composeMessage(
                     currentDate,
-                    T_HUNTERS,
+                    guild.raid_claim_role || "",
                     `All fights completed! Collect your rewards! :gem:`
                 ));
             }

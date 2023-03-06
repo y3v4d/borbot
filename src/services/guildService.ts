@@ -22,6 +22,11 @@ export interface GuildTextChannel {
     name: string
 }
 
+export interface GuildRole {
+    id: string,
+    name: string
+}
+
 class GuildService {
     private client: Bot;
 
@@ -121,6 +126,28 @@ class GuildService {
         return list;
     }
 
+    async getGuildRoles(id: string) {
+        const dbGuild = await this.getGuildById(id);
+        const cached = this.client.guilds.cache.get(id);
+        if(!cached) {
+            throw {
+                code: Code.GUILD_REQUIRES_BOT,
+                message: "Bot required in guild"
+            }
+        }
+
+        const ranks = cached.roles.cache.values();
+        const list: GuildRole[] = [];
+        for(const rank of ranks) {
+            list.push({
+                id: rank.id,
+                name: rank.name
+            });
+        }
+
+        return list;
+    }
+
     async getGuildMembers(id: string) {
         const guild = this.client.guilds.cache.get(id);
         if(!guild) {
@@ -185,6 +212,28 @@ class GuildService {
                 console.warn(`Invalid information (clan_uid: ${connected.clan_uid})`);
             }
         }
+    }
+
+    async getGuildRaid(id: string) {
+        const dbGuild = await this.getGuildById(id);
+
+        return {
+            id: id,
+
+            announcement_channel: dbGuild.raid_announcement_channel || "",
+            fight_role: dbGuild.raid_fight_role || "",
+            claim_role: dbGuild.raid_claim_role || ""
+        };
+    }
+
+    async updateGuildRaid(id: string, announcementChannel: string, fightRole: string, claimRole: string) {
+        const dbGuild = await this.getGuildById(id);
+
+        dbGuild.raid_announcement_channel = announcementChannel;
+        dbGuild.raid_fight_role = fightRole;
+        dbGuild.raid_claim_role = claimRole;
+
+        await dbGuild.save();
     }
 
     async getGuildSchedule(id: string) {

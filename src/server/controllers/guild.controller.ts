@@ -95,6 +95,19 @@ const GuildController = {
             next(error);
         }
     },
+
+    getGuildRoles: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const roles = await bot.guildService.getGuildRoles(GUILD_ID);
+
+            res.send(roles);
+        } catch(error: any) {
+            next(error);
+        }
+    },
     
     setup: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
@@ -120,6 +133,36 @@ const GuildController = {
 
             res.send({ code: Code.OK });
         } catch(error: any) {
+            next(error);
+        }
+    },
+
+    getRaid: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const raid = await bot.guildService.getGuildRaid(GUILD_ID);
+
+            res.send(raid);
+        } catch(error) {
+            next(error);
+        }
+    },
+
+    updateRaid: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        const announcement_channel = req.body.announcement_channel || "";
+        const fight_role = req.body.fight_role || "";
+        const claim_role = req.body.claim_role || "";
+
+        try {
+            await bot.guildService.updateGuildRaid(GUILD_ID, announcement_channel, fight_role, claim_role);
+
+            res.send({ code: 200 });
+        } catch(error) {
             next(error);
         }
     },

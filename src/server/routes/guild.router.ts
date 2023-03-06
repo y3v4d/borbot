@@ -11,9 +11,13 @@ GuildRouter.post('/:id/unsetup', IsInGuild, GuildController.unsetup);
 
 GuildRouter.get('/:id/members', IsInGuild, GuildController.getGuildMembers);
 GuildRouter.get('/:id/channels', IsInGuild, GuildController.getGuildChannels);
+GuildRouter.get('/:id/roles', IsInGuild, GuildController.getGuildRoles);
 
 GuildRouter.get('/:id/connected', IsInGuild, GuildController.getConnectedUsers);
 GuildRouter.post('/:id/connected', IsInGuild, GuildController.postConnectedUsers);
+
+GuildRouter.get('/:id/raid', IsInGuild, GuildController.getRaid);
+GuildRouter.post('/:id/raid', IsInGuild, GuildController.updateRaid);
 
 GuildRouter.get('/:id/schedule', IsInGuild, GuildController.getSchedule);
 GuildRouter.post('/:id/schedule', IsInGuild, GuildController.postSchedule);
