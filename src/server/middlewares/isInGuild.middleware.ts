@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { GuildMember } from "discord.js";
 import UserService from "../../services/userService";
 import { IUserGuild } from "../../models/user";
 import Code from "../../shared/code";

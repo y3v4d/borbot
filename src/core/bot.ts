@@ -158,12 +158,22 @@ export default class Bot extends Client {
         return guild.channels.cache.get(channel_id);
     }
 
+    async existsCachedGuildChannel(guild: Guild, channel_id: string, fetch = false) {
+        if(fetch) await guild.channels.fetch();
+        return guild.channels.cache.has(channel_id);
+    }
+
     async getCachedGuildRoles(id: string, fetch = false) {
         const guild = this.getCachedGuild(id);
         if(!guild) return null;
 
         if(fetch) await guild.roles.fetch();
         return guild.roles.cache;
+    }
+
+    async existsCachedGuildRole(guild: Guild, role_id: string, fetch = false) {
+        if(fetch) await guild.roles.fetch();
+        return guild.roles.cache.has(role_id);
     }
 
     get isDevelopment(): boolean {

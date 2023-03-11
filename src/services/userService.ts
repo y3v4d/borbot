@@ -35,14 +35,9 @@ namespace UserService {
 
     export async function getUser(id: string) {
         const user = await UserModel.findOne({ id: id });
-        if(!user) {
-            throw {
-                code: Code.USER_NOT_REGISTERED,
-                message: "User doesn't exist"
-            }
-        }
+        if(!user) return null;
 
-        return user;
+        return user as IUser;
     }
 
     export async function getUserInformation(token: string) {

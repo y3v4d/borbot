@@ -24,6 +24,14 @@ export interface GuildScheduleUpdate {
     channel?: string
 }
 
+export interface GuildUpdateParams {
+    raid_announcement_channel?: string,
+    raid_fight_role?: string,
+    raid_claim_role?: string,
+
+    remind_channel?: string
+}
+
 namespace GuildService {
     export async function addGuild(guild_id: string, uid: string, pwd: string) {  
         const schema: IGuild = {
@@ -35,17 +43,41 @@ namespace GuildService {
         await GuildModel.create(schema);
     }
 
+    export async function getGuild(id: string) {
+        const guild = await GuildModel.findOne({ guild_id: id });
+        return guild as IGuild | null;
+    }
+
+    export async function updateGuild(id: string, params: GuildUpdateParams) {
+        const guild = await GuildService.getGuild(id);
+        if(!guild) return false;
+
+        if(params.raid_announcement_channel) {
+            guild.raid_announcement_channel = params.raid_announcement_channel;
+        }
+
+        if(params.raid_fight_role) {
+            guild.raid_fight_role = params.raid_fight_role;
+        }
+
+        if(params.raid_claim_role) {
+            guild.raid_claim_role = params.raid_claim_role;
+        }
+
+        if(params.remind_channel) {
+            guild.remind_channel = params.remind_channel;
+        }
+
+        await GuildModel.updateOne(guild);
+        return true;
+    }
+
     export async function removeGuild(id: string) {
         const guild = await GuildService.getGuild(id);
         if(!guild) return false;
 
         await GuildModel.findOneAndRemove(guild);
         return true;
-    }
-
-    export async function getGuild(id: string) {
-        const guild = await GuildModel.findOne({ guild_id: id });
-        return guild as IGuild | null;
     }
 
     export async function isGuildSetup(id: string) {

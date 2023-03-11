@@ -2,7 +2,7 @@ import { NextFunction, Response } from "express";
 import Bot from "../../core/bot";
 import { IsInGuildRequest } from "../middlewares/isInGuild.middleware";
 import { getGuildIconURL, getUserIconURL } from "../../shared/utils";
-import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry } from "../../services/guildService";
+import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";
 import Code from "../../shared/code";
 import ClanService from "../../services/clanService";
 
@@ -33,6 +33,72 @@ const GuildController = {
         });
     },
 
+    guild_patch: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.guild!.id;
+        const bot = req.app.get('bot') as Bot;
+
+        const params: GuildUpdateParams = {
+            raid_announcement_channel: req.body.raid_announcement_channel,
+            raid_fight_role: req.body.raid_fight_role,
+            raid_claim_role: req.body.raid_claim_role,
+            remind_channel: req.body.remind_channel
+        };
+
+        try {
+            const cached = bot.getCachedGuild(GUILD_ID);
+            if(!cached) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            if(params.raid_announcement_channel && !await bot.existsCachedGuildChannel(cached, params.raid_announcement_channel)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid raid announcement channel"
+                });
+
+                return;
+            }
+
+            if(params.raid_fight_role && !await bot.existsCachedGuildRole(cached, params.raid_fight_role)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid raid fight role"
+                });
+
+                return;
+            }
+
+            if(params.raid_claim_role && !await bot.existsCachedGuildRole(cached, params.raid_claim_role)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid raid claim role"
+                });
+
+                return;
+            }
+
+            if(params.remind_channel && !await bot.existsCachedGuildChannel(cached, params.remind_channel)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid remind channel"
+                });
+                
+                return;
+            }
+
+            const result = await GuildService.updateGuild(GUILD_ID, params);
+            if(!result) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            res.send({ code: Code.OK });
+        } catch(error) {
+            next(error);
+        }
+    },
+
     guild_post: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
@@ -46,8 +112,8 @@ const GuildController = {
                 return;
             }
 
-            const guild = await GuildService.getGuild(GUILD_ID);
-            if(guild) {
+            const isSetup = await GuildService.isGuildSetup(GUILD_ID);
+            if(isSetup) {
                 next({ code: Code.GUILD_ALREADY_SETUP });
                 return;
             }
@@ -68,7 +134,6 @@ const GuildController = {
 
     guild_delete: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
 
         try {
             const result = await GuildService.removeGuild(GUILD_ID);
@@ -85,7 +150,6 @@ const GuildController = {
 
     guild_clan_members_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
 
         try {
             const guild = await GuildService.getGuild(GUILD_ID);
@@ -189,7 +253,6 @@ const GuildController = {
 
     guild_connected_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
         
         try {
             const isSetup = await GuildService.isGuildSetup(GUILD_ID);

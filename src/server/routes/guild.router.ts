@@ -6,6 +6,7 @@ const GuildRouter = Router();
 
 GuildRouter.get('/:id', IsInGuild, GuildController.guild_get);
 GuildRouter.post('/:id', IsInGuild, GuildController.guild_post);
+GuildRouter.patch('/:id', IsInGuild, GuildController.guild_patch);
 GuildRouter.delete('/:id', IsInGuild, GuildController.guild_delete);
 
 GuildRouter.get('/:id/clan/members', IsInGuild, GuildController.guild_clan_members_get);

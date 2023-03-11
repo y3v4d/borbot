@@ -14,7 +14,10 @@ function server(client: Bot) {
 
     server.set('bot', client);
 
-    server.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
+    server.use(cors({ 
+        origin: 'http://localhost:3000',
+        credentials: true
+    }));
     server.use(bodyParser.json());
     server.use(cookieParser());
 
