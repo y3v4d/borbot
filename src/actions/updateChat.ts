@@ -4,7 +4,7 @@ import Action from "../core/action";
 import GuildModel, { IGuild } from "../models/guild";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
-import { ClanMember } from "../services/clanService";
+import ClanService, { ClanMember } from "../services/clanService";
 
 const CHAT = '983503510479990785';
 
@@ -91,8 +91,8 @@ export const UpdateChat: Action = {
 
         let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
 
-        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const messages = await client.clanService.getClanMessages(guild.user_uid, guild.password_hash, clan.name);
+        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetched.channels.cache.get(CHAT);
         if(!channel || !channel.isText()) {
@@ -100,14 +100,14 @@ export const UpdateChat: Action = {
             return;
         }
 
-        for(let msg of messages) {
+        for(let msg of messages!) {
             if(msg.timestamp > timestamp) {
-                let processed = await processMentions(msg.content, fetched, clan.members);
+                let processed = await processMentions(msg.content, fetched, clan!.members);
                 processed = await processEmoji(processed, fetched);
 
                 const date = new Date(msg.timestamp * 1000);
                 await channel.send({
-                    content: `> **${clan.members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
+                    content: `> **${clan!.members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;

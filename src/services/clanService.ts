@@ -58,8 +58,8 @@ export interface ClanMessage {
     timestamp: number
 }
 
-class ClanService {
-    async getClanInformation(uid: string, pwd: string) {
+namespace ClanService {
+    export async function getClanInformation(uid: string, pwd: string) {
         try {
             const data = await ClickerHeroesAPI.getGuildInfo(uid, pwd);
 
@@ -88,17 +88,14 @@ class ClanService {
             } as Clan;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
-                throw {
-                    code: Code.CLAN_INVALID_CREDENTIALS,
-                    message: "Invalid clan credentials"
-                }
+                return null;
             }
 
             throw error;
         }
     }
 
-    async getClanNewRaid(uid: string, pwd: string, clanName: string) {
+    export async function getClanNewRaid(uid: string, pwd: string, clanName: string) {
         try {
             const data = await ClickerHeroesAPI.getNewRaid(uid, pwd, clanName);
             const raid: ClanNewRaid = {
@@ -123,17 +120,14 @@ class ClanService {
             return raid;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
-                throw {
-                    code: Code.CLAN_INVALID_CREDENTIALS,
-                    message: "Invalid clan credentials"
-                }
+                return null;
             }
 
             throw error;
         }
     }
 
-    async getClanMessages(uid: string, pwd: string, guildName: string) {
+    export async function getClanMessages(uid: string, pwd: string, guildName: string) {
         try {
             const data = await ClickerHeroesAPI.getGuildMessages(uid, pwd, guildName);
             const messages: ClanMessage[] = [];
@@ -146,10 +140,7 @@ class ClanService {
             return messages;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
-                throw {
-                    code: Code.CLAN_INVALID_CREDENTIALS,
-                    message: "Invalid clan credentials"
-                }
+                return null;
             }
 
             throw error;

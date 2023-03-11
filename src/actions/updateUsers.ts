@@ -4,6 +4,7 @@ import MemberModel from "../models/member";
 import GuildModel, { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import { addCommas } from "../shared/utils";
+import ClanService from "../services/clanService";
 
 const MILESTONE_CHANNEL = "908335160171331596";
 
@@ -58,12 +59,12 @@ export const UpdateUsers: Action = {
             return;
         }
         
-        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
 
         const members = await MemberModel.find({ guild_id: guild.guild_id });
         const fetchedMembers = await fetched.members.fetch();
         for(const member of members) {
-            const clanMember = clan.members.find(o => o.uid === member.clan_uid);
+            const clanMember = clan!.members.find(o => o.uid === member.clan_uid);
             if(!clanMember) {
                 logger(`#updateUsers Clan member ${member.clan_uid} doesn't exist!`, LoggerType.ERROR);
                 continue;

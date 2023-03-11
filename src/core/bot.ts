@@ -1,12 +1,10 @@
-import { Client, ClientOptions, GuildMember, Interaction, Message, PartialGuildMember } from "discord.js";
+import { Client, ClientOptions, Guild, GuildMember, Interaction, Message, PartialGuildMember } from "discord.js";
 import { Actions } from "../actions";
 import { Commands } from "../commands";
 import GuildModel from "../models/guild";
 import MemberModel from "../models/member";
 import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
-import GuildService from "../services/guildService";
-import ClanService from "../services/clanService";
 import Action from "./action";
 import logger from "../shared/logger";
 
@@ -16,16 +14,10 @@ interface OngoingAction {
 }
 
 export default class Bot extends Client {
-    private _guildService: GuildService;
-    private _clanService: ClanService;
-
     private _actions: OngoingAction[] = [];
 
     constructor(options: ClientOptions) {
         super(options);
-
-        this._guildService = new GuildService(this);
-        this._clanService = new ClanService();
 
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
@@ -130,12 +122,48 @@ export default class Bot extends Client {
         setInterval(execute, 60000);
     }
 
-    get guildService() {
-        return this._guildService;
+    getCachedGuild(id: string) {
+        const cached = this.guilds.cache.get(id);
+        if(!cached) return null;
+
+        return cached;
     }
 
-    get clanService() {
-        return this._clanService;
+    async getCachedGuildMembers(id: string, fetch = true) {
+        const guild = this.getCachedGuild(id);
+        if(!guild) return null;
+
+        if(fetch) await guild.members.fetch();
+        return guild.members.cache;
+    }
+
+    async getCachedGuildMember(guild_id: string, member_id: string, fetch = true) {
+        const guild = this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        if(fetch) await guild.members.fetch();
+        return guild.members.cache.get(member_id);
+    }
+
+    async getCachedGuildChannels(id: string, fetch = false) {
+        const guild = this.getCachedGuild(id);
+        if(!guild) return null;
+
+        if(fetch) await guild.channels.fetch();
+        return guild.channels.cache;
+    }
+
+    async getCachedGuildChannel(guild: Guild, channel_id: string, fetch = false) {
+        if(fetch) await guild.channels.fetch();
+        return guild.channels.cache.get(channel_id);
+    }
+
+    async getCachedGuildRoles(id: string, fetch = false) {
+        const guild = this.getCachedGuild(id);
+        if(!guild) return null;
+
+        if(fetch) await guild.roles.fetch();
+        return guild.roles.cache;
     }
 
     get isDevelopment(): boolean {

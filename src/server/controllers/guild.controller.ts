@@ -1,21 +1,20 @@
 import { NextFunction, Response } from "express";
-import DiscordAPI from "../../api/discord";
 import Bot from "../../core/bot";
 import { IsInGuildRequest } from "../middlewares/isInGuild.middleware";
-import GuildModel from "../../models/guild";
-import { getGuildIconURL } from "../../shared/utils";
-import { GuildConnectedMember, GuildScheduleEntry } from "../../services/guildService";
+import { getGuildIconURL, getUserIconURL } from "../../shared/utils";
+import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry } from "../../services/guildService";
 import Code from "../../shared/code";
+import ClanService from "../../services/clanService";
 
 const GuildController = {
-    getGuildInformation: async function(req: IsInGuildRequest, res: Response) {
-        const GUILD_ID = req.params.id;
+    guild_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const bot = req.app.get('bot') as Bot;
-
         const userGuild = req.guild!;
+
+        const dbGuild = await GuildService.getGuild(userGuild.id);
         
-        const is_setup = await bot.guildService.isGuildSetup(GUILD_ID);
-        const is_joined = bot.guilds.cache.get(GUILD_ID) !== undefined;
+        const is_setup = dbGuild !== null;
+        const is_joined = bot.guilds.cache.get(userGuild.id) !== undefined;
         
         res.send({
             id: userGuild.id,
@@ -24,48 +23,199 @@ const GuildController = {
             permissions: userGuild.permissions,
             isAdmin: userGuild.isAdmin,
             is_setup: is_setup,
-            is_joined: is_joined
+            is_joined: is_joined,
+
+            raid_announcement_channel: dbGuild?.raid_announcement_channel,
+            raid_fight_role: dbGuild?.raid_fight_role,
+            raid_claim_role: dbGuild?.raid_claim_role,
+
+            remind_channel: dbGuild?.remind_channel
         });
     },
-    
-    getGuildMembers: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+
+    guild_post: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
-        
+
+        const { uid: USER_ID, pwd: USER_PWD } = req.body;
+
         try {
-            const dbGuild = await bot.guildService.getGuildById(GUILD_ID);
+            const cached = bot.getCachedGuild(GUILD_ID);
+            if(!cached) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
 
-            const clan = await bot.clanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
-            const guildMembers = await bot.guildService.getGuildMembers(GUILD_ID);
+            const guild = await GuildService.getGuild(GUILD_ID);
+            if(guild) {
+                next({ code: Code.GUILD_ALREADY_SETUP });
+                return;
+            }
 
-            res.send({
-                clan: clan.members,
-                guild: guildMembers
-            });
+            const clan = await ClanService.getClanInformation(USER_ID, USER_PWD);
+            if(!clan) {
+                next({ code: Code.CLAN_INVALID_CREDENTIALS });
+                return;
+            }
+
+            await GuildService.addGuild(GUILD_ID, USER_ID, USER_PWD);
+
+            res.send({ code: Code.OK });
         } catch(error: any) {
             next(error);
         }
     },
-    
-    getConnectedUsers: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+
+    guild_delete: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
-        
+
         try {
-            const connected = await bot.guildService.getGuildConnectedMembers(GUILD_ID);
-    
-            res.send(connected);
+            const result = await GuildService.removeGuild(GUILD_ID);
+            if(!result) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            res.send({ code: Code.OK });
         } catch(error: any) {
             next(error);
         }
     },
-    
-    postConnectedUsers: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+
+    guild_clan_members_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
 
-        const list = req.body.data as GuildConnectedMember[] | undefined;
-        if(!list) {
+        try {
+            const guild = await GuildService.getGuild(GUILD_ID);
+            if(!guild) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+            if(!clan) {
+                next({ code: Code.CLAN_INVALID_CREDENTIALS });
+                return;
+            }
+
+            res.send(clan.members);
+        } catch(error) {
+            next(error);
+        }
+    },
+
+    guild_members_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+        
+        try {
+            const members = await bot.getCachedGuildMembers(GUILD_ID);
+            if(!members) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            const list: any[] = [];
+            for(const [,member] of members) {
+                list.push({
+                    id: member.user.id,
+                    discriminator: member.user.discriminator,
+                    username: member.user.username,
+                    avatar: getUserIconURL(member.user, 48),
+                    nickname: member.nickname,
+                    isBot: member.user.bot || false
+                });
+            }
+
+            res.send(list);
+        } catch(error: any) {
+            next(error);
+        }
+    },
+
+    guild_channels_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const channels = await bot.getCachedGuildChannels(GUILD_ID);
+            if(!channels) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            const list: any[] = [];
+            for(const [,channel] of channels) {
+                if(!channel.parentId || channel.isVoice() || !channel.isText()) continue;
+
+                list.push({
+                    id: channel.id,
+                    name: channel.name
+                });
+            }
+
+            res.send(list);
+        } catch(error: any) {
+            next(error);
+        }
+    },
+
+    guild_roles_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const roles = await bot.getCachedGuildRoles(GUILD_ID);
+            if(!roles) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            const list: any[] = [];
+            for(const [,role] of roles) {
+                list.push({
+                    id: role.id,
+                    name: role.name
+                });
+            }
+
+            res.send(list);
+        } catch(error: any) {
+            next(error);
+        }
+    },
+
+    guild_connected_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+        
+        try {
+            const isSetup = await GuildService.isGuildSetup(GUILD_ID);
+            if(!isSetup) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            const members = await GuildService.getGuildConnected(req.guild!.id);
+            const list = members.map(o => ({
+                guild_uid: o.guild_uid,
+                clan_uid: o.clan_uid
+            }));
+    
+            res.send(list);
+        } catch(error: any) {
+            next(error);
+        }
+    },
+
+    guild_connected_post: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        const data = req.body.data as GuildConnectedMember[] | undefined;
+        if(!data) {
             res.status(400).send({
                 code: Code.BAD_REQUEST,
                 message: "List of connected members required."
@@ -75,119 +225,84 @@ const GuildController = {
         }
 
         try {
-            await bot.guildService.updateGuildConnectedMembers(GUILD_ID, list);
+            const guild = await GuildService.getGuild(GUILD_ID);
+            if(!guild) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            const members = await bot.getCachedGuildMembers(GUILD_ID);
+            if(!members) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+            if(!clan) {
+                next({ code: Code.CLAN_INVALID_CREDENTIALS });
+                return;
+            }
+
+            const list: GuildConnectedMember[] = [];
+            for(const entry of data) {
+                const isInClan = clan.members.find(o => o.uid === entry.clan_uid) !== undefined;
+                const isInGuild = entry.guild_uid === '' || members.find(o => o.id === entry.guild_uid) !== undefined;
+
+                if(isInClan && isInGuild) {
+                    list.push(entry);
+                } else {
+                    res.send(400).send({ 
+                        code: Code.BAD_REQUEST, 
+                        msg: `Invalid entry in list (clan uid: ${entry.clan_uid}, guild uid: ${entry.guild_uid})`
+                    });
+
+                    return;
+                }
+            }
+
+            await GuildService.updateGuildConnected(GUILD_ID, list);
+
+            res.send({ code: Code.OK });
+        } catch(error: any) {
+            next(error);
+        }
+    },
+
+    guild_schedule_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+        const GUILD_ID = req.params.id;
+        const bot = req.app.get('bot') as Bot;
+
+        try {
+            const schedule = await GuildService.getGuildSchedule(GUILD_ID);
+            if(!schedule) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
+
+            const data: any = {
+                cycle_start: schedule.cycle_start,
+                entries: [],
+
+                channel: schedule.schedule_channel
+            };
         
-            res.send({ code: Code.OK });
-        } catch(error: any) {
-            next(error);
-        }
-    },
-    
-    getGuildChannels: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
+            for(let i = 1; i <= 10; ++i) {
+                const entry = schedule.map.find(o => o.index == i);
+                data.entries.push({ uid: entry?.member.guild_uid || '', index: i });
+            }
 
-        try {
-            const channels = await bot.guildService.getGuildChannels(GUILD_ID);
-
-            res.send(channels);
+            res.send(data);
         } catch(error: any) {
             next(error);
         }
     },
 
-    getGuildRoles: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
+    guild_schedule_post: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
         const bot = req.app.get('bot') as Bot;
 
-        try {
-            const roles = await bot.guildService.getGuildRoles(GUILD_ID);
-
-            res.send(roles);
-        } catch(error: any) {
-            next(error);
-        }
-    },
-    
-    setup: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        const { uid: USER_ID, pwd: USER_PWD } = req.body;
-
-        try {
-            await bot.guildService.createSetupGuild(GUILD_ID, USER_ID, USER_PWD);
-
-            res.send({ code: Code.OK });
-        } catch(error: any) {
-            next(error);
-        }
-    },
-    
-    unsetup: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        try {
-            await bot.guildService.removeSetupGuild(GUILD_ID);
-
-            res.send({ code: Code.OK });
-        } catch(error: any) {
-            next(error);
-        }
-    },
-
-    getRaid: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        try {
-            const raid = await bot.guildService.getGuildRaid(GUILD_ID);
-
-            res.send(raid);
-        } catch(error) {
-            next(error);
-        }
-    },
-
-    updateRaid: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        const announcement_channel = req.body.announcement_channel || "";
-        const fight_role = req.body.fight_role || "";
-        const claim_role = req.body.claim_role || "";
-        const remind_channel = req.body.remind_channel || "";
-
-        try {
-            await bot.guildService.updateGuildRaid(GUILD_ID, announcement_channel, fight_role, claim_role, remind_channel);
-
-            res.send({ code: 200 });
-        } catch(error) {
-            next(error);
-        }
-    },
-    
-    getSchedule: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        try {
-            const schedule = await bot.guildService.getGuildSchedule(GUILD_ID);
-
-            res.send(schedule);
-        } catch(error: any) {
-            next(error);
-        }
-    },
-    
-    postSchedule: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
-
-        const schedule_channel = req.body.schedule_channel || "";
-        const list = req.body.list as GuildScheduleEntry[] | undefined;
-        if(!list) {
+        const data = req.body.list as { uid: string, index: number }[] | undefined;
+        if(!data) {
             res.status(400).send({
                 code: Code.BAD_REQUEST,
                 message: "List of schedule entries required."
@@ -196,10 +311,55 @@ const GuildController = {
             return;
         }
 
-        const cycle_start = new Date(req.body.cycle_start) || undefined;
+        const schedule: GuildScheduleUpdate = {
+            cycle_start: new Date(req.body.cycle_start) || undefined,
+            entries: [],
+
+            channel: req.body.schedule_channel || undefined
+        }
         
         try {
-            await bot.guildService.updateGuildSchedule(GUILD_ID, list, schedule_channel, cycle_start);
+            const cached = await bot.getCachedGuild(GUILD_ID);
+            if(!cached) {
+                next({ code: Code.GUILD_REQUIRES_BOT });
+                return;
+            }
+
+            if(schedule.channel) {
+                const channel = await bot.getCachedGuildChannel(cached, schedule.channel);
+                if(!channel) {
+                    res.status(400).send({
+                        code: Code.BAD_REQUEST,
+                        message: "Invalid channel parameter"
+                    });
+
+                    return;
+                }
+            }
+
+            const list: GuildScheduleUpdateEntry[] = [];
+            for(const entry of data) {
+                const member = await GuildService.getGuildConnectedMember(GUILD_ID, entry.uid);
+                const isIndexValid = entry.index >= 1 && entry.index <= 10;
+
+                if(member && isIndexValid) {
+                    list.push({ index: entry.index, member: member });
+                } else {
+                    res.status(400).send({
+                        code: Code.BAD_REQUEST,
+                        msg: `Invalid entry in list (index: ${entry.index}, uid: ${entry.uid}`
+                    });
+
+                    return;
+                }
+            }
+            schedule.entries = list;
+
+            const result = await GuildService.updateGuildSchedule(GUILD_ID, schedule);
+            if(!result) {
+                next({ code: Code.GUILD_NOT_SETUP });
+                return;
+            }
 
             res.send({ code: Code.OK });
         } catch(error: any) {

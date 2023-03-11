@@ -4,6 +4,7 @@ import { IGuild } from "../models/guild";
 import ScheduleModel from "../models/schedule";
 import { IMember } from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import ClanService from "../services/clanService";
 
 function dateToString(date: Date) {
     return `${(date.getUTCDate().toString().padStart(2, '0'))}.${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`;
@@ -39,13 +40,13 @@ export const UpdateSchedule: Action = {
             return;
         }
 
-        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
+        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const MS_IN_DAY = 86400000;
 
         const cycle_end = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * 9);
-        const allFightsCompleted = raid.isSuccessful && raid.isBonusSuccessful;
+        const allFightsCompleted = raid!.isSuccessful && raid!.isBonusSuccessful;
 
         let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
         for(let i = 0; i < 10; ++i) {
@@ -65,7 +66,7 @@ export const UpdateSchedule: Action = {
                 continue;
             }
 
-            const member = clan.members.find(o => o.uid === entry.member.clan_uid);
+            const member = clan!.members.find(o => o.uid === entry.member.clan_uid);
             if(!member) {
                 message += 'Noone\n';
                 logger(`#updateSchedule Couldn't find clan member with uid ${entry.member.clan_uid}!`, LoggerType.WARN);

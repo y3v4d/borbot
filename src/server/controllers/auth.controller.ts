@@ -3,7 +3,7 @@ import DiscordAPI from "../../api/discord";
 import UserService from "../../services/userService";
 
 const AuthController = {
-    login: async function(req: Request, res: Response) {
+    auth_login: async function(req: Request, res: Response) {
         const clientID = process.env.APP_ID as string;
         const clientSecret = process.env.APP_SECRET as string;
         const clientCode = req.body.code as string;
@@ -21,7 +21,7 @@ const AuthController = {
         }
     },
     
-    logout: async function(req: Request, res: Response) {
+    auth_logout: async function(req: Request, res: Response) {
         res.clearCookie('token').send({ msg: "OK" });
     },
 

@@ -15,7 +15,7 @@ import MeRouter from './server/routes/me.router';
 import cookieParser from 'cookie-parser';
 import GuildService from './services/guildService';
 import ClanService from './services/clanService';
-import Code from './shared/code';
+import Code, { CodeMessage } from './shared/code';
 
 mongoose.connect(process.env.MONGODB_URI!).then(async () => {
     logger("MongoDB Conncted!");
@@ -33,8 +33,6 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     const api = express();
     api.set('bot', client);
-    api.set('guildService', new GuildService(client));
-    api.set('clanService', new ClanService());
 
     api.use(cors({ origin: ['http://localhost:3000'], credentials: true }));
     api.use(bodyparser.json());
@@ -74,7 +72,7 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
             res.status(500).send({ code: Code.INTERNAL_SERVER_ERROR, message: "Internal server error" });
         } else {
-            res.status(404).send(err);
+            res.status(404).send({ code: err.code, message: CodeMessage[err.code] || '' });
         }
     };
 

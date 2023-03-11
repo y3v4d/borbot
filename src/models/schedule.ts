@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IMember } from "./member";
 
 export interface IScheduleMember {
     _id: mongoose.Types.ObjectId,
@@ -8,7 +9,7 @@ export interface IScheduleMember {
 }
 
 export interface ISchedule {
-    _id: mongoose.ObjectId,
+    _id: mongoose.Types.ObjectId,
 
     cycle_start: Date,
     last_checked?: Date,
@@ -25,10 +26,21 @@ export interface ISchedule {
     map: mongoose.Types.DocumentArray<IScheduleMember>
 }
 
-const ScheduleSchema = new mongoose.Schema<ISchedule>({
-    cycle_start: { type: Date, required: true },
+export interface IScheduleMemberPopulated {
+    _id?: mongoose.Types.ObjectId,
 
-    length: { type: Number, required: true },
+    member: IMember,
+    index: number
+}
+
+export interface ISchedulePopulated {
+    map: IScheduleMemberPopulated[]
+}
+
+const ScheduleSchema = new mongoose.Schema<ISchedule>({
+    cycle_start: { type: Date, required: true, default: new Date() },
+
+    length: { type: Number, required: true, default: 10 },
 
     last_checked: { type: Date, required: false },
     loggedRaidSuccess: { type: Boolean, required: false },
@@ -46,7 +58,8 @@ const ScheduleSchema = new mongoose.Schema<ISchedule>({
             },
             index: Number
         }], 
-        required: false 
+        required: true,
+        default: [] 
     }
 });
 

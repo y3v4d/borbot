@@ -4,6 +4,7 @@ import { IGuild } from "../models/guild";
 import ScheduleModel from "../models/schedule";
 import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
+import ClanService from "../services/clanService";
 
 function dateToString(date: Date) {
     return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
@@ -39,8 +40,8 @@ export const AnnounceRaids: Action = {
     
             logger(`#announceRaids in ${fetched.name}`);
     
-            const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-            const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
+            const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+            const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
     
             const channel = fetched.channels.cache.get(guild.raid_announcement_channel || "");
             if(!channel || !channel.isText()) {
@@ -81,7 +82,7 @@ export const AnnounceRaids: Action = {
                 ));
             }
     
-            if(!schedule.loggedRaidSuccess && raid.isSuccessful) {
+            if(!schedule.loggedRaidSuccess && raid!.isSuccessful) {
                 schedule.loggedRaidSuccess = true;
     
                 let userToMention = "";
@@ -104,7 +105,7 @@ export const AnnounceRaids: Action = {
                 }
             }
     
-            if(!schedule.loggedBonusRaidAvailable && raid.isBonusAvailable) {
+            if(!schedule.loggedBonusRaidAvailable && raid!.isBonusAvailable) {
                 schedule.loggedBonusRaidAvailable = true;
     
                 await channel.send(composeMessage(
@@ -114,7 +115,7 @@ export const AnnounceRaids: Action = {
                 ));
             }
     
-            if(!schedule.loggedBonusRaidSuccess && raid.isBonusSuccessful) {
+            if(!schedule.loggedBonusRaidSuccess && raid!.isBonusSuccessful) {
                 schedule.loggedBonusRaidSuccess = true;
     
                 await channel.send(composeMessage(

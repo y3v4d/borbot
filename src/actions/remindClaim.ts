@@ -3,7 +3,7 @@ import Action from "../core/action";
 import MemberModel from "../models/member";
 import GuildModel, { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
-import { ClanClass, ClanMember } from "../services/clanService";
+import ClanService, { ClanClass, ClanMember } from "../services/clanService";
 
 async function composeRemainder(client: Bot, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
@@ -46,8 +46,8 @@ export const RemindClaim: Action = {
         // return if the same day or isn't past 11pm
         if(differenceBetweenDays(dateToString(currentDate), lastReminded) === 0 || currentDate.getUTCHours() !== 23) return;
 
-        const clan = await client.clanService.getClanInformation(guild.user_uid, guild.password_hash);
-        const raid = await client.clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan.name);
+        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetchedGuild.channels.fetch(guild.remind_channel || "");
         if(!channel || !channel.isText()) {
@@ -55,12 +55,12 @@ export const RemindClaim: Action = {
             return;
         }
 
-        const missing = clan.members.filter(value => 
-            raid.scores.findIndex(o => o.uid === value.uid) === -1
+        const missing = clan!.members.filter(value => 
+            raid!.scores.findIndex(o => o.uid === value.uid) === -1
         );
 
-        const missingBonus = clan.members.filter(value => 
-            raid.bonusScores.findIndex(o => o.uid === value.uid) === -1
+        const missingBonus = clan!.members.filter(value => 
+            raid!.bonusScores.findIndex(o => o.uid === value.uid) === -1
         );
 
         guild.last_reminded = dateToString(currentDate);
@@ -70,14 +70,14 @@ export const RemindClaim: Action = {
         if(missing.length === 0 && missingBonus.length === 0) return;
 
         let msg = `:coin: **RAID REMINDER ${dateToString(currentDate)}** :coin:\n\n`;
-        if(!raid.isSuccessful) {
+        if(!raid!.isSuccessful) {
             msg += ":crossed_swords: FIRST RAID NOT COMPLETED :crossed_swords:\n\n"
         } else if(missing.length > 0) {
             msg += await composeRemainder(client, missing, ":crossed_swords: FIRST RAID :crossed_swords:");
             msg += '\n';
         }
         
-        if(!raid.isBonusSuccessful) {
+        if(!raid!.isBonusSuccessful) {
             msg += "**:gem: BONUS RAID NOT COMPLETED :gem:**\n\n";
         } else if(missingBonus.length > 0) {
             msg += await composeRemainder(client, missingBonus, ":gem: BONUS RAID :gem:");

@@ -6,7 +6,7 @@ import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
 import GuildModel from "../models/guild";
 import { addCommas } from "../shared/utils";
-import { ClanClass } from "../services/clanService";
+import ClanService, { ClanClass } from "../services/clanService";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -30,7 +30,7 @@ export const Profile: Command = {
             return;
         }
 
-        const clan = await client.clanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
+        const clan = await ClanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
 
         const user = interaction.options.getUser("user", false) || interaction.user;
         const dbMember = await MemberModel.findOne({ guild_uid: user.id });
@@ -44,7 +44,7 @@ export const Profile: Command = {
             return;
         }
 
-        const member = clan.members.find(o => o.uid === dbMember.clan_uid);
+        const member = clan!.members.find(o => o.uid === dbMember.clan_uid);
         if(!member) {
             logger(`/profile Couldn't find clan member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({ 

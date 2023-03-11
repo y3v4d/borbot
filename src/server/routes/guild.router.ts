@@ -4,22 +4,20 @@ import IsInGuild from "../middlewares/isInGuild.middleware";
 
 const GuildRouter = Router();
 
-GuildRouter.get('/:id', IsInGuild, GuildController.getGuildInformation);
+GuildRouter.get('/:id', IsInGuild, GuildController.guild_get);
+GuildRouter.post('/:id', IsInGuild, GuildController.guild_post);
+GuildRouter.delete('/:id', IsInGuild, GuildController.guild_delete);
 
-GuildRouter.post('/:id/setup', IsInGuild, GuildController.setup);
-GuildRouter.post('/:id/unsetup', IsInGuild, GuildController.unsetup);
+GuildRouter.get('/:id/clan/members', IsInGuild, GuildController.guild_clan_members_get);
 
-GuildRouter.get('/:id/members', IsInGuild, GuildController.getGuildMembers);
-GuildRouter.get('/:id/channels', IsInGuild, GuildController.getGuildChannels);
-GuildRouter.get('/:id/roles', IsInGuild, GuildController.getGuildRoles);
+GuildRouter.get('/:id/members', IsInGuild, GuildController.guild_members_get);
+GuildRouter.get('/:id/channels', IsInGuild, GuildController.guild_channels_get);
+GuildRouter.get('/:id/roles', IsInGuild, GuildController.guild_roles_get);
 
-GuildRouter.get('/:id/connected', IsInGuild, GuildController.getConnectedUsers);
-GuildRouter.post('/:id/connected', IsInGuild, GuildController.postConnectedUsers);
+GuildRouter.get('/:id/connected', IsInGuild, GuildController.guild_connected_get);
+GuildRouter.post('/:id/connected', IsInGuild, GuildController.guild_connected_post);
 
-GuildRouter.get('/:id/raid', IsInGuild, GuildController.getRaid);
-GuildRouter.post('/:id/raid', IsInGuild, GuildController.updateRaid);
-
-GuildRouter.get('/:id/schedule', IsInGuild, GuildController.getSchedule);
-GuildRouter.post('/:id/schedule', IsInGuild, GuildController.postSchedule);
+GuildRouter.get('/:id/schedule', IsInGuild, GuildController.guild_schedule_get);
+GuildRouter.post('/:id/schedule', IsInGuild, GuildController.guild_schedule_post);
 
 export default GuildRouter;

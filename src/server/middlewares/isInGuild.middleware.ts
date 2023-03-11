@@ -5,8 +5,7 @@ import { IUserGuild } from "../../models/user";
 import Code from "../../shared/code";
 
 export interface IsInGuildRequest extends Request {
-    guild?: IUserGuild,
-    member?: GuildMember
+    guild?: IUserGuild
 }
 
 export default async function IsInGuild(req: IsInGuildRequest, res: Response, next: NextFunction) {

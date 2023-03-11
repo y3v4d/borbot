@@ -27,4 +27,17 @@ enum Code {
     MEMBER_NOT_EXIST = 4000
 }
 
+export const CodeMessage: { [key: number]: string } = {
+    [Code.USER_NO_TOKEN]: 'Path requires authorization',
+    [Code.USER_NOT_REGISTERED]: 'User not registered',
+    [Code.USER_NOT_IN_GUILD]: 'User is not in guild',
+    [Code.USER_NOT_AN_ADMIN]: 'User is not an admin',
+    [Code.GUILD_REQUIRES_BOT]: 'Guild required bot',
+    [Code.GUILD_ALREADY_SETUP]: 'Guild already setup',
+    [Code.GUILD_NOT_SETUP]: "Guild isn't setup",
+    [Code.GUILD_NO_SCHEDULE]: "Guild doesn't have schedule",
+    [Code.CLAN_INVALID_CREDENTIALS]: 'Invalid clan credentials',
+    [Code.MEMBER_NOT_EXIST]: 'Member do not exist'
+};
+
 export default Code;
