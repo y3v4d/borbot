@@ -2,11 +2,10 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, MessageEmbed } from "discord.js";
 import Bot from "../core/bot";
 import Command from "../core/command";
-import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
-import GuildModel from "../models/guild";
 import { addCommas } from "../shared/utils";
 import ClanService, { ClanClass } from "../services/clanService";
+import GuildService from "../services/guildService";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -20,22 +19,30 @@ export const Profile: Command = {
     run: async function(client: Bot, interaction: BaseCommandInteraction) {
         const guildId = interaction.guildId!;
 
-        const dbGuild = await GuildModel.findOne({ guild_id: guildId });
-        if(!dbGuild) {
+        const guild = await GuildService.getGuild(guildId);
+        if(!guild) {
             await interaction.reply({ 
-                content: "Couldn't find guild in database...", 
+                content: "Guild isn't setup! Contact the administrator.", 
                 ephemeral: true 
             });
 
             return;
         }
 
-        const clan = await ClanService.getClanInformation(dbGuild.user_uid, dbGuild.password_hash);
+        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            await interaction.reply({
+                content: "Couldn't get clan information! Contact the administrator.",
+                ephemeral: true
+            });
+
+            return;
+        }
 
         const user = interaction.options.getUser("user", false) || interaction.user;
-        const dbMember = await MemberModel.findOne({ guild_uid: user.id });
-        if(!dbMember) {
-            logger(`/profile Couldn't find member with guild uid: ${user.id}`, LoggerType.ERROR);
+        const connected = await GuildService.getGuildConnectedMember(guildId, user.id);
+        if(!connected) {
+            logger(`/profile Couldn't find connected member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({
                 content: "You're not connected! Contact the guild administrator :)",
                 ephemeral: true
@@ -44,7 +51,7 @@ export const Profile: Command = {
             return;
         }
 
-        const member = clan!.members.find(o => o.uid === dbMember.clan_uid);
+        const member = clan.members.find(o => o.uid === connected.clan_uid);
         if(!member) {
             logger(`/profile Couldn't find clan member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({ 
@@ -58,14 +65,14 @@ export const Profile: Command = {
         const embed = new MessageEmbed()
             .setColor("#5E81AC")
             .setTitle(`Profile`)
-            .setAuthor({ name: member.nickname, iconURL: (user ? user.avatarURL()! : interaction.user!.avatarURL()!) })
+            .setAuthor({ name: member.nickname, iconURL: (user.avatarURL() || "") })
             .addFields(
                 { name: "Class", value: ClanClass[member.class], inline: true },
                 { name: "Level", value: member.level.toString(), inline: true },
                 { name: "Highest Zone", value: addCommas(member.highestZone), inline: true }
             )
             .setImage('https://i.imgur.com/glzDw4P.gif')
-            .setFooter({ text: "Composed by Mighty Borb", iconURL: client.user!.avatarURL()! });
+            .setFooter({ text: "Composed by Mighty Borb", iconURL: client.user?.avatarURL() || "" });
 
         switch(member.class) {
             case ClanClass.Mage:
