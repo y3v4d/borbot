@@ -98,7 +98,7 @@ namespace GuildService {
     export async function updateGuildConnected(guild_id: string, list: GuildConnectedMember[]) {    
         for(const connected of list) {
             if(connected.guild_uid == '') {
-                await MemberModel.findOneAndDelete({ clan_uid: connected.clan_uid, guild_id: guild_id });
+                await GuildService.removeGuildConnectedMember({ clan_uid: connected.clan_uid, guild_id: guild_id });
             } else {
                 await MemberModel.findOneAndUpdate(
                     { clan_uid: connected.clan_uid, guild_id: guild_id }, 
@@ -107,6 +107,27 @@ namespace GuildService {
                 );
             }
         }
+    }
+
+    export async function removeGuildConnectedMember(member: IMember | { guild_id: string, clan_uid: string }) {
+        const schedule = await GuildService.getGuildSchedule(member.guild_id);
+        if(!schedule) return false;
+
+        let scheduleIndex = -1;
+        if('guild_uid' in member) {
+            scheduleIndex = schedule.map.findIndex(o => o.member._id!.equals(member._id!));
+        } else {
+            scheduleIndex = schedule.map.findIndex(o => o.member.guild_id === member.guild_id && o.member.clan_uid === member.clan_uid);
+        }
+
+        if(scheduleIndex !== -1) {
+            schedule.map.splice(scheduleIndex, 1);
+            await ScheduleModel.updateOne(schedule);
+        }
+        
+        await MemberModel.findOneAndRemove(member);
+        
+        return true;
     }
 
     export async function getGuildSchedule(guild_id: string) {

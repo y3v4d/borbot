@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 export interface IMember {
-    _id: mongoose.Types.ObjectId,
+    _id?: mongoose.Types.ObjectId,
 
     guild_id: string,
 

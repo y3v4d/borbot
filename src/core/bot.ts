@@ -7,6 +7,7 @@ import { ISchedule } from "../models/schedule";
 import ScheduleModel from "../models/schedule";
 import Action from "./action";
 import logger from "../shared/logger";
+import GuildService from "../services/guildService";
 
 interface OngoingAction {
     action: Action,
@@ -25,34 +26,18 @@ export default class Bot extends Client {
     }
 
     protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
-        const dbGuild = await GuildModel.findOne({ guild_id: member.guild.id });
-        if(!dbGuild) {
-            console.warn("Couldn't find guild with id " + member.guild.id);
-            return;
+        try {
+            const connected = await GuildService.getGuildConnectedMember(member.guild.id, member.id);
+            if(!connected) return;
+
+            const result = await GuildService.removeGuildConnectedMember(connected);
+            if(!result) {
+                logger(`Didn't remove member ${member.id} from guild ${member.guild.id} schedule.`);
+                return;
+            }
+        } catch(error: any) {
+            logger(`Error when removing connected member: `, error);
         }
-
-        const dbMember = await MemberModel.findOne({ guild_id: dbGuild.guild_id, guild_uid: member.id });
-        if(!dbMember) {
-            console.warn(`Couldn't find guild member with id ${member.id}`);
-            return;
-        }
-
-        const dbSchedule = (await dbGuild.populate<{ schedule: ISchedule }>('schedule')).schedule;
-        if(!dbSchedule) {
-            console.warn("Couldn't find schedule in guild " + dbGuild.guild_id);
-        } else {
-            const scheduleIndex = dbSchedule.map.findIndex(o => o.member.equals(dbMember._id));
-            if(scheduleIndex === -1) return;
-
-            dbSchedule.map.splice(scheduleIndex, 1);
-            await ScheduleModel.updateOne(dbSchedule);
-
-            console.log(`Removed ${dbMember._id} user from schedule.`);
-        }
-        
-
-        await dbMember.delete();
-        console.log(`Removed member with guild id ${member.id} from the database.`);
     }
 
     protected async onInteractionCreate(interaction: Interaction) {
