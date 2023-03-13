@@ -6,8 +6,6 @@ import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService, { ClanMember } from "../services/clanService";
 
-const CHAT = '983503510479990785';
-
 function composeDate(date: Date) {
     return `${date.getUTCDate().toString().padStart(2, '0')}.` +
             `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}.` +
@@ -94,7 +92,7 @@ export const UpdateChat: Action = {
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
         const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
-        const channel = await fetched.channels.cache.get(CHAT);
+        const channel = await fetched.channels.cache.get(guild.chat_channel || "");
         if(!channel || !channel.isText()) {
             logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
             return;

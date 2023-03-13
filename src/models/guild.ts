@@ -16,6 +16,9 @@ export interface IGuild {
     remind_channel?: string,
     last_reminded?: string,
 
+    milestone_channel?: string,
+    chat_channel?: string,
+
     schedule?: mongoose.Types.ObjectId
 }
 
@@ -34,6 +37,9 @@ const GuildSchema = new mongoose.Schema<IGuild>({
 
     remind_channel: { type: String, required: false },
     last_reminded: { type: String, required: false },
+
+    milestone_channel: { type: String, required: false },
+    chat_channel: { type: String, required: false },
 
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: 'Schedule', required: false }
 });

@@ -29,7 +29,10 @@ const GuildController = {
             raid_fight_role: dbGuild?.raid_fight_role,
             raid_claim_role: dbGuild?.raid_claim_role,
 
-            remind_channel: dbGuild?.remind_channel
+            remind_channel: dbGuild?.remind_channel,
+
+            milestone_channel: dbGuild?.milestone_channel,
+            chat_channel: dbGuild?.chat_channel
         });
     },
 
@@ -41,7 +44,9 @@ const GuildController = {
             raid_announcement_channel: req.body.raid_announcement_channel,
             raid_fight_role: req.body.raid_fight_role,
             raid_claim_role: req.body.raid_claim_role,
-            remind_channel: req.body.remind_channel
+            remind_channel: req.body.remind_channel,
+            milestone_channel: req.body.milestone_channel,
+            chat_channel: req.body.chat_channel
         };
 
         try {
@@ -84,6 +89,24 @@ const GuildController = {
                     message: "Invalid remind channel"
                 });
                 
+                return;
+            }
+
+            if(params.milestone_channel && !await bot.existsCachedGuildChannel(cached, params.milestone_channel)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid milestone channel"
+                });
+
+                return;
+            }
+
+            if(params.chat_channel && !await bot.existsCachedGuildChannel(cached, params.chat_channel)) {
+                res.status(400).send({
+                    code: Code.BAD_REQUEST,
+                    message: "Invalid chat channel"
+                });
+
                 return;
             }
 

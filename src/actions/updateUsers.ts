@@ -1,12 +1,10 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
 import MemberModel from "../models/member";
-import GuildModel, { IGuild } from "../models/guild";
+import { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import { addCommas } from "../shared/utils";
 import ClanService from "../services/clanService";
-
-const MILESTONE_CHANNEL = "908335160171331596";
 
 const MILESTONES = [
     100, 200, 300,
@@ -78,7 +76,7 @@ export const UpdateUsers: Action = {
                 member.save();
 
                 if(lastMilestone !== -1) {
-                    const channel = fetched.channels.cache.get(MILESTONE_CHANNEL);
+                    const channel = await client.getCachedGuildChannel(fetched, guild.milestone_channel || "");
                     if(!channel?.isText()) {
                         logger("#updateUsers Couldn't find announcement channel!", LoggerType.ERROR);
                     } else {

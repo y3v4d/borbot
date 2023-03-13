@@ -29,7 +29,10 @@ export interface GuildUpdateParams {
     raid_fight_role?: string,
     raid_claim_role?: string,
 
-    remind_channel?: string
+    remind_channel?: string,
+
+    milestone_channel?: string,
+    chat_channel?: string
 }
 
 namespace GuildService {
@@ -66,6 +69,14 @@ namespace GuildService {
 
         if(params.remind_channel) {
             guild.remind_channel = params.remind_channel;
+        }
+
+        if(params.milestone_channel) {
+            guild.milestone_channel = params.milestone_channel;
+        }
+
+        if(params.chat_channel) {
+            guild.chat_channel = params.chat_channel;
         }
 
         await GuildModel.updateOne(guild);
