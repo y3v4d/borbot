@@ -62,13 +62,13 @@ export const UpdateSchedule: Action = {
 
             const entry = schedule.map.find(o => o.index === i + 1);
             if(!entry) {
-                message += 'Noone\n';
+                message += `Anyone${prefix}\n`;
                 continue;
             }
 
             const member = clan!.members.find(o => o.uid === entry.member.clan_uid);
             if(!member) {
-                message += 'Noone\n';
+                message += `Anyone${prefix}\n`;
                 logger(`#updateSchedule Couldn't find clan member with uid ${entry.member.clan_uid}!`, LoggerType.WARN);
 
                 continue;

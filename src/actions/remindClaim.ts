@@ -4,6 +4,7 @@ import MemberModel from "../models/member";
 import GuildModel, { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService, { ClanClass, ClanMember } from "../services/clanService";
+import GuildService from "../services/guildService";
 
 async function composeRemainder(client: Bot, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
@@ -49,7 +50,7 @@ export const RemindClaim: Action = {
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
-        const channel = await fetchedGuild.channels.fetch(guild.remind_channel || "");
+        const channel = await fetchedGuild.channels.cache.get(guild.remind_channel || "");
         if(!channel || !channel.isText()) {
             logger(`#remindClaim Couldn't get valid channel`, LoggerType.WARN);
             return;
@@ -64,7 +65,7 @@ export const RemindClaim: Action = {
         );
 
         guild.last_reminded = dateToString(currentDate);
-        await GuildModel.updateOne(guild);
+        await GuildModel.findOneAndUpdate({ guild_id: guild.guild_id }, { last_reminded: guild.last_reminded });
 
         // return if everyone collected
         if(missing.length === 0 && missingBonus.length === 0) return;

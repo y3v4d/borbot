@@ -1,6 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 export interface IGuild {
+    _id?: Types.ObjectId,
+
     guild_id: string,
 
     user_uid: string,

@@ -5,6 +5,7 @@ import { getGuildIconURL, getUserIconURL } from "../../shared/utils";
 import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";
 import Code from "../../shared/code";
 import ClanService from "../../services/clanService";
+import logger from "../../shared/logger";
 
 const GuildController = {
     guild_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
@@ -356,7 +357,6 @@ const GuildController = {
 
     guild_schedule_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
         const GUILD_ID = req.params.id;
-        const bot = req.app.get('bot') as Bot;
 
         try {
             const schedule = await GuildService.getGuildSchedule(GUILD_ID);
@@ -427,6 +427,11 @@ const GuildController = {
             for(const entry of data) {
                 const member = await GuildService.getGuildConnectedMember(GUILD_ID, entry.uid);
                 const isIndexValid = entry.index >= 1 && entry.index <= 10;
+
+                if(entry.uid === '' && isIndexValid) {
+                    list.push({ index: entry.index });
+                    continue;
+                }
 
                 if(member && isIndexValid) {
                     list.push({ index: entry.index, member: member });

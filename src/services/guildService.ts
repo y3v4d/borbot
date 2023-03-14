@@ -1,11 +1,7 @@
-import mongoose, { MergeType, Model } from "mongoose";
-import ClickerHeroesAPI from "../api/clickerheroes";
-import Bot from "../core/bot";
+import { MergeType } from "mongoose";
 import GuildModel, { IGuild } from "../models/guild";
 import MemberModel, { IMember } from "../models/member";
 import ScheduleModel, { ISchedule, ISchedulePopulated } from "../models/schedule";
-import Code from "../shared/code";
-import logger, { LoggerType } from "../shared/logger";
 
 export interface GuildConnectedMember {
     guild_uid: string,
@@ -13,7 +9,7 @@ export interface GuildConnectedMember {
 }
 
 export interface GuildScheduleUpdateEntry {
-    member: IMember,
+    member?: IMember,
     index: number
 }
 
@@ -79,7 +75,7 @@ namespace GuildService {
             guild.chat_channel = params.chat_channel;
         }
 
-        await GuildModel.updateOne(guild);
+        await GuildModel.findOneAndUpdate({ _id: guild._id }, guild);
         return true;
     }
 
@@ -133,7 +129,7 @@ namespace GuildService {
 
         if(scheduleIndex !== -1) {
             schedule.map.splice(scheduleIndex, 1);
-            await ScheduleModel.updateOne(schedule);
+            await ScheduleModel.findOneAndUpdate({ _id: schedule._id }, { map: schedule.map });
         }
         
         await MemberModel.findOneAndRemove(member);
@@ -153,7 +149,7 @@ namespace GuildService {
             dbSchedule = await ScheduleModel.create({ cycle_start: today, length: 10 });
             guild.schedule = dbSchedule._id;
 
-            await GuildModel.updateOne(guild);
+            await GuildModel.findOneAndUpdate({ _id: guild._id }, { schedule: dbSchedule._id });
         }
 
         const populated = await dbSchedule.populate<Pick<ISchedulePopulated, 'map'>>("map.member");
@@ -165,17 +161,18 @@ namespace GuildService {
         if(!dbSchedule) return false;
     
         for(let i = 0; i < 10; ++i) {
-            const member = data.entries.find(o => o.index == i + 1)?.member;
-            if(!member) continue;
+            const entry = data.entries.find(o => o.index == i + 1);
+            if(!entry) continue;
     
-            const entry = dbSchedule.map.find(o => o.index === i + 1);
-            if(!entry) {
-                console.warn(`Didn't find entry with index ${i + 1}. Creating...`);
-                dbSchedule.map.push({ member: member, index: i + 1 });
+            const index = dbSchedule.map.findIndex(o => o.index === i + 1);
+            if(index === -1) {
+                if(entry.member) dbSchedule.map.push({ member: entry.member, index: i + 1 });
                 continue;
+            } else if(entry.member) {
+                dbSchedule.map[index].member = entry.member;
+            } else {
+                dbSchedule.map.splice(index, 1);
             }
-    
-            entry.member = member;
         }
 
         if(data.channel) {
@@ -187,7 +184,7 @@ namespace GuildService {
             dbSchedule.cycle_start = data.cycle_start;
         }
     
-        await ScheduleModel.updateOne(dbSchedule);
+        await ScheduleModel.findOneAndUpdate({ _id: dbSchedule._id }, dbSchedule);
         return true;
     }
 }
