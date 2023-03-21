@@ -1,3 +1,7 @@
+import * as jwt from 'jsonwebtoken';
+import Code from './code';
+import logger, { LoggerType } from './logger';
+
 const CDN_ENDPOINT = 'https://cdn.discordapp.com';
 const UI_ENDPOINT = 'https://ui-avatars.com/api';
 
@@ -44,4 +48,22 @@ export function addCommas(n: number | string) {
     const temp = n.toString();
     
     return temp.length < 5 ? temp : temp.replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+}
+
+export function generateAccessToken(uid: string) {
+    return jwt.sign({ uid: uid }, process.env.TOKEN_SECRET as string, { expiresIn: 3600 });
+}
+
+export function decryptAccessToken(token: string) {
+    return new Promise<{ uid: string }>((resolve, reject) => {
+        jwt.verify(token, process.env.TOKEN_SECRET as string, (err, user) => {
+            if(err) {
+                logger(`Decrypt token error: ${err.message}`, LoggerType.ERROR);
+                reject({ code: Code.TOKEN_ERROR, message: "Token error" });
+                return;
+            }
+    
+            resolve({ uid: (user as jwt.JwtPayload).uid });
+        });
+    });
 }

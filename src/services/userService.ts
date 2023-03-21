@@ -53,14 +53,9 @@ namespace UserService {
         return info;
     }
 
-    export async function getUserGuilds(token: string) {
-        const user = await UserModel.findOne({ token: token });
-        if(!user) {
-            throw {
-                code: Code.USER_NOT_REGISTERED, 
-                message: `User doesn't exist` 
-            };
-        }
+    export async function getUserGuilds(id: string) {
+        const user = await UserModel.findOne({ id: id });
+        if(!user) return null;
 
         const isLastUpdated = user.last_update_guilds && Date.now() - user.last_update_guilds < 60000;
         if(isLastUpdated) {

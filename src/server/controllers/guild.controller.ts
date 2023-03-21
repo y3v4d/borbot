@@ -5,7 +5,6 @@ import { getGuildIconURL, getUserIconURL } from "../../shared/utils";
 import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";
 import Code from "../../shared/code";
 import ClanService from "../../services/clanService";
-import logger from "../../shared/logger";
 
 const GuildController = {
     guild_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
