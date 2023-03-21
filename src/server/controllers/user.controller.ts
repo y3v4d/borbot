@@ -4,7 +4,7 @@ import Code from "../../shared/code";
 import { AuthenticatedRequest } from "../middlewares/authenticateUser.middleware";
 
 const UserController = {
-    async user_information_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    async user_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         res.send(req.user);
     },
     
