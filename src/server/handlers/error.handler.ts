@@ -6,7 +6,7 @@ function ErrorHandler (err: any, req: Request, res: Response, next: NextFunction
     if(err.code === undefined) {
         logger(`Unknown error: ${err.message}`, LoggerType.ERROR);
 
-        res.status(500).send({ code: -1, message: 'Unknown error' });
+        res.status(500).send({ code: -1, message: 'Unkown error' });
         return;
     } else if(err.code === Code.DISCORD_API_ERROR) {
         logger(`Discord call failed with status ${err.status}, path: ${err.path}, message: ${err.data.message}`, LoggerType.ERROR);

@@ -9,6 +9,8 @@ enum Code {
     CLICKERHEROES_API_ERROR = 5,
     CLICKERHEROES_API_FAILED = 6,
 
+    TOKEN_ERROR = 7,
+
     OK = 200,
     BAD_REQUEST = 400,
 

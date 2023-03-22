@@ -4,17 +4,15 @@ import Code from "../../shared/code";
 import { AuthenticatedRequest } from "../middlewares/authenticateUser.middleware";
 
 const UserController = {
-    async user_information_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-        const user = req.user!;
-
-        res.send(user);
+    async user_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+        res.send(req.user);
     },
     
-    async user_guilds_get(req: Request, res: Response, next: NextFunction) {
-        const TOKEN = req.headers.authorization!;
+    async user_guilds_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+        const user = req.user!;
 
         try {
-            const guilds = await UserService.getUserGuilds(TOKEN);
+            const guilds = await UserService.getUserGuilds(user.id);
 
             res.send(guilds);
         } catch(error: any) {
