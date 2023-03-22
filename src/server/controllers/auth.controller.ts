@@ -14,7 +14,7 @@ const AuthController = {
             const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode);
             const user = await DiscordAPI.getUserInformation(oauth.access_token);
 
-            await UserService.createUser({ id: user.id, token: oauth.access_token });
+            await UserService.createOrUpdateUser({ id: user.id, token: oauth.access_token });
 
             const jwtToken = generateAccessToken(user.id);
             res.cookie('token', jwtToken).send({ code: Code.OK, msg: "OK" });

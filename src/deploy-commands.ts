@@ -4,7 +4,7 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import { Commands } from "./commands";
 
-const rest = new REST({ version: '9' }).setToken(process.env.TOKEN!);
+const rest = new REST({ version: '9' }).setToken(process.env.BOT_TOKEN!);
 const commandsData = Commands.map(c => c.data.toJSON());
 
 (async () => {

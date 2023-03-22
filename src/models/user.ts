@@ -12,7 +12,7 @@ export interface IUser {
     id: string,
     token: string,
 
-    guilds?: mongoose.Types.DocumentArray<IUserGuild>,
+    guilds: mongoose.Types.DocumentArray<IUserGuild>,
     last_update_guilds?: number
 }
 
@@ -27,7 +27,8 @@ const UserSchema = new mongoose.Schema<IUser>({
             permissions: String,
             isAdmin: Boolean 
         }],
-        required: false
+        required: true,
+        default: []
     },
     last_update_guilds: { type: Number, required: false }
 });

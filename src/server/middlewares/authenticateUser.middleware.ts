@@ -3,9 +3,10 @@ import UserService from "../../services/userService";
 import Code from "../../shared/code";
 import { decryptAccessToken } from "../../shared/utils";
 import { IUser } from "../../models/user";
+import { HydratedDocument } from "mongoose";
 
 export interface AuthenticatedRequest extends Request {
-    user?: IUser
+    user?: HydratedDocument<IUser>
 }
 
 export default async function AuthenticateUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {

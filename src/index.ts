@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             Intents.FLAGS.GUILD_MEMBERS
         ]});
 
-    await client.login(process.env.TOKEN);
+    await client.login(process.env.BOT_TOKEN);
 
     const api = server(client);
     api.listen(3010, () => {

@@ -19,7 +19,7 @@ const GuildController = {
         res.send({
             id: userGuild.id,
             name: userGuild.name,
-            icon: getGuildIconURL(userGuild),
+            icon: userGuild.icon,
             permissions: userGuild.permissions,
             isAdmin: userGuild.isAdmin,
             is_setup: is_setup,
