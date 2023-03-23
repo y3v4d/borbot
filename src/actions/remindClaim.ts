@@ -1,18 +1,18 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
-import MemberModel from "../models/member";
-import GuildModel, { IGuild } from "../models/guild";
+import { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService, { ClanClass, ClanMember } from "../services/clanService";
 import GuildService from "../services/guildService";
+import { HydratedDocument } from "mongoose";
 
-async function composeRemainder(client: Bot, members: ClanMember[], title: string) {
+async function composeRemainder(guild_id: string, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
 
     for(const member of members) {
         msg += '- ';
 
-        const dbMember = await MemberModel.findOne({ clan_uid: member.uid });
+        const dbMember = await GuildService.getGuildConnectedMember(guild_id, { clan_uid: member.uid });
         msg += (dbMember ? `<@${dbMember.guild_uid}>` : member.nickname);
         msg += ` **The ${ClanClass[member.class]}**\n`;
     }
@@ -32,7 +32,7 @@ function differenceBetweenDays(self: string, other: string) {
 }
 
 export const RemindClaim: Action = {
-    run: async function(client: Bot, guild: IGuild) {
+    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         const fetchedGuild = await client.guilds.cache.get(guild.guild_id);
         if(!fetchedGuild) {
             logger(`#remindClaim Couldn't get guild ${guild.guild_id}`);
@@ -65,7 +65,7 @@ export const RemindClaim: Action = {
         );
 
         guild.last_reminded = dateToString(currentDate);
-        await GuildModel.findOneAndUpdate({ guild_id: guild.guild_id }, { last_reminded: guild.last_reminded });
+        await guild.save();
 
         // return if everyone collected
         if(missing.length === 0 && missingBonus.length === 0) return;
@@ -74,14 +74,14 @@ export const RemindClaim: Action = {
         if(!raid!.isSuccessful) {
             msg += ":crossed_swords: FIRST RAID NOT COMPLETED :crossed_swords:\n\n"
         } else if(missing.length > 0) {
-            msg += await composeRemainder(client, missing, ":crossed_swords: FIRST RAID :crossed_swords:");
+            msg += await composeRemainder(guild.guild_id, missing, ":crossed_swords: FIRST RAID :crossed_swords:");
             msg += '\n';
         }
         
         if(!raid!.isBonusSuccessful) {
             msg += "**:gem: BONUS RAID NOT COMPLETED :gem:**\n\n";
         } else if(missingBonus.length > 0) {
-            msg += await composeRemainder(client, missingBonus, ":gem: BONUS RAID :gem:");
+            msg += await composeRemainder(guild.guild_id, missingBonus, ":gem: BONUS RAID :gem:");
             msg += '\n';
         }
 

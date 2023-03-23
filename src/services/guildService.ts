@@ -44,7 +44,9 @@ namespace GuildService {
 
     export async function getGuild(id: string) {
         const guild = await GuildModel.findOne({ guild_id: id });
-        return guild as IGuild | null;
+        if(!guild) return null;
+
+        return guild;
     }
 
     export async function updateGuild(id: string, params: GuildUpdateParams) {
@@ -75,7 +77,7 @@ namespace GuildService {
             guild.chat_channel = params.chat_channel;
         }
 
-        await GuildModel.findOneAndUpdate({ _id: guild._id }, guild);
+        await guild.save();
         return true;
     }
 
@@ -83,7 +85,7 @@ namespace GuildService {
         const guild = await GuildService.getGuild(id);
         if(!guild) return false;
 
-        await GuildModel.findOneAndRemove(guild);
+        await guild.deleteOne();
         return true;
     }
 
@@ -92,14 +94,16 @@ namespace GuildService {
         return guild !== null;
     }
 
-    export async function getGuildConnectedMember(guild_id: string, member_id: string) {
-        const member = await MemberModel.findOne({ guild_id: guild_id, guild_uid: member_id });
-        return member as IMember | null;
+    export async function getGuildConnectedMember(guild_id: string, params: { guild_uid?: string, clan_uid?: string }) {
+        const member = await MemberModel.findOne({ guild_id: guild_id, guild_uid: params.guild_uid, clan_uid: params.clan_uid });
+        if(!member) return null;
+
+        return member;
     }
 
     export async function getGuildConnected(id: string) {
         const members = await MemberModel.find({ guild_id: id });
-        return members as IMember[];
+        return members;
     }
 
     export async function updateGuildConnected(guild_id: string, list: GuildConnectedMember[]) {    
@@ -108,7 +112,7 @@ namespace GuildService {
                 await GuildService.removeGuildConnectedMember({ clan_uid: connected.clan_uid, guild_id: guild_id });
             } else {
                 await MemberModel.findOneAndUpdate(
-                    { clan_uid: connected.clan_uid, guild_id: guild_id }, 
+                    { clan_uid: connected.clan_uid, guild_id: guild_id },
                     { guild_uid: connected.guild_uid },
                     { upsert: true }
                 );
@@ -129,7 +133,7 @@ namespace GuildService {
 
         if(scheduleIndex !== -1) {
             schedule.map.splice(scheduleIndex, 1);
-            await ScheduleModel.findOneAndUpdate({ _id: schedule._id }, { map: schedule.map });
+            await schedule.updateOne({ map: schedule.map });
         }
         
         await MemberModel.findOneAndRemove(member);
@@ -149,42 +153,42 @@ namespace GuildService {
             dbSchedule = await ScheduleModel.create({ cycle_start: today, length: 10 });
             guild.schedule = dbSchedule._id;
 
-            await GuildModel.findOneAndUpdate({ _id: guild._id }, { schedule: dbSchedule._id });
+            await guild.save();
         }
 
         const populated = await dbSchedule.populate<Pick<ISchedulePopulated, 'map'>>("map.member");
-        return populated as MergeType<ISchedule, Pick<ISchedulePopulated, 'map'>>;
+        return populated;
     }
 
     export async function updateGuildSchedule(id: string, data: GuildScheduleUpdate) {
-        const dbSchedule = await GuildService.getGuildSchedule(id);
-        if(!dbSchedule) return false;
+        const schedule = await GuildService.getGuildSchedule(id);
+        if(!schedule) return false;
     
         for(let i = 0; i < 10; ++i) {
             const entry = data.entries.find(o => o.index == i + 1);
             if(!entry) continue;
     
-            const index = dbSchedule.map.findIndex(o => o.index === i + 1);
+            const index = schedule.map.findIndex(o => o.index === i + 1);
             if(index === -1) {
-                if(entry.member) dbSchedule.map.push({ member: entry.member, index: i + 1 });
+                if(entry.member) schedule.map.push({ member: entry.member, index: i + 1 });
                 continue;
             } else if(entry.member) {
-                dbSchedule.map[index].member = entry.member;
+                schedule.map[index].member = entry.member;
             } else {
-                dbSchedule.map.splice(index, 1);
+                schedule.map.splice(index, 1);
             }
         }
 
         if(data.channel) {
-            dbSchedule.schedule_channel = data.channel;
+            schedule.schedule_channel = data.channel;
         }
 
         if(data.cycle_start) {
             data.cycle_start.setUTCHours(0, 0, 0, 0);
-            dbSchedule.cycle_start = data.cycle_start;
+            schedule.cycle_start = data.cycle_start;
         }
     
-        await ScheduleModel.findOneAndUpdate({ _id: dbSchedule._id }, dbSchedule);
+        await schedule.save();
         return true;
     }
 }

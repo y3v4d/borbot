@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Bot from "../../core/bot";
 import { IsInGuildRequest } from "../middlewares/isInGuild.middleware";
-import { getGuildIconURL, getUserIconURL } from "../../shared/utils";
+import { getUserIconURL } from "../../shared/utils";
 import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";
 import Code from "../../shared/code";
 import ClanService from "../../services/clanService";
@@ -412,7 +412,7 @@ const GuildController = {
 
             const list: GuildScheduleUpdateEntry[] = [];
             for(const entry of data) {
-                const member = await GuildService.getGuildConnectedMember(GUILD_ID, entry.uid);
+                const member = await GuildService.getGuildConnectedMember(GUILD_ID, { guild_uid: entry.uid });
                 const isIndexValid = entry.index >= 1 && entry.index <= 10;
 
                 if(entry.uid === '' && isIndexValid) {

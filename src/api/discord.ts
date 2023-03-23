@@ -89,14 +89,6 @@ namespace DiscordAPI {
             }
         });
     }
-
-    export async function getUserInGuild(token: string, guildID: string) {
-        return await request<any>('get', `users/@me/guilds/${guildID}/member`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-    }
 }
 
 export default DiscordAPI;

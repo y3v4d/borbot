@@ -17,17 +17,8 @@ namespace UserService {
         }
     }
 
-    export async function removeUser(data: { id?: string, token?: string }) {
-        if(!data.id && data.token) {
-            logger("removeUser has to be provided with either id or token");
-            return;
-        }
-
-        if(data.id) {
-            await UserModel.deleteOne({ id: data.id });
-        } else {
-            await UserModel.deleteOne({ token: data.token });
-        }
+    export async function removeUser(id: string) {
+        await UserModel.deleteOne({ id: id });
     }
 
     export async function getUser(id: string) {

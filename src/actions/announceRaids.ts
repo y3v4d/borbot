@@ -1,10 +1,10 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
 import { IGuild } from "../models/guild";
-import ScheduleModel from "../models/schedule";
-import MemberModel from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService from "../services/clanService";
+import { HydratedDocument } from "mongoose";
+import GuildService from "../services/guildService";
 
 function dateToString(date: Date) {
     return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
@@ -30,7 +30,7 @@ function getAbsoluteDate() {
 }
 
 export const AnnounceRaids: Action = {
-    run: async function(client: Bot, guild: IGuild) {
+    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         try {
             const fetched = client.guilds.cache.get(guild.guild_id);
             if(!fetched) {
@@ -49,7 +49,7 @@ export const AnnounceRaids: Action = {
                 return;
             }
     
-            const schedule = await ScheduleModel.findOne(guild.schedule);
+            const schedule = await GuildService.getGuildSchedule(guild.guild_id);
             if(!schedule) {
                 logger("#announceRaids Schedule wasn't setup!", LoggerType.WARN);
                 return;
@@ -89,9 +89,8 @@ export const AnnounceRaids: Action = {
     
                 const cycleDay = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
                 const scheduleMember = schedule.map.find(o => o.index === (cycleDay + 1));
-                if(scheduleMember) {
-                    const memberId = (await MemberModel.findById(scheduleMember.member))!.guild_uid;
-                    userToMention = `${memberId}`;
+                if(scheduleMember && scheduleMember.member) {
+                    userToMention = `${scheduleMember.member.guild_uid}`;
                 }
     
                 if(userToMention.length == 0) {

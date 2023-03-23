@@ -27,7 +27,7 @@ export default class Bot extends Client {
 
     protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
         try {
-            const connected = await GuildService.getGuildConnectedMember(member.guild.id, member.id);
+            const connected = await GuildService.getGuildConnectedMember(member.guild.id, { guild_uid: member.id });
             if(!connected) return;
 
             const result = await GuildService.removeGuildConnectedMember(connected);

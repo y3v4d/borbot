@@ -1,10 +1,11 @@
 import { Guild } from "discord.js";
 import Bot from "../core/bot";
 import Action from "../core/action";
-import GuildModel, { IGuild } from "../models/guild";
-import MemberModel from "../models/member";
+import { IGuild } from "../models/guild";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService, { ClanMember } from "../services/clanService";
+import { HydratedDocument } from "mongoose";
+import GuildService from "../services/guildService";
 
 function composeDate(date: Date) {
     return `${date.getUTCDate().toString().padStart(2, '0')}.` +
@@ -33,7 +34,7 @@ async function processMentions(msg: string, guild: Guild, members: ClanMember[])
             continue;
         }
 
-        const dbMember = await MemberModel.findOne({ clan_uid: clanMember.uid });
+        const dbMember = await GuildService.getGuildConnectedMember(guild.id, { clan_uid: clanMember.uid });
         if(!dbMember) {
             ret += split;
             continue;
@@ -78,7 +79,7 @@ async function processEmoji(msg: string, guild: Guild) {
 }
 
 export const UpdateChat: Action = {
-    run: async function(client: Bot, guild: IGuild) {
+    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         const fetched = await client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateChat Couldn't get guild ${guild.guild_id}`);
@@ -113,7 +114,7 @@ export const UpdateChat: Action = {
         }
 
         guild.last_chat_update = timestamp;
-        await GuildModel.updateOne(guild);
+        await guild.save();
     },
 
     startOnInit: true,

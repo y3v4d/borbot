@@ -1,17 +1,17 @@
 import Bot from "../core/bot";
 import Action from "../core/action";
 import { IGuild } from "../models/guild";
-import ScheduleModel from "../models/schedule";
-import { IMember } from "../models/member";
 import logger, { LoggerType } from "../shared/logger";
 import ClanService from "../services/clanService";
+import { HydratedDocument } from "mongoose";
+import GuildService from "../services/guildService";
 
 function dateToString(date: Date) {
     return `${(date.getUTCDate().toString().padStart(2, '0'))}.${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`;
 }
 
 export const UpdateSchedule: Action = {
-    run: async function(client: Bot, guild: IGuild) {
+    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         const fetched = await client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateSchedule Couldn't get guild with id: ${guild.guild_id}`);
@@ -20,8 +20,7 @@ export const UpdateSchedule: Action = {
 
         logger(`#updateSchedule in ${fetched.name}`);
 
-        const schedule = await ScheduleModel.findOne({ _id: guild.schedule })
-            .populate<{ map: [{ member: IMember, index: number }]}>("map.member");
+        const schedule = await GuildService.getGuildSchedule(guild.guild_id);
         if(!schedule) {
             logger("#updateSchedule Schedule wasn't setup!", LoggerType.WARN);
             return;
