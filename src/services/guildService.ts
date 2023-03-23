@@ -85,7 +85,13 @@ namespace GuildService {
         const guild = await GuildService.getGuild(id);
         if(!guild) return false;
 
+        if(guild.schedule) {
+            await ScheduleModel.deleteOne({ _id: guild.schedule });
+        }
+
+        await MemberModel.deleteMany({ guild_id: id });
         await guild.deleteOne();
+        
         return true;
     }
 
