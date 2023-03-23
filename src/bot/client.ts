@@ -24,7 +24,7 @@ export default class Bot extends Client {
 
     protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
         try {
-            const connected = await GuildService.getGuildConnectedMember(member.guild.id, { guild_uid: member.id });
+            const connected = await GuildService.getGuildConnectedMember({ guild_id: member.guild.id, guild_uid: member.id });
             if(!connected) return;
 
             const result = await GuildService.removeGuildConnectedMember(connected);
@@ -96,6 +96,8 @@ export default class Bot extends Client {
                         o.action.run(this, guild);
                         o.ticks = o.action.timeout;
                     });
+
+                    guild.save();
                 }
             }).catch(error => logger(`ActionRunner: Couldn't fetch guilds, error: `, error));
         }

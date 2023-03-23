@@ -412,7 +412,7 @@ const GuildController = {
 
             const list: GuildScheduleUpdateEntry[] = [];
             for(const entry of data) {
-                const member = await GuildService.getGuildConnectedMember(GUILD_ID, { guild_uid: entry.uid });
+                const member = await GuildService.getGuildConnectedMember({ guild_id: GUILD_ID, guild_uid: entry.uid });
                 const isIndexValid = entry.index >= 1 && entry.index <= 10;
 
                 if(entry.uid === '' && isIndexValid) {
