@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, MessageEmbed } from "discord.js";
-import Bot from "../core/bot";
+import Bot from "../client";
 import Command from "../core/command";
-import logger, { LoggerType } from "../shared/logger";
-import { addCommas } from "../shared/utils";
-import ClanService, { ClanClass } from "../services/clanService";
-import GuildService from "../services/guildService";
+import logger, { LoggerType } from "../../shared/logger";
+import { addCommas } from "../../shared/utils";
+import ClanService, { ClanClass } from "../../services/clanService";
+import GuildService from "../../services/guildService";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -40,7 +40,7 @@ export const Profile: Command = {
         }
 
         const user = interaction.options.getUser("user", false) || interaction.user;
-        const connected = await GuildService.getGuildConnectedMember(guildId, user.id);
+        const connected = await GuildService.getGuildConnectedMember(guildId, { guild_uid: user.id });
         if(!connected) {
             logger(`/profile Couldn't find connected member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({

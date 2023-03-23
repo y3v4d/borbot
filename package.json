@@ -1,6 +1,6 @@
 {
   "name": "borbot",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Bot for managing Clicker Heroes clan in Discord server",
   "main": "dist/index.js",
   "scripts": {
@@ -31,7 +31,8 @@
     "dotenv": "^15.0.0",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
-    "mongoose": "^6.3.1",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.2",
     "text-table": "^0.2.0"
   },
   "devDependencies": {
@@ -39,6 +40,7 @@
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/express-session": "^1.17.5",
+    "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^17.0.25",
     "@types/text-table": "^0.2.2",
     "ts-node": "^10.7.0",

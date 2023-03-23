@@ -1,3 +1,7 @@
+import * as jwt from 'jsonwebtoken';
+import Code from './code';
+import logger, { LoggerType } from './logger';
+
 const CDN_ENDPOINT = 'https://cdn.discordapp.com';
 const UI_ENDPOINT = 'https://ui-avatars.com/api';
 
@@ -44,4 +48,44 @@ export function addCommas(n: number | string) {
     const temp = n.toString();
     
     return temp.length < 5 ? temp : temp.replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+}
+
+export function generateAccessToken(uid: string) {
+    return jwt.sign({ uid: uid }, process.env.TOKEN_SECRET as string, { expiresIn: 3600 });
+}
+
+export function decryptAccessToken(token: string) {
+    return new Promise<{ uid: string }>((resolve, reject) => {
+        jwt.verify(token, process.env.TOKEN_SECRET as string, (err, user) => {
+            if(err) {
+                logger(`Decrypt token error: ${err.message}`, LoggerType.ERROR);
+                reject({ code: Code.TOKEN_ERROR, message: "Token error" });
+                return;
+            }
+    
+            resolve({ uid: (user as jwt.JwtPayload).uid });
+        });
+    });
+}
+
+export function getDateMidnight(date = new Date()) {
+    date.setUTCHours(0, 0, 0, 0);
+
+    return date;
+}
+
+export function dateToString(date: Date, printHours = false) {
+    const year = date.getUTCFullYear().toString();
+    const month = date.getUTCMonth().toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+
+    const hour = date.getUTCHours().toString().padStart(2, '0');
+    const minute = date.getUTCMinutes().toString().padStart(2, '0');
+    const second = date.getUTCSeconds().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day}` + (printHours ? ` ${hour}:${minute}:${second}` : '');
+}
+
+export function dateDifference(self: Date, other: Date) {
+    return (self.getTime() - other.getTime()) / 86400000;
 }

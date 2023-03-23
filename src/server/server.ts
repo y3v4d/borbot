@@ -3,9 +3,9 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 
-import Bot from "../core/bot";
+import Bot from "../bot/client";
 import AuthRouter from './routes/auth.router';
-import MeRouter from './routes/me.router';
+import UserRouter from './routes/user.router';
 import GuildRouter from './routes/guild.router';
 import ErrorHandler from './handlers/error.handler';
 
@@ -22,7 +22,7 @@ function server(client: Bot) {
     server.use(cookieParser());
 
     server.use('/api/auth', AuthRouter);
-    server.use('/api/me', MeRouter);
+    server.use('/api/user', UserRouter);
     server.use('/api/guilds', GuildRouter);
 
     server.use(ErrorHandler);

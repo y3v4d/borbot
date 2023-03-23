@@ -16,7 +16,7 @@ export interface IGuild {
     last_chat_update?: number,
 
     remind_channel?: string,
-    last_reminded?: string,
+    last_reminded?: Date,
 
     milestone_channel?: string,
     chat_channel?: string,
@@ -38,7 +38,7 @@ const GuildSchema = new mongoose.Schema<IGuild>({
     last_chat_update: { type: Number, required: false },
 
     remind_channel: { type: String, required: false },
-    last_reminded: { type: String, required: false },
+    last_reminded: { type: Date, required: false },
 
     milestone_channel: { type: String, required: false },
     chat_channel: { type: String, required: false },

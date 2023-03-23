@@ -1,22 +1,25 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import UserService from "../../services/userService";
 import { IUserGuild } from "../../models/user";
 import Code from "../../shared/code";
+import { AuthenticatedRequest } from "./authenticateUser.middleware";
 
-export interface IsInGuildRequest extends Request {
+export interface IsInGuildRequest extends AuthenticatedRequest {
     guild?: IUserGuild
 }
 
 export default async function IsInGuild(req: IsInGuildRequest, res: Response, next: NextFunction) {
     const guild_id = req.params.id;
-    const token = req.headers.authorization;
-    if(!token) {
-        res.status(401).send({ code: Code.USER_NO_TOKEN, message: "Path required authorization"});
-        return;
-    }
+    const user = req.user!;
 
     try {
-        const guilds = await UserService.getUserGuilds(token);
+        const guilds = await UserService.getUserUpdatedGuilds(user);
+        if(!guilds) {
+            return res.status(403).send({
+                code: Code.USER_NOT_REGISTERED, 
+                message: `Invalid user` 
+            });
+        }
         
         const guild = guilds.find(o => o.id === guild_id);
         if(!guild) {

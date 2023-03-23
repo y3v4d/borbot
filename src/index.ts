@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Intents } from "discord.js";
 
-import Bot from './core/bot';
+import Bot from './bot/client';
 import mongoose from 'mongoose';
 import logger, { LoggerType } from './shared/logger';
 import server from './server/server';
@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
             Intents.FLAGS.GUILD_MEMBERS
         ]});
 
-    await client.login(process.env.TOKEN);
+    await client.login(process.env.BOT_TOKEN);
 
     const api = server(client);
     api.listen(3010, () => {

@@ -1,11 +1,8 @@
-import { Client, ClientOptions, Guild, GuildMember, Interaction, Message, PartialGuildMember } from "discord.js";
-import { Actions } from "../actions";
-import { Commands } from "../commands";
+import { Client, ClientOptions, Guild, GuildMember, Interaction, PartialGuildMember } from "discord.js";
+import { Actions } from "./actions";
+import { Commands } from "./commands";
 import GuildModel from "../models/guild";
-import MemberModel from "../models/member";
-import { ISchedule } from "../models/schedule";
-import ScheduleModel from "../models/schedule";
-import Action from "./action";
+import Action from "./core/action";
 import logger from "../shared/logger";
 import GuildService from "../services/guildService";
 
@@ -27,7 +24,7 @@ export default class Bot extends Client {
 
     protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
         try {
-            const connected = await GuildService.getGuildConnectedMember(member.guild.id, member.id);
+            const connected = await GuildService.getGuildConnectedMember(member.guild.id, { guild_uid: member.id });
             if(!connected) return;
 
             const result = await GuildService.removeGuildConnectedMember(connected);

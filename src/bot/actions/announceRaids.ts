@@ -1,36 +1,23 @@
-import Bot from "../core/bot";
+import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../models/guild";
-import ScheduleModel from "../models/schedule";
-import MemberModel from "../models/member";
-import logger, { LoggerType } from "../shared/logger";
-import ClanService from "../services/clanService";
-
-function dateToString(date: Date) {
-    return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
-}
+import { IGuild } from "../../models/guild";
+import logger, { LoggerType } from "../../shared/logger";
+import ClanService from "../../services/clanService";
+import { HydratedDocument } from "mongoose";
+import GuildService from "../../services/guildService";
+import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
+import { roleMention, userMention } from "@discordjs/builders";
 
 function composeMessage(date: Date, rank: string, msg: string) {
-    return `<@&${rank}> **${dateToString(date)}\n${msg}**`;
+    return `${roleMention(rank)} **${dateToString(date)}\n${msg}**`;
 }
 
 function composeBonusMessage(date: Date, id: string, msg: string) {
-    return `<@${id}> **${dateToString(date)}\n${msg}**`;
-}
-
-function differenceBetweenDateInDays(self: Date, other: Date) {
-    return (self.getTime() - other.getTime()) / 86400000;
-}
-
-function getAbsoluteDate() {
-    const date = new Date();
-    date.setUTCHours(0, 0, 0, 0);
-
-    return date;
+    return `${userMention(id)} **${dateToString(date)}\n${msg}**`;
 }
 
 export const AnnounceRaids: Action = {
-    run: async function(client: Bot, guild: IGuild) {
+    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         try {
             const fetched = client.guilds.cache.get(guild.guild_id);
             if(!fetched) {
@@ -49,17 +36,17 @@ export const AnnounceRaids: Action = {
                 return;
             }
     
-            const schedule = await ScheduleModel.findOne(guild.schedule);
+            const schedule = await GuildService.getGuildSchedule(guild.guild_id);
             if(!schedule) {
                 logger("#announceRaids Schedule wasn't setup!", LoggerType.WARN);
                 return;
             }
     
-            const currentDate = getAbsoluteDate();
+            const currentDate = getDateMidnight();
             const checkedToday = schedule.last_checked && schedule.last_checked.getTime() === currentDate.getTime();
 
             if(!checkedToday) {
-                const diff = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
+                const diff = dateDifference(currentDate, schedule.cycle_start);
     
                 if(diff >= 10 || diff < 0) {
                     const cycles = Math.floor(diff / 10);
@@ -87,11 +74,10 @@ export const AnnounceRaids: Action = {
     
                 let userToMention = "";
     
-                const cycleDay = differenceBetweenDateInDays(currentDate, schedule.cycle_start);
+                const cycleDay = dateDifference(currentDate, schedule.cycle_start);
                 const scheduleMember = schedule.map.find(o => o.index === (cycleDay + 1));
-                if(scheduleMember) {
-                    const memberId = (await MemberModel.findById(scheduleMember.member))!.guild_uid;
-                    userToMention = `${memberId}`;
+                if(scheduleMember && scheduleMember.member) {
+                    userToMention = `${scheduleMember.member.guild_uid}`;
                 }
     
                 if(userToMention.length == 0) {

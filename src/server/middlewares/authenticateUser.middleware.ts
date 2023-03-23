@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import UserService from "../../services/userService";
 import Code from "../../shared/code";
-import DiscordAPI from "../../api/discord";
+import { decryptAccessToken } from "../../shared/utils";
+import { IUser } from "../../models/user";
+import { HydratedDocument } from "mongoose";
 
 export interface AuthenticatedRequest extends Request {
-    user?: DiscordAPI.UserInformationResponse
+    user?: HydratedDocument<IUser>
 }
 
 export default async function AuthenticateUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -15,7 +17,14 @@ export default async function AuthenticateUser(req: AuthenticatedRequest, res: R
     }
 
     try {
-        const user = await UserService.getUserInformation(TOKEN);
+        const payload = await decryptAccessToken(TOKEN);
+
+        const user = await UserService.getUser(payload.uid);
+        if(!user) {
+            next({ code: Code.USER_NOT_REGISTERED });
+            return;
+        }
+
         req.user = user;
 
         next();

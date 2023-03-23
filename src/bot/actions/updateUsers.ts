@@ -1,10 +1,11 @@
-import Bot from "../core/bot";
+import Bot from "../client";
 import Action from "../core/action";
-import MemberModel from "../models/member";
-import { IGuild } from "../models/guild";
-import logger, { LoggerType } from "../shared/logger";
-import { addCommas } from "../shared/utils";
-import ClanService from "../services/clanService";
+import { IGuild } from "../../models/guild";
+import logger, { LoggerType } from "../../shared/logger";
+import { addCommas } from "../../shared/utils";
+import ClanService from "../../services/clanService";
+import { HydratedDocument } from "mongoose";
+import GuildService from "../../services/guildService";
 
 const MILESTONES = [
     100, 200, 300,
@@ -50,7 +51,7 @@ export const UpdateUsers: Action = {
     startOnInit: true,
     repeat: true,
 
-    async run(client: Bot, guild: IGuild) {
+    async run(client: Bot, guild: HydratedDocument<IGuild>) {
         const fetched = client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateUsers Couldn't find guild ${guild.guild_id}`);
@@ -59,7 +60,7 @@ export const UpdateUsers: Action = {
         
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
 
-        const members = await MemberModel.find({ guild_id: guild.guild_id });
+        const members = await GuildService.getGuildConnected(guild.guild_id);
         const fetchedMembers = await fetched.members.fetch();
         for(const member of members) {
             const clanMember = clan!.members.find(o => o.uid === member.clan_uid);
@@ -90,8 +91,6 @@ export const UpdateUsers: Action = {
             const dcMember = fetchedMembers.get(member.guild_uid);
             if(dcMember && dcMember.manageable) {
                 dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
-            } else {
-                logger(`#updateUsers User ${dcMember?.nickname} couldn't be updated!`, LoggerType.WARN);
             }
         }
     }
