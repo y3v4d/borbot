@@ -91,8 +91,6 @@ export const UpdateUsers: Action = {
             const dcMember = fetchedMembers.get(member.guild_uid);
             if(dcMember && dcMember.manageable) {
                 dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
-            } else {
-                logger(`#updateUsers User ${dcMember?.nickname} couldn't be updated!`, LoggerType.WARN);
             }
         }
     }

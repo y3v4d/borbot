@@ -67,3 +67,25 @@ export function decryptAccessToken(token: string) {
         });
     });
 }
+
+export function getDateMidnight(date = new Date()) {
+    date.setUTCHours(0, 0, 0, 0);
+
+    return date;
+}
+
+export function dateToString(date: Date, printHours = false) {
+    const year = date.getUTCFullYear().toString();
+    const month = date.getUTCMonth().toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+
+    const hour = date.getUTCHours().toString().padStart(2, '0');
+    const minute = date.getUTCMinutes().toString().padStart(2, '0');
+    const second = date.getUTCSeconds().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day}` + (printHours ? ` ${hour}:${minute}:${second}` : '');
+}
+
+export function dateDifference(self: Date, other: Date) {
+    return (self.getTime() - other.getTime()) / 86400000;
+}

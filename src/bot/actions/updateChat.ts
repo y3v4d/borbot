@@ -6,15 +6,7 @@ import logger, { LoggerType } from "../../shared/logger";
 import ClanService, { ClanMember } from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
-
-function composeDate(date: Date) {
-    return `${date.getUTCDate().toString().padStart(2, '0')}.` +
-            `${(date.getUTCMonth() + 1).toString().padStart(2, '0')}.` +
-            `${date.getUTCFullYear()} ` +
-            `${date.getUTCHours().toString().padStart(2, '0')}:` +
-            `${date.getUTCMinutes().toString().padStart(2, '0')}:` +
-            `${date.getUTCSeconds().toString().padStart(2, '0')}`; 
-}
+import { dateToString } from "../../shared/utils";
 
 async function processMentions(msg: string, guild: Guild, members: ClanMember[]) {
     const splits = msg.split(/(@\w*)/g);
@@ -104,9 +96,11 @@ export const UpdateChat: Action = {
                 let processed = await processMentions(msg.content, fetched, clan!.members);
                 processed = await processEmoji(processed, fetched);
 
+                const nickname = clan!.members.find(o => o.uid === msg.uid)?.nickname || "Unkown";
                 const date = new Date(msg.timestamp * 1000);
+                
                 await channel.send({
-                    content: `> **${clan!.members.find(o => o.uid === msg.uid)?.nickname || "Unkown"} ${composeDate(date)}**\n> ${processed}`
+                    content: `> **${nickname} ${dateToString(date, true)}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;

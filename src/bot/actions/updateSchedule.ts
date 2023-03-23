@@ -5,10 +5,7 @@ import logger, { LoggerType } from "../../shared/logger";
 import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
-
-function dateToString(date: Date) {
-    return `${(date.getUTCDate().toString().padStart(2, '0'))}.${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`;
-}
+import { dateToString } from "../../shared/utils";
 
 export const UpdateSchedule: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {

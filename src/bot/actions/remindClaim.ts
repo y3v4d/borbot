@@ -5,6 +5,7 @@ import logger, { LoggerType } from "../../shared/logger";
 import ClanService, { ClanClass, ClanMember } from "../../services/clanService";
 import GuildService from "../../services/guildService";
 import { HydratedDocument } from "mongoose";
+import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 
 async function composeRemainder(guild_id: string, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
@@ -20,17 +21,6 @@ async function composeRemainder(guild_id: string, members: ClanMember[], title: 
     return msg;
 }
 
-function dateToString(date: Date) {
-    return `${date.getUTCFullYear().toString()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${(date.getUTCDate().toString().padStart(2, '0'))}`;
-}
-
-function differenceBetweenDays(self: string, other: string) {
-    return Math.round(
-        (new Date(self).getTime() - new Date(other).getTime()) /
-        86400000 // MS in day
-    );
-}
-
 export const RemindClaim: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
         const fetchedGuild = await client.guilds.cache.get(guild.guild_id);
@@ -41,11 +31,11 @@ export const RemindClaim: Action = {
 
         logger(`#remindClaim in ${fetchedGuild.name}`);
 
-        const lastReminded = (guild.last_reminded === undefined ? "2000-01-01" : guild.last_reminded);
+        const lastReminded = (guild.last_reminded === undefined ? new Date("2000-01-01") : guild.last_reminded);
         const currentDate = new Date(Date.now());
 
         // return if the same day or isn't past 11pm
-        if(differenceBetweenDays(dateToString(currentDate), lastReminded) === 0 || currentDate.getUTCHours() !== 23) return;
+        if(Math.round(dateDifference(currentDate, lastReminded)) === 0 || currentDate.getUTCHours() !== 23) return;
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
@@ -64,7 +54,7 @@ export const RemindClaim: Action = {
             raid!.bonusScores.findIndex(o => o.uid === value.uid) === -1
         );
 
-        guild.last_reminded = dateToString(currentDate);
+        guild.last_reminded = getDateMidnight(currentDate);
         await guild.save();
 
         // return if everyone collected
