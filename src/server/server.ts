@@ -3,7 +3,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 
-import Bot from "../core/bot";
+import Bot from "../bot/client";
 import AuthRouter from './routes/auth.router';
 import UserRouter from './routes/user.router';
 import GuildRouter from './routes/guild.router';

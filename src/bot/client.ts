@@ -1,11 +1,8 @@
-import { Client, ClientOptions, Guild, GuildMember, Interaction, Message, PartialGuildMember } from "discord.js";
-import { Actions } from "../actions";
-import { Commands } from "../commands";
+import { Client, ClientOptions, Guild, GuildMember, Interaction, PartialGuildMember } from "discord.js";
+import { Actions } from "./actions";
+import { Commands } from "./commands";
 import GuildModel from "../models/guild";
-import MemberModel from "../models/member";
-import { ISchedule } from "../models/schedule";
-import ScheduleModel from "../models/schedule";
-import Action from "./action";
+import Action from "./core/action";
 import logger from "../shared/logger";
 import GuildService from "../services/guildService";
 

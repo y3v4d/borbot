@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction } from "discord.js";
-import Bot from "../core/bot";
+import Bot from "../client";
 import Command from "../core/command";
 import table from "text-table";
-import { addCommas } from "../shared/utils";
-import ClanService, { ClanClass } from "../services/clanService";
-import GuildService from "../services/guildService";
+import { addCommas } from "../../shared/utils";
+import ClanService, { ClanClass } from "../../services/clanService";
+import GuildService from "../../services/guildService";
 
 export const Clan: Command = {
     data: new SlashCommandBuilder()

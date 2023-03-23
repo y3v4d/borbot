@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BaseCommandInteraction, MessageEmbed } from "discord.js";
-import Bot from "../core/bot";
+import Bot from "../client";
 import Command from "../core/command";
-import logger, { LoggerType } from "../shared/logger";
-import { addCommas } from "../shared/utils";
-import ClanService, { ClanClass } from "../services/clanService";
-import GuildService from "../services/guildService";
+import logger, { LoggerType } from "../../shared/logger";
+import { addCommas } from "../../shared/utils";
+import ClanService, { ClanClass } from "../../services/clanService";
+import GuildService from "../../services/guildService";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()

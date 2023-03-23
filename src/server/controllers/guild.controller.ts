@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import Bot from "../../core/bot";
+import Bot from "../../bot/client";
 import { IsInGuildRequest } from "../middlewares/isInGuild.middleware";
 import { getUserIconURL } from "../../shared/utils";
 import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";

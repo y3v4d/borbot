@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Intents } from "discord.js";
 
-import Bot from './core/bot';
+import Bot from './bot/client';
 import mongoose from 'mongoose';
 import logger, { LoggerType } from './shared/logger';
 import server from './server/server';

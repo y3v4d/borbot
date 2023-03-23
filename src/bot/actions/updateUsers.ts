@@ -1,11 +1,11 @@
-import Bot from "../core/bot";
+import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../models/guild";
-import logger, { LoggerType } from "../shared/logger";
-import { addCommas } from "../shared/utils";
-import ClanService from "../services/clanService";
+import { IGuild } from "../../models/guild";
+import logger, { LoggerType } from "../../shared/logger";
+import { addCommas } from "../../shared/utils";
+import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../services/guildService";
+import GuildService from "../../services/guildService";
 
 const MILESTONES = [
     100, 200, 300,

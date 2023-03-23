@@ -1,11 +1,11 @@
 import { Guild } from "discord.js";
-import Bot from "../core/bot";
+import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../models/guild";
-import logger, { LoggerType } from "../shared/logger";
-import ClanService, { ClanMember } from "../services/clanService";
+import { IGuild } from "../../models/guild";
+import logger, { LoggerType } from "../../shared/logger";
+import ClanService, { ClanMember } from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../services/guildService";
+import GuildService from "../../services/guildService";
 
 function composeDate(date: Date) {
     return `${date.getUTCDate().toString().padStart(2, '0')}.` +

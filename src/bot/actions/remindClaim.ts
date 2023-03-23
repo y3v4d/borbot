@@ -1,9 +1,9 @@
-import Bot from "../core/bot";
+import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../models/guild";
-import logger, { LoggerType } from "../shared/logger";
-import ClanService, { ClanClass, ClanMember } from "../services/clanService";
-import GuildService from "../services/guildService";
+import { IGuild } from "../../models/guild";
+import logger, { LoggerType } from "../../shared/logger";
+import ClanService, { ClanClass, ClanMember } from "../../services/clanService";
+import GuildService from "../../services/guildService";
 import { HydratedDocument } from "mongoose";
 
 async function composeRemainder(guild_id: string, members: ClanMember[], title: string) {
