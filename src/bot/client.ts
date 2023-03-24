@@ -90,12 +90,12 @@ export default class Bot extends Client {
             });
             if(list.length === 0) return;
             
-            GuildModel.find().then(guilds => {
+            GuildModel.find().then(async guilds => {
                 for(const guild of guilds) {
-                    list.forEach(o => {
-                        o.action.run(this, guild);
-                        o.ticks = o.action.timeout;
-                    });
+                    for(const action of list) {
+                        await action.action.run(this, guild);
+                        action.ticks = action.action.timeout;
+                    }
 
                     guild.save();
                 }
