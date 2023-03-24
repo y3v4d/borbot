@@ -100,8 +100,8 @@ namespace GuildService {
         return guild !== null;
     }
 
-    export async function getGuildConnectedMember(guild_id: string, params: { guild_uid?: string, clan_uid?: string }) {
-        const member = await MemberModel.findOne({ guild_id: guild_id, guild_uid: params.guild_uid, clan_uid: params.clan_uid });
+    export async function getGuildConnectedMember(params: { guild_id: string, guild_uid?: string, clan_uid?: string }) {
+        const member = await MemberModel.findOne(params);
         if(!member) return null;
 
         return member;

@@ -13,7 +13,8 @@ async function composeRemainder(guild_id: string, members: ClanMember[], title: 
     for(const member of members) {
         msg += '- ';
 
-        const dbMember = await GuildService.getGuildConnectedMember(guild_id, { clan_uid: member.uid });
+        const dbMember = await GuildService.getGuildConnectedMember({ guild_id: guild_id, clan_uid: member.uid });
+        if(!dbMember) console.log('didnt dint');
         msg += (dbMember ? `<@${dbMember.guild_uid}>` : member.nickname);
         msg += ` **The ${ClanClass[member.class]}**\n`;
     }
@@ -35,7 +36,7 @@ export const RemindClaim: Action = {
         const currentDate = new Date(Date.now());
 
         // return if the same day or isn't past 11pm
-        if(Math.round(dateDifference(currentDate, lastReminded)) === 0 || currentDate.getUTCHours() !== 23) return;
+        if(Math.floor(dateDifference(currentDate, lastReminded)) === 0 || currentDate.getUTCHours() !== 23) return;
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
@@ -55,7 +56,6 @@ export const RemindClaim: Action = {
         );
 
         guild.last_reminded = getDateMidnight(currentDate);
-        await guild.save();
 
         // return if everyone collected
         if(missing.length === 0 && missingBonus.length === 0) return;

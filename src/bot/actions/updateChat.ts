@@ -26,7 +26,7 @@ async function processMentions(msg: string, guild: Guild, members: ClanMember[])
             continue;
         }
 
-        const dbMember = await GuildService.getGuildConnectedMember(guild.id, { clan_uid: clanMember.uid });
+        const dbMember = await GuildService.getGuildConnectedMember({ guild_id: guild.id, clan_uid: clanMember.uid });
         if(!dbMember) {
             ret += split;
             continue;
@@ -108,7 +108,6 @@ export const UpdateChat: Action = {
         }
 
         guild.last_chat_update = timestamp;
-        await guild.save();
     },
 
     startOnInit: true,

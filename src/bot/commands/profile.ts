@@ -40,7 +40,7 @@ export const Profile: Command = {
         }
 
         const user = interaction.options.getUser("user", false) || interaction.user;
-        const connected = await GuildService.getGuildConnectedMember(guildId, { guild_uid: user.id });
+        const connected = await GuildService.getGuildConnectedMember({ guild_id: guildId, guild_uid: user.id });
         if(!connected) {
             logger(`/profile Couldn't find connected member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({
