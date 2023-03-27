@@ -33,12 +33,12 @@ const AuthController = {
         const code = req.query.code;
         
         res.set('Content-Type', 'text/html');
-        res.send(Buffer.from(`<script>window.opener.postMessage("${code}", ${process.env.FRONTEND_ADDRESS});window.close();</script>`));
+        res.send(Buffer.from(`<script>window.opener.postMessage("${code}", "${process.env.FRONTEND_ADDRESS}");window.close();</script>`));
     },
     
     discord_auth_bot_callback: function(req: Request, res: Response) {
         res.set('Content-Type', 'text/html');
-        res.send(Buffer.from(`<script>window.opener.postMessage("OK", ${process.env.FRONTEND_ADDRESS});window.close();</script>`));
+        res.send(Buffer.from(`<script>window.opener.postMessage("OK", "${process.env.FRONTEND_ADDRESS}");window.close();</script>`));
     },
 }
 
