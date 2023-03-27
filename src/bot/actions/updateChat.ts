@@ -77,12 +77,14 @@ export const UpdateChat: Action = {
             logger(`#updateChat Couldn't get guild ${guild.guild_id}`);
             return;
         }
-        
-        logger(`#updateChat in ${fetched.name}`);
 
         let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateChat Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
         const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetched.channels.cache.get(guild.chat_channel || "");
@@ -108,6 +110,8 @@ export const UpdateChat: Action = {
         }
 
         guild.last_chat_update = timestamp;
+
+        logger(`#updateChat in ${fetched.name}`);
     },
 
     startOnInit: true,

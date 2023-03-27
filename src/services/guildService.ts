@@ -126,12 +126,12 @@ namespace GuildService {
         }
     }
 
-    export async function removeGuildConnectedMember(member: IMember | { guild_id: string, clan_uid: string }) {
+    export async function removeGuildConnectedMember(member: IMember | { guild_id: string, guild_uid?: string, clan_uid?: string }) {
         const schedule = await GuildService.getGuildSchedule(member.guild_id);
         if(!schedule) return false;
 
         let scheduleIndex = -1;
-        if('guild_uid' in member) {
+        if('_id' in member) {
             scheduleIndex = schedule.map.findIndex(o => o.member._id!.equals(member._id!));
         } else {
             scheduleIndex = schedule.map.findIndex(o => o.member.guild_id === member.guild_id && o.member.clan_uid === member.clan_uid);

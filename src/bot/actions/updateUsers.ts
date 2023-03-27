@@ -60,6 +60,10 @@ export const UpdateUsers: Action = {
         }
         
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateUsers Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
 
         const members = await GuildService.getGuildConnected(guild.guild_id);
         const fetchedMembers = await fetched.members.fetch();
@@ -94,5 +98,7 @@ export const UpdateUsers: Action = {
                 dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
             }
         }
+
+        logger(`#updateUsers in ${fetched.name}`);
     }
 };

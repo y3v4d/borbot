@@ -3,7 +3,7 @@ import { Actions } from "./actions";
 import { Commands } from "./commands";
 import GuildModel from "../models/guild";
 import Action from "./core/action";
-import logger from "../shared/logger";
+import logger, { LoggerType } from "../shared/logger";
 import GuildService from "../services/guildService";
 
 interface OngoingAction {
@@ -20,37 +20,6 @@ export default class Bot extends Client {
         this.on('ready', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
         this.on('guildMemberRemove', this.onGuildMemberRemove.bind(this));
-    }
-
-    protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
-        try {
-            const connected = await GuildService.getGuildConnectedMember({ guild_id: member.guild.id, guild_uid: member.id });
-            if(!connected) return;
-
-            const result = await GuildService.removeGuildConnectedMember(connected);
-            if(!result) {
-                logger(`Didn't remove member ${member.id} from guild ${member.guild.id} schedule.`);
-                return;
-            }
-        } catch(error: any) {
-            logger(`Error when removing connected member: `, error);
-        }
-    }
-
-    protected async onInteractionCreate(interaction: Interaction) {
-        if(!interaction.isCommand()) return;
-
-        const cmd = Commands.find(c => c.data.name === interaction.commandName);
-        if(!cmd) {
-            await interaction.reply({
-                content: "Couldn't find command runner...",
-                ephemeral: true
-            });
-
-            return;
-        }
-
-        await cmd.run(this, interaction);
     }
 
     protected async onReady() {
@@ -78,7 +47,31 @@ export default class Bot extends Client {
         this.intializeActions(Actions);
     }
 
-    protected intializeActions(actions: Action[]) {
+    protected async onInteractionCreate(interaction: Interaction) {
+        if(!interaction.isCommand()) return;
+
+        const cmd = Commands.find(c => c.data.name === interaction.commandName);
+        if(!cmd) {
+            await interaction.reply({
+                content: "Couldn't find command runner...",
+                ephemeral: true
+            });
+
+            return;
+        }
+
+        await cmd.run(this, interaction);
+    }
+
+    protected async onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
+        try {
+            await GuildService.removeGuildConnectedMember({ guild_id: member.guild.id, guild_uid: member.id });
+        } catch(error: any) {
+            logger(`Error when removing connected member: `, error);
+        }
+    }
+
+    private intializeActions(actions: Action[]) {
         this._actions = actions.map(o => ({
             action: o,
             ticks: o.startOnInit ? 0 : o.timeout
@@ -86,20 +79,28 @@ export default class Bot extends Client {
 
         const execute = () => {
             const list = this._actions.filter(o => {
-                return --o.ticks <= 0;
+                const shouldRun = --o.ticks <= 0;
+                if(shouldRun) o.ticks = o.action.timeout;
+
+                return shouldRun;
             });
             if(list.length === 0) return;
             
             GuildModel.find().then(async guilds => {
                 for(const guild of guilds) {
-                    for(const action of list) {
-                        await action.action.run(this, guild);
-                        action.ticks = action.action.timeout;
-                    }
+                    (async () => {
+                        for(const action of list) {
+                            try {
+                                await action.action.run(this, guild);
+                            } catch(error) {
+                                logger(`Error in action: ${error}`, LoggerType.ERROR)
+                            }
+                        }
 
-                    guild.save();
+                        guild.save();
+                    })();
                 }
-            }).catch(error => logger(`ActionRunner: Couldn't fetch guilds, error: `, error));
+            }).catch(error => logger(`ActionRunner: Couldn't fetch guilds, error: ${error}`, LoggerType.ERROR));
         }
 
         execute();

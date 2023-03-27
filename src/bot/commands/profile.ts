@@ -44,7 +44,7 @@ export const Profile: Command = {
         if(!connected) {
             logger(`/profile Couldn't find connected member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({
-                content: "You're not connected! Contact the guild administrator :)",
+                content: "Selected user is not connected! Contact the guild administrator :)",
                 ephemeral: true
             });
 

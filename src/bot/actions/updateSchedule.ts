@@ -16,8 +16,6 @@ export const UpdateSchedule: Action = {
             return;
         }
 
-        logger(`#updateSchedule in ${fetched.name}`);
-
         const schedule = await GuildService.getGuildSchedule(guild.guild_id);
         if(!schedule) {
             logger("#updateSchedule Schedule wasn't setup!", LoggerType.WARN);
@@ -38,6 +36,10 @@ export const UpdateSchedule: Action = {
         }
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateSchedule Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const MS_IN_DAY = 86400000;
@@ -89,6 +91,8 @@ export const UpdateSchedule: Action = {
         schedule.schedule_message_id = sent_message.id;
 
         await schedule.save();
+
+        logger(`#updateSchedule in ${fetched.name}`);
     },
 
     startOnInit: true,

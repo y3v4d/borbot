@@ -31,8 +31,6 @@ export const RemindClaim: Action = {
             return;
         }
 
-        logger(`#remindClaim in ${fetchedGuild.name}`);
-
         const lastReminded = (guild.last_reminded === undefined ? new Date("2000-01-01") : guild.last_reminded);
         const currentDate = new Date(Date.now());
 
@@ -40,6 +38,10 @@ export const RemindClaim: Action = {
         if(Math.floor(dateDifference(currentDate, lastReminded)) === 0 || currentDate.getUTCHours() !== 23) return;
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#remindClaim Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetchedGuild.channels.cache.get(guild.remind_channel || "");
@@ -79,6 +81,8 @@ export const RemindClaim: Action = {
         msg += "**WARNING!** *Everyone mentioned, you have less then 1 hour to claim the rewards!*";
 
         await channel.send(msg);
+
+        logger(`#remindClaim in ${fetchedGuild.name}`);
     },
 
     startOnInit: true,
