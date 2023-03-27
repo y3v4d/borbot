@@ -1,18 +1,18 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { BaseCommandInteraction } from "discord.js";
 import Bot from "../client";
 import Command from "../core/command";
 import table from "text-table";
 import { addCommas } from "../../shared/utils";
 import ClanService, { ClanClass } from "../../services/clanService";
 import GuildService from "../../services/guildService";
+import { CommandInteraction } from "discord.js";
 
 export const Clan: Command = {
     data: new SlashCommandBuilder()
         .setName('clan')
         .setDescription('Replies with clan info!'),
 
-    run: async(client: Bot, interaction: BaseCommandInteraction) => {
+    run: async(client: Bot, interaction: CommandInteraction) => {
         const guildId = interaction.guildId!;
 
         const guild = await GuildService.getGuild(guildId);

@@ -1,4 +1,4 @@
-import { Guild } from "discord.js";
+import { ChannelType, Guild } from "discord.js";
 import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
@@ -77,16 +77,18 @@ export const UpdateChat: Action = {
             logger(`#updateChat Couldn't get guild ${guild.guild_id}`);
             return;
         }
-        
-        logger(`#updateChat in ${fetched.name}`);
 
         let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateChat Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
         const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetched.channels.cache.get(guild.chat_channel || "");
-        if(!channel || !channel.isText()) {
+        if(!channel || channel.type !== ChannelType.GuildText) {
             logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
             return;
         }
@@ -100,7 +102,7 @@ export const UpdateChat: Action = {
                 const date = new Date(msg.timestamp * 1000);
                 
                 await channel.send({
-                    content: `> **${nickname} ${dateToString(date, true)}**\n> ${processed}`
+                    content: `> **${nickname} ${dateToString(date, 'Y-M-D h:m:s')}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;
@@ -108,6 +110,8 @@ export const UpdateChat: Action = {
         }
 
         guild.last_chat_update = timestamp;
+
+        logger(`#updateChat in ${fetched.name}`);
     },
 
     startOnInit: true,

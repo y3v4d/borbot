@@ -5,6 +5,7 @@ import { getUserIconURL } from "../../shared/utils";
 import GuildService, { GuildConnectedMember, GuildScheduleUpdate, GuildScheduleUpdateEntry, GuildUpdateParams } from "../../services/guildService";
 import Code from "../../shared/code";
 import ClanService from "../../services/clanService";
+import { ChannelType } from "discord.js";
 
 const GuildController = {
     guild_get: async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
@@ -223,7 +224,7 @@ const GuildController = {
 
             const list: any[] = [];
             for(const [,channel] of channels) {
-                if(!channel.parentId || channel.isVoice() || !channel.isText()) continue;
+                if(!channel.parentId || channel.type !== ChannelType.GuildText) continue;
 
                 list.push({
                     id: channel.id,

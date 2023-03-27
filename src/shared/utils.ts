@@ -74,16 +74,15 @@ export function getDateMidnight(date = new Date()) {
     return date;
 }
 
-export function dateToString(date: Date, printHours = false) {
-    const year = date.getUTCFullYear().toString();
-    const month = date.getUTCMonth().toString().padStart(2, '0');
-    const day = date.getUTCDate().toString().padStart(2, '0');
+export function dateToString(date: Date, format = "Y-M-D") {
+    let output = format.replaceAll(/Y+/g, date.getUTCFullYear().toString())
+        .replaceAll(/M+/g, (date.getUTCMonth() + 1).toString().padStart(2, '0'))
+        .replaceAll(/D+/g, date.getUTCDate().toString().padStart(2, '0'))
+        .replaceAll(/h+/g, date.getUTCHours().toString().padStart(2, '0'))
+        .replaceAll(/m+/g, date.getUTCMinutes().toString().padStart(2, '0'))
+        .replaceAll(/s+/g, date.getUTCSeconds().toString().padStart(2, '0'));
 
-    const hour = date.getUTCHours().toString().padStart(2, '0');
-    const minute = date.getUTCMinutes().toString().padStart(2, '0');
-    const second = date.getUTCSeconds().toString().padStart(2, '0');
-
-    return `${year}-${month}-${day}` + (printHours ? ` ${hour}:${minute}:${second}` : '');
+    return output;
 }
 
 export function dateDifference(self: Date, other: Date) {

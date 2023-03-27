@@ -6,6 +6,7 @@ import { addCommas } from "../../shared/utils";
 import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
+import { ChannelType } from "discord.js";
 
 const MILESTONES = [
     100, 200, 300,
@@ -59,6 +60,10 @@ export const UpdateUsers: Action = {
         }
         
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateUsers Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
 
         const members = await GuildService.getGuildConnected(guild.guild_id);
         const fetchedMembers = await fetched.members.fetch();
@@ -78,7 +83,7 @@ export const UpdateUsers: Action = {
 
                 if(lastMilestone !== -1) {
                     const channel = await client.getCachedGuildChannel(fetched, guild.milestone_channel || "");
-                    if(!channel?.isText()) {
+                    if(!channel || channel.type !== ChannelType.GuildText) {
                         logger("#updateUsers Couldn't find announcement channel!", LoggerType.ERROR);
                     } else {
                         const prettyZone = addCommas(getZoneFromMilestone(currentMilestone));
@@ -93,5 +98,7 @@ export const UpdateUsers: Action = {
                 dcMember.setNickname(`${clanMember.nickname} [${clanMember.level}]`);
             }
         }
+
+        logger(`#updateUsers in ${fetched.name}`);
     }
 };

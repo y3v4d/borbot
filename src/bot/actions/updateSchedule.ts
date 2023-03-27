@@ -6,6 +6,7 @@ import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
 import { dateToString } from "../../shared/utils";
+import { ChannelType } from "discord.js";
 
 export const UpdateSchedule: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
@@ -14,8 +15,6 @@ export const UpdateSchedule: Action = {
             logger(`#updateSchedule Couldn't get guild with id: ${guild.guild_id}`);
             return;
         }
-
-        logger(`#updateSchedule in ${fetched.name}`);
 
         const schedule = await GuildService.getGuildSchedule(guild.guild_id);
         if(!schedule) {
@@ -31,12 +30,16 @@ export const UpdateSchedule: Action = {
         }
 
         const channel = await fetched.channels.cache.get(channel_id);
-        if(!channel || !channel.isText()) {
+        if(!channel || channel.type !== ChannelType.GuildText) {
             logger("#updateSchedule Couldn't find schedule channel!", LoggerType.WARN);
             return;
         }
 
         const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        if(!clan) {
+            logger(`#updateSchedule Invalid clan information`, LoggerType.ERROR);
+            return;
+        }
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const MS_IN_DAY = 86400000;
@@ -44,7 +47,7 @@ export const UpdateSchedule: Action = {
         const cycle_end = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * 9);
         const allFightsCompleted = raid!.isSuccessful && raid!.isBonusSuccessful;
 
-        let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
+        let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start, 'M.D')}-${dateToString(cycle_end, 'M.D')}** :calendar_spiral:\n\n`;
         for(let i = 0; i < 10; ++i) {
             const date = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * i);
             const time_difference = Date.now() - date.getTime();
@@ -54,7 +57,7 @@ export const UpdateSchedule: Action = {
 
             const prefix = is_past || (is_today && allFightsCompleted) ? "~~" : is_today && !allFightsCompleted ? "**" : "";
 
-            message += `${prefix}${dateToString(date)} -> `;
+            message += `${prefix}${dateToString(date, 'M.D')} -> `;
 
             const entry = schedule.map.find(o => o.index === i + 1);
             if(!entry) {
@@ -88,6 +91,8 @@ export const UpdateSchedule: Action = {
         schedule.schedule_message_id = sent_message.id;
 
         await schedule.save();
+
+        logger(`#updateSchedule in ${fetched.name}`);
     },
 
     startOnInit: true,
