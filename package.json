@@ -7,7 +7,7 @@
     "deploy": "ts-node src/deploy-commands.ts",
     "dev": "ts-node src/index.ts",
     "compile": "webpack",
-    "start": "NODE_ENV=production node dist/index.js"
+    "start": "export NODE_ENV=production && node dist/index.js"
   },
   "repository": {
     "type": "git",
