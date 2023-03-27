@@ -1,4 +1,5 @@
 import { closeSync, openSync, writeFileSync } from "fs";
+import { dateToString } from "./utils";
 
 let firstWrite = true;
 
@@ -14,8 +15,7 @@ export enum LoggerType {
 export default function logger(msg: string, type = LoggerType.NORMAL) {
     const date = new Date(Date.now());
 
-    let dateMsg = `${date.getFullYear().toString()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${(date.getDate().toString().padStart(2, '0'))}`;
-    dateMsg += ` ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+    let dateMsg = `${dateToString(date, 'Y-M-D h:m:s')}`;
 
     const finalMsg = `[${dateMsg}${(type != LoggerType.NORMAL ? ` ${type}` : "")}] ${msg}`;
 
@@ -34,7 +34,7 @@ export default function logger(msg: string, type = LoggerType.NORMAL) {
     }
 
     if(firstWrite) {
-        filename += `log_${dateMsg}.txt`.replaceAll(' ', '_').replaceAll('-', '_').replaceAll(':', '_');
+        filename += `log_${dateToString(date)}.txt`.replaceAll(' ', '_').replaceAll('-', '_').replaceAll(':', '_');
         firstWrite = false;
     }
 
