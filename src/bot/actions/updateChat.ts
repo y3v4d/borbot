@@ -100,7 +100,7 @@ export const UpdateChat: Action = {
                 const date = new Date(msg.timestamp * 1000);
                 
                 await channel.send({
-                    content: `> **${nickname} ${dateToString(date, true)}**\n> ${processed}`
+                    content: `> **${nickname} ${dateToString(date, 'Y-M-D h:m:s')}**\n> ${processed}`
                 });
 
                 timestamp = msg.timestamp;

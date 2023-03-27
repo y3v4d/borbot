@@ -45,7 +45,7 @@ export const UpdateSchedule: Action = {
         const cycle_end = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * 9);
         const allFightsCompleted = raid!.isSuccessful && raid!.isBonusSuccessful;
 
-        let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start)}-${dateToString(cycle_end)}** :calendar_spiral:\n\n`;
+        let message = `:calendar_spiral: **SCHEDULE ${dateToString(schedule.cycle_start, 'M.D')}-${dateToString(cycle_end, 'M.D')}** :calendar_spiral:\n\n`;
         for(let i = 0; i < 10; ++i) {
             const date = new Date(schedule.cycle_start.getTime() + MS_IN_DAY * i);
             const time_difference = Date.now() - date.getTime();
@@ -55,7 +55,7 @@ export const UpdateSchedule: Action = {
 
             const prefix = is_past || (is_today && allFightsCompleted) ? "~~" : is_today && !allFightsCompleted ? "**" : "";
 
-            message += `${prefix}${dateToString(date)} -> `;
+            message += `${prefix}${dateToString(date, 'M.D')} -> `;
 
             const entry = schedule.map.find(o => o.index === i + 1);
             if(!entry) {
