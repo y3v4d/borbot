@@ -65,7 +65,7 @@ namespace DiscordAPI {
             client_secret: clientSecret,
             grant_type: 'authorization_code',
             code: clientCode,
-            redirect_uri: 'http://127.0.0.1:3010/api/auth'
+            redirect_uri: `${process.env.SERVER_ADDRESS}:3010/api/auth`
         };
 
         return await request<AuthTokenResponse>('post', 'oauth2/token', {

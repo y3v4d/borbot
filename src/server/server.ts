@@ -11,11 +11,11 @@ import ErrorHandler from './handlers/error.handler';
 
 function server(client: Bot) {
     const server = express();
-
+    
     server.set('bot', client);
 
-    server.use(cors({ 
-        origin: 'http://localhost:3000',
+    server.use(cors({
+        origin: process.env.FRONTEND_ADDRESS,
         credentials: true
     }));
     server.use(bodyParser.json());
