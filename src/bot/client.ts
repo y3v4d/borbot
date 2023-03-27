@@ -162,7 +162,6 @@ export default class Bot extends Client {
     }
 
     get isDevelopment(): boolean {
-        console.log(`node env equal to `, process.env.NODE_ENV);
-        return process.env.NODE_ENV != "production";
+        return process.env.PRODUCTION != undefined;
     }
 }
