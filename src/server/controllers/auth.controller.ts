@@ -11,7 +11,7 @@ const AuthController = {
         const clientCode = req.body.code as string;
     
         try {
-            const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode);
+            const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode, process.env.SERVER_ADDRESS!);
             const user = await DiscordAPI.getUserInformation(oauth.access_token);
 
             await UserService.createOrUpdateUser({ id: user.id, token: oauth.access_token });
@@ -33,12 +33,12 @@ const AuthController = {
         const code = req.query.code;
         
         res.set('Content-Type', 'text/html');
-        res.send(Buffer.from(`<script>window.opener.postMessage("${code}", "http://localhost:3000");window.close();</script>`));
+        res.send(Buffer.from(`<script>window.opener.postMessage("${code}", ${process.env.FRONTEND_ADDRESS});window.close();</script>`));
     },
     
     discord_auth_bot_callback: function(req: Request, res: Response) {
         res.set('Content-Type', 'text/html');
-        res.send(Buffer.from(`<script>window.opener.postMessage("OK", "http://localhost:3000");window.close();</script>`));
+        res.send(Buffer.from(`<script>window.opener.postMessage("OK", ${process.env.FRONTEND_ADDRESS});window.close();</script>`));
     },
 }
 

@@ -59,13 +59,13 @@ namespace DiscordAPI {
         features: string[]
     }[]
 
-    export async function getAuthToken(clientID: string, clientSecret: string, clientCode: string) {
+    export async function getAuthToken(clientID: string, clientSecret: string, clientCode: string, redirect: string) {
         const params: any = {
             client_id: clientID,
             client_secret: clientSecret,
             grant_type: 'authorization_code',
             code: clientCode,
-            redirect_uri: `${process.env.SERVER_ADDRESS}:3010/api/auth`
+            redirect_uri: `${redirect}/api/auth`
         };
 
         return await request<AuthTokenResponse>('post', 'oauth2/token', {
