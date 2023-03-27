@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Intents } from "discord.js";
+import { GatewayIntentBits } from "discord.js";
 
 import Bot from './bot/client';
 import mongoose from 'mongoose';
@@ -12,10 +12,10 @@ mongoose.connect(process.env.MONGODB_URI!).then(async () => {
 
     const client = new Bot({
         intents: [
-            Intents.FLAGS.GUILDS,
-            Intents.FLAGS.GUILD_MESSAGES,
-            Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-            Intents.FLAGS.GUILD_MEMBERS
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildEmojisAndStickers,
+            GatewayIntentBits.GuildMembers
         ]});
 
     await client.login(process.env.BOT_TOKEN);

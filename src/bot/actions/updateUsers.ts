@@ -6,6 +6,7 @@ import { addCommas } from "../../shared/utils";
 import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
+import { ChannelType } from "discord.js";
 
 const MILESTONES = [
     100, 200, 300,
@@ -78,7 +79,7 @@ export const UpdateUsers: Action = {
 
                 if(lastMilestone !== -1) {
                     const channel = await client.getCachedGuildChannel(fetched, guild.milestone_channel || "");
-                    if(!channel?.isText()) {
+                    if(!channel || channel.type !== ChannelType.GuildText) {
                         logger("#updateUsers Couldn't find announcement channel!", LoggerType.ERROR);
                     } else {
                         const prettyZone = addCommas(getZoneFromMilestone(currentMilestone));

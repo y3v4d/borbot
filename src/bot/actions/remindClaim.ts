@@ -6,6 +6,7 @@ import ClanService, { ClanClass, ClanMember } from "../../services/clanService";
 import GuildService from "../../services/guildService";
 import { HydratedDocument } from "mongoose";
 import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
+import { ChannelType } from "discord.js";
 
 async function composeRemainder(guild_id: string, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
@@ -42,7 +43,7 @@ export const RemindClaim: Action = {
         const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetchedGuild.channels.cache.get(guild.remind_channel || "");
-        if(!channel || !channel.isText()) {
+        if(!channel || channel.type !== ChannelType.GuildText) {
             logger(`#remindClaim Couldn't get valid channel`, LoggerType.WARN);
             return;
         }

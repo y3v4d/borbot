@@ -6,6 +6,7 @@ import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
 import { dateToString } from "../../shared/utils";
+import { ChannelType } from "discord.js";
 
 export const UpdateSchedule: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
@@ -31,7 +32,7 @@ export const UpdateSchedule: Action = {
         }
 
         const channel = await fetched.channels.cache.get(channel_id);
-        if(!channel || !channel.isText()) {
+        if(!channel || channel.type !== ChannelType.GuildText) {
             logger("#updateSchedule Couldn't find schedule channel!", LoggerType.WARN);
             return;
         }

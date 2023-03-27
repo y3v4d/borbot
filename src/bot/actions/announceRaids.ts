@@ -7,6 +7,7 @@ import { HydratedDocument } from "mongoose";
 import GuildService from "../../services/guildService";
 import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { roleMention, userMention } from "@discordjs/builders";
+import { ChannelType } from "discord.js";
 
 function composeMessage(date: Date, rank: string, msg: string) {
     return `${roleMention(rank)} **${dateToString(date)}\n${msg}**`;
@@ -31,7 +32,7 @@ export const AnnounceRaids: Action = {
             const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
     
             const channel = fetched.channels.cache.get(guild.raid_announcement_channel || "");
-            if(!channel || !channel.isText()) {
+            if(!channel || channel.type !== ChannelType.GuildText) {
                 logger("#announceRaids Invalid channel for raid announcements!", LoggerType.WARN);
                 return;
             }

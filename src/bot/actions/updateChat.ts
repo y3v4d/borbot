@@ -1,4 +1,4 @@
-import { Guild } from "discord.js";
+import { ChannelType, Guild } from "discord.js";
 import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
@@ -86,7 +86,7 @@ export const UpdateChat: Action = {
         const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetched.channels.cache.get(guild.chat_channel || "");
-        if(!channel || !channel.isText()) {
+        if(!channel || channel.type !== ChannelType.GuildText) {
             logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
             return;
         }

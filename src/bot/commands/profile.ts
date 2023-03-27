@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { BaseCommandInteraction, MessageEmbed } from "discord.js";
 import Bot from "../client";
 import Command from "../core/command";
 import logger, { LoggerType } from "../../shared/logger";
 import { addCommas } from "../../shared/utils";
 import ClanService, { ClanClass } from "../../services/clanService";
 import GuildService from "../../services/guildService";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -16,7 +16,7 @@ export const Profile: Command = {
             .setDescription("Optional: Select user you would like to see")
             .setRequired(false)),
 
-    run: async function(client: Bot, interaction: BaseCommandInteraction) {
+    run: async function(client: Bot, interaction: CommandInteraction) {
         const guildId = interaction.guildId!;
 
         const guild = await GuildService.getGuild(guildId);
@@ -62,7 +62,7 @@ export const Profile: Command = {
             return;
         }
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setColor("#5E81AC")
             .setTitle(`Profile`)
             .setAuthor({ name: member.nickname, iconURL: (user.avatarURL() || "") })
