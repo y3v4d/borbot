@@ -16,7 +16,7 @@ export const Profile: Command = {
             .setDescription("Optional: Select user you would like to see")
             .setRequired(false)),
 
-    run: async function(client: Bot, interaction: CommandInteraction) {
+    run: async function(client: Bot, interaction: any) {
         const guildId = interaction.guildId!;
 
         const guild = await GuildService.getGuild(guildId);
