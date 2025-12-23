@@ -17,7 +17,7 @@ export default class Bot extends Client {
     constructor(options: ClientOptions) {
         super(options);
 
-        this.on('ready', this.onReady.bind(this));
+        this.on('clientReady', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
         this.on('guildMemberRemove', this.onGuildMemberRemove.bind(this));
     }
@@ -92,8 +92,8 @@ export default class Bot extends Client {
                         for(const action of list) {
                             try {
                                 await action.action.run(this, guild);
-                            } catch(error) {
-                                logger(`Error in action: ${error}`, LoggerType.ERROR)
+                            } catch(error: any) {
+                                logger(`Error in action: ${JSON.stringify(error)}`, LoggerType.ERROR)
                             }
                         }
 

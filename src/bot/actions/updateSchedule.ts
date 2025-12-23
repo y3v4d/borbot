@@ -10,7 +10,7 @@ import { ChannelType } from "discord.js";
 
 export const UpdateSchedule: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetched = await client.guilds.cache.get(guild.guild_id);
+        const fetched = client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateSchedule Couldn't get guild with id: ${guild.guild_id}`);
             return;

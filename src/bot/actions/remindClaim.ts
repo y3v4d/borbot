@@ -25,7 +25,7 @@ async function composeRemainder(guild_id: string, members: ClanMember[], title: 
 
 export const RemindClaim: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetchedGuild = await client.guilds.cache.get(guild.guild_id);
+        const fetchedGuild = client.guilds.cache.get(guild.guild_id);
         if(!fetchedGuild) {
             logger(`#remindClaim Couldn't get guild ${guild.guild_id}`);
             return;
