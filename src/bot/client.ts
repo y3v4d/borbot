@@ -30,7 +30,7 @@ export default class Bot extends Client {
 
         try {
             if(!this.isDevelopment) {
-                await this.user.setUsername(`Borbot ${process.env.npm_package_version}`);
+                await this.user.setUsername(`Borbot 0.13`);
             } else {
                 await this.user.setUsername(`Borbot In Development`);
             }
