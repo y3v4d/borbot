@@ -10,7 +10,7 @@ namespace ClickerHeroesAPI {
     }
 
     async function request<T>(request: string, params: any) {
-        const ENDPOINT = 'http://ClickerHeroes-SavedGames3-747864888.us-east-1.elb.amazonaws.com';
+        const ENDPOINT = 'https://guilds.clickerheroes.com';
         
         try {
             const response = await axios({

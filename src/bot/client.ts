@@ -17,7 +17,7 @@ export default class Bot extends Client {
     constructor(options: ClientOptions) {
         super(options);
 
-        this.on('ready', this.onReady.bind(this));
+        this.on('clientReady', this.onReady.bind(this));
         this.on('interactionCreate', this.onInteractionCreate.bind(this));
         this.on('guildMemberRemove', this.onGuildMemberRemove.bind(this));
     }
@@ -30,12 +30,12 @@ export default class Bot extends Client {
 
         try {
             if(!this.isDevelopment) {
-                await this.user.setUsername(`Borbot ${process.env.npm_package_version}`);
+                await this.user.setUsername(`Borbot 0.13`);
             } else {
                 await this.user.setUsername(`Borbot In Development`);
             }
             
-            await this.user.setAvatar(this.isDevelopment ? "https://i.imgur.com/1xMiyWX.png" : "https://i.imgur.com/eC0cR2X.png");
+            //await this.user.setAvatar(this.isDevelopment ? "https://i.imgur.com/1xMiyWX.png" : "https://i.imgur.com/eC0cR2X.png");
         } catch(error) {
             console.warn("Couldn't update bot username or avatar!");
         }
@@ -92,8 +92,8 @@ export default class Bot extends Client {
                         for(const action of list) {
                             try {
                                 await action.action.run(this, guild);
-                            } catch(error) {
-                                logger(`Error in action: ${error}`, LoggerType.ERROR)
+                            } catch(error: any) {
+                                logger(`Error in action: ${JSON.stringify(error)}`, LoggerType.ERROR)
                             }
                         }
 
@@ -162,6 +162,7 @@ export default class Bot extends Client {
     }
 
     get isDevelopment(): boolean {
-        return process.env.NODE_ENV != "production";
+        console.log(`production ${process.env.PRODUCTION}`);
+        return process.env.PRODUCTION != 'true';
     }
 }

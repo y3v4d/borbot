@@ -1,4 +1,4 @@
-import { closeSync, openSync, writeFileSync } from "fs";
+import { closeSync, existsSync, mkdirSync, openSync, writeFileSync } from "fs";
 import { dateToString } from "./utils";
 
 let firstWrite = true;
@@ -36,6 +36,10 @@ export default function logger(msg: string, type = LoggerType.NORMAL) {
     if(firstWrite) {
         filename += `log_${dateToString(date)}.txt`.replaceAll(' ', '_').replaceAll('-', '_').replaceAll(':', '_');
         firstWrite = false;
+    }
+
+    if(!existsSync('./logs')) {
+        mkdirSync('./logs');
     }
 
     const file = openSync(filename, 'a+', 0o666);
