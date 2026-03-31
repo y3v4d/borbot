@@ -9,44 +9,6 @@ namespace ClickerHeroesAPI {
         result?: T
     }
 
-    async function request<T>(request: string, params: any) {
-        const ENDPOINT = 'https://guilds.clickerheroes.com';
-        
-        try {
-            const response = await axios({
-                method: 'post',
-                url: `${ENDPOINT}/clans/${request}.php`,
-                params: params,
-                headers: {
-                    'Content-type': 'application/x-www-form-urlencoded'
-                }
-            });
-
-            const data = response.data as Response<T>;
-            if(!data.success) {
-                throw {
-                    code: Code.CLICKERHEROES_API_FAILED,
-                    message: data.reason!
-                }
-            }
-
-            return data.result!;
-        } catch(error: any) {
-            if(error.code === Code.CLICKERHEROES_API_FAILED) {
-                throw error;
-            } else if (error.request) {
-                throw ({
-                    code: Code.NO_RESPONSE
-                });
-            } else {
-                throw ({
-                    code: Code.INTERNAL_SERVER_ERROR,
-                    message: error.message
-                });
-            }
-        }
-    }
-
     export interface GuildInfoResult {
         guild: {
             name: string,
@@ -69,7 +31,7 @@ namespace ClickerHeroesAPI {
         }
     }
 
-    interface GuildInfoMember {
+    export interface GuildInfoMember {
         uid: string,
         highestZone: string,
         nickname: string,
@@ -110,8 +72,54 @@ namespace ClickerHeroesAPI {
         return await request<GuildNewRaidResult>('getNewRaid', { uid: uid, passwordHash: pwd, guildName: guildName });
     }
 
-    export async function getGuildMessages(uid: string, pwd: string, guildName: string) {
-        return await request<GuildMessagesResult>('getGuildMessages', { uid: uid, passwordHash: pwd, guildName: guildName, timestamp: (Date.now() / 1000) });
+    export async function getGuildMessages(uid: string, pwd: string, guildName: string, timestamp = Date.now()) {
+        return await request<GuildMessagesResult>(
+            'getGuildMessages', 
+            { 
+                uid: uid, 
+                passwordHash: pwd, 
+                guildName: guildName, 
+                timestamp: (timestamp / 1000) 
+            }
+        );
+    }
+
+    async function request<T>(request: string, params: any) {
+        const ENDPOINT = 'https://guilds.clickerheroes.com';
+        
+        try {
+            const response = await axios({
+                method: 'post',
+                url: `${ENDPOINT}/clans/${request}.php`,
+                params: params,
+                headers: {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            const data = response.data as Response<T>;
+            if(!data.success) {
+                throw {
+                    code: Code.CLICKERHEROES_API_FAILED,
+                    message: data.reason!
+                }
+            }
+
+            return data.result!;
+        } catch(error: any) {
+            if(error.code === Code.CLICKERHEROES_API_FAILED) {
+                throw error;
+            } else if (error.request) {
+                throw ({
+                    code: Code.NO_RESPONSE
+                });
+            } else {
+                throw ({
+                    code: Code.INTERNAL_SERVER_ERROR,
+                    message: error.message
+                });
+            }
+        }
     }
 }
 

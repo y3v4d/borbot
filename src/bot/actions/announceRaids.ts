@@ -2,9 +2,7 @@ import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
-import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../../services/guildService";
 import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { roleMention, userMention } from "@discordjs/builders";
 import { ChannelType } from "discord.js";
@@ -15,18 +13,20 @@ function composeMessage(mention: string, date: Date, msg: string) {
 
 export const AnnounceRaids: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetched = client.guilds.cache.get(guild.guild_id);
+        const { guildService, clanService } = client;
+
+        const fetched = client.client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#announceRaids Couldn't find guild with id ${guild.guild_id}`);
             return;
         }
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             logger(`#announceRaids Invalid clan information`, LoggerType.ERROR);
             return;
         }
-        const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
+        const raid = await clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = fetched.channels.cache.get(guild.raid_announcement_channel || "");
         if(!channel || channel.type !== ChannelType.GuildText) {
@@ -34,7 +34,7 @@ export const AnnounceRaids: Action = {
             return;
         }
 
-        const schedule = await GuildService.getGuildSchedule(guild.guild_id);
+        const schedule = await guildService.getGuildSchedule(guild.guild_id);
         if(!schedule) {
             logger("#announceRaids Schedule wasn't setup!", LoggerType.WARN);
             return;

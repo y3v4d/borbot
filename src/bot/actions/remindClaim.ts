@@ -2,19 +2,19 @@ import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
-import ClanService, { ClanClass, ClanMember } from "../../services/clanService";
-import GuildService from "../../services/guildService";
+import { ClanClass, ClanMember } from "../../services/clan.service";
+import GuildService from "../../services/guild.service";
 import { HydratedDocument } from "mongoose";
 import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { ChannelType } from "discord.js";
 
-async function composeRemainder(guild_id: string, members: ClanMember[], title: string) {
+async function composeRemainder(guildService: GuildService, guild_id: string, members: ClanMember[], title: string) {
     let msg = `**${title}**\n`;
 
     for(const member of members) {
         msg += '- ';
 
-        const dbMember = await GuildService.getGuildConnectedMember({ guild_id: guild_id, clan_uid: member.uid });
+        const dbMember = await guildService.getGuildMemberByClanUID(guild_id, member.uid);
         if(!dbMember) console.log('didnt dint');
         msg += (dbMember ? `<@${dbMember.guild_uid}>` : member.nickname);
         msg += ` **The ${ClanClass[member.class]}**\n`;
@@ -25,7 +25,9 @@ async function composeRemainder(guild_id: string, members: ClanMember[], title: 
 
 export const RemindClaim: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetchedGuild = client.guilds.cache.get(guild.guild_id);
+        const { guildService, clanService } = client;
+
+        const fetchedGuild = client.client.guilds.cache.get(guild.guild_id);
         if(!fetchedGuild) {
             logger(`#remindClaim Couldn't get guild ${guild.guild_id}`);
             return;
@@ -37,12 +39,12 @@ export const RemindClaim: Action = {
         // return if the same day or isn't past 11pm
         if(Math.floor(dateDifference(currentDate, lastReminded)) === 0 || currentDate.getUTCHours() !== 23) return;
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             logger(`#remindClaim Invalid clan information`, LoggerType.ERROR);
             return;
         }
-        const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
+        const raid = await clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const channel = await fetchedGuild.channels.cache.get(guild.remind_channel || "");
         if(!channel || channel.type !== ChannelType.GuildText) {
@@ -67,14 +69,14 @@ export const RemindClaim: Action = {
         if(!raid!.isSuccessful) {
             msg += ":crossed_swords: FIRST RAID NOT COMPLETED :crossed_swords:\n\n"
         } else if(missing.length > 0) {
-            msg += await composeRemainder(guild.guild_id, missing, ":crossed_swords: FIRST RAID :crossed_swords:");
+            msg += await composeRemainder(guildService, guild.guild_id, missing, ":crossed_swords: FIRST RAID :crossed_swords:");
             msg += '\n';
         }
         
         if(!raid!.isBonusSuccessful) {
             msg += "**:gem: BONUS RAID NOT COMPLETED :gem:**\n\n";
         } else if(missingBonus.length > 0) {
-            msg += await composeRemainder(guild.guild_id, missingBonus, ":gem: BONUS RAID :gem:");
+            msg += await composeRemainder(guildService, guild.guild_id, missingBonus, ":gem: BONUS RAID :gem:");
             msg += '\n';
         }
 

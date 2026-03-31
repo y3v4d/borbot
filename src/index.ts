@@ -1,27 +1,49 @@
 import 'dotenv/config';
-import { GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 
 import Bot from './bot/client';
 import mongoose from 'mongoose';
 import logger, { LoggerType } from './shared/logger';
-import server from './server/server';
+import createServer from './server/server';
+import ClanService from './services/clan.service';
+import GuildService from './services/guild.service';
+import UserService from './services/user.service';
 
-mongoose.connect(process.env.MONGODB_URI!).then(async () => {
-    logger("MongoDB Conncted!");
-    logger("Bot is starting...");
+async function main() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI!);
 
-    const client = new Bot({
-        intents: [
-            GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.GuildEmojisAndStickers,
-            GatewayIntentBits.GuildMembers
-        ]});
+        logger("MongoDB Connected!");
+        logger("Bot is starting...");
 
-    await client.login(process.env.BOT_TOKEN);
+        const client = new Client({
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.GuildExpressions,
+                GatewayIntentBits.GuildMembers
+            ]
+        });
 
-    const api = server(client);
-    api.listen(3010, () => {
-        logger("Started REST API on port 3010.");
-    });
-}).catch(error => logger(error, LoggerType.ERROR));
+        client.once('clientReady', async () => {
+            const userService = new UserService();
+            const guildService = new GuildService();
+            const clanService = new ClanService();
+
+            const bot = new Bot(client, guildService, clanService);
+            await bot.launch();
+
+            const api = createServer(bot, userService, guildService, clanService);
+            api.listen(3010, () => {
+                logger("Started REST API on port 3010.");
+            });
+        })
+
+        await client.login(process.env.BOT_TOKEN);
+        logger("Bot logged in!");
+    } catch(error: any) {
+        logger(error, LoggerType.ERROR);
+    }
+}
+
+main();

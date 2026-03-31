@@ -25,7 +25,7 @@ export interface IGuild {
 }
 
 const GuildSchema = new mongoose.Schema<IGuild>({
-    guild_id: { type: String, required: true },
+    guild_id: { type: String, index: true, required: true },
 
     user_uid: { type: String, required: true },
     password_hash: { type: String, required: true },

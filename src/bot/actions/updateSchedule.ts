@@ -2,21 +2,23 @@ import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
-import ClanService from "../../services/clanService";
+import ClanService from "../../services/clan.service";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../../services/guildService";
+import GuildService from "../../services/guild.service";
 import { dateToString } from "../../shared/utils";
 import { ChannelType } from "discord.js";
 
 export const UpdateSchedule: Action = {
     run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetched = client.guilds.cache.get(guild.guild_id);
+        const { guildService, clanService } = client;
+
+        const fetched = client.client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateSchedule Couldn't get guild with id: ${guild.guild_id}`);
             return;
         }
 
-        const schedule = await GuildService.getGuildSchedule(guild.guild_id);
+        const schedule = await guildService.getGuildSchedule(guild.guild_id);
         if(!schedule) {
             logger("#updateSchedule Schedule wasn't setup!", LoggerType.WARN);
             return;
@@ -35,12 +37,12 @@ export const UpdateSchedule: Action = {
             return;
         }
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             logger(`#updateSchedule Invalid clan information`, LoggerType.ERROR);
             return;
         }
-        const raid = await ClanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
+        const raid = await clanService.getClanNewRaid(guild.user_uid, guild.password_hash, clan!.name);
 
         const MS_IN_DAY = 86400000;
 

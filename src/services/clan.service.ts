@@ -1,4 +1,5 @@
 import ClickerHeroesAPI from "../api/clickerheroes";
+import InMemoryCache from "../shared/cache";
 import Code from "../shared/code";
 
 export enum ClanClass {
@@ -58,8 +59,8 @@ export interface ClanMessage {
     timestamp: number
 }
 
-namespace ClanService {
-    export async function getClanInformation(uid: string, pwd: string) {
+class ClanService {
+    async getClanInformation(uid: string, pwd: string) {
         try {
             const data = await ClickerHeroesAPI.getGuildInfo(uid, pwd);
 
@@ -95,7 +96,7 @@ namespace ClanService {
         }
     }
 
-    export async function getClanNewRaid(uid: string, pwd: string, clanName: string) {
+    async getClanNewRaid(uid: string, pwd: string, clanName: string) {
         try {
             const data = await ClickerHeroesAPI.getNewRaid(uid, pwd, clanName);
             const raid: ClanNewRaid = {
@@ -127,7 +128,7 @@ namespace ClanService {
         }
     }
 
-    export async function getClanMessages(uid: string, pwd: string, guildName: string) {
+    async getClanMessages(uid: string, pwd: string, guildName: string) {
         try {
             const data = await ClickerHeroesAPI.getGuildMessages(uid, pwd, guildName);
             const messages: ClanMessage[] = [];

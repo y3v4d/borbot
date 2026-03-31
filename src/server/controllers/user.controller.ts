@@ -1,11 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import DiscordAPI from "../../api/discord";
-import UserService from "../../services/userService";
+import UserService from "../../services/user.service";
 import Code from "../../shared/code";
-import { AuthenticatedRequest } from "../middlewares/authenticateUser.middleware";
+import { AuthenticatedRequest } from "../middlewares/authenticate_user.middleware";
 
-const UserController = {
-    async user_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+class UserController {
+    constructor(
+        readonly userService: UserService
+    ) {}
+
+    user_get = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         const user = req.user!;
 
         try {
@@ -21,13 +25,14 @@ const UserController = {
         } catch(error) {
             next(error);
         }
-    },
+    }
     
-    async user_guilds_get(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    user_guilds_get = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         const user = req.user!;
 
         try {
-            const guilds = await UserService.getUserUpdatedGuilds(user);
+            console.log(`Getting updated guilds for user ${user.id}...`);
+            const guilds = await this.userService.getUserUpdatedGuilds(user);
 
             res.send(guilds);
         } catch(error: any) {

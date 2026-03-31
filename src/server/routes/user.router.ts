@@ -1,10 +1,14 @@
-import { Router } from "express";
+import { RequestHandler, Router } from "express";
 import UserController from "../controllers/user.controller";
-import AuthenticateUser from "../middlewares/authenticateUser.middleware";
 
-const UserRouter = Router();
+export default function createUserRouter(
+    controller: UserController,
+    authenticate: RequestHandler
+) {
+    const router = Router();
 
-UserRouter.get('/', AuthenticateUser, UserController.user_get);
-UserRouter.get('/guilds', AuthenticateUser, UserController.user_guilds_get);
+    router.get('/', authenticate, controller.user_get);
+    router.get('/guilds', authenticate, controller.user_guilds_get);
 
-export default UserRouter;
+    return router;
+}

@@ -3,8 +3,7 @@ import Bot from "../client";
 import Command from "../core/command";
 import table from "text-table";
 import { addCommas } from "../../shared/utils";
-import ClanService, { ClanClass } from "../../services/clanService";
-import GuildService from "../../services/guildService";
+import { ClanClass } from "../../services/clan.service";
 import { CommandInteraction } from "discord.js";
 
 export const Clan: Command = {
@@ -13,9 +12,10 @@ export const Clan: Command = {
         .setDescription('Replies with clan info!'),
 
     run: async(client: Bot, interaction: CommandInteraction) => {
+        const { guildService, clanService } = client;
         const guildId = interaction.guildId!;
 
-        const guild = await GuildService.getGuild(guildId);
+        const guild = await guildService.getGuild(guildId);
         if(!guild) {
             await interaction.reply({ 
                 content: "Guild isn't setup! Contact the admin.", 
@@ -25,7 +25,7 @@ export const Clan: Command = {
             return;
         }
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             await interaction.reply({
                 content: "Error retreiving clan data! Contact the admin.",

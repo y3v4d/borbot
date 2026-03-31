@@ -3,9 +3,8 @@ import Bot from "../client";
 import Command from "../core/command";
 import logger, { LoggerType } from "../../shared/logger";
 import { addCommas } from "../../shared/utils";
-import ClanService, { ClanClass } from "../../services/clanService";
-import GuildService from "../../services/guildService";
-import { CommandInteraction, EmbedBuilder } from "discord.js";
+import { ClanClass } from "../../services/clan.service";
+import { EmbedBuilder } from "discord.js";
 
 export const Profile: Command = {
     data: new SlashCommandBuilder()
@@ -17,9 +16,10 @@ export const Profile: Command = {
             .setRequired(false)),
 
     run: async function(client: Bot, interaction: any) {
+        const { guildService, clanService } = client;
         const guildId = interaction.guildId!;
 
-        const guild = await GuildService.getGuild(guildId);
+        const guild = await guildService.getGuild(guildId);
         if(!guild) {
             await interaction.reply({ 
                 content: "Guild isn't setup! Contact the administrator.", 
@@ -29,7 +29,7 @@ export const Profile: Command = {
             return;
         }
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             await interaction.reply({
                 content: "Couldn't get clan information! Contact the administrator.",
@@ -40,7 +40,7 @@ export const Profile: Command = {
         }
 
         const user = interaction.options.getUser("user", false) || interaction.user;
-        const connected = await GuildService.getGuildConnectedMember({ guild_id: guildId, guild_uid: user.id });
+        const connected = await guildService.getGuildMemberByDiscordUID(guildId, user.id);
         if(!connected) {
             logger(`/profile Couldn't find connected member with guild uid: ${user.id}`, LoggerType.ERROR);
             await interaction.reply({
@@ -72,7 +72,7 @@ export const Profile: Command = {
                 { name: "Highest Zone", value: addCommas(member.highestZone), inline: true }
             )
             .setImage('https://i.imgur.com/glzDw4P.gif')
-            .setFooter({ text: "Composed by Mighty Borb", iconURL: client.user?.avatarURL() || "" });
+            .setFooter({ text: "Composed by Mighty Borb", iconURL: client.client.user?.avatarURL() || "" });
 
         switch(member.class) {
             case ClanClass.Mage:

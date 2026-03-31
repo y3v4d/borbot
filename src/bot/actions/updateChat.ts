@@ -3,12 +3,12 @@ import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
-import ClanService, { ClanMember } from "../../services/clanService";
+import { ClanMember } from "../../services/clan.service";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../../services/guildService";
+import GuildService from "../../services/guild.service";
 import { dateToString } from "../../shared/utils";
 
-async function processMentions(msg: string, guild: Guild, members: ClanMember[]) {
+async function processMentions(guildService: GuildService, msg: string, guild: Guild, members: ClanMember[]) {
     const splits = msg.split(/(@\w*)/g);
     if(splits.length === 0) return msg;
 
@@ -26,7 +26,7 @@ async function processMentions(msg: string, guild: Guild, members: ClanMember[])
             continue;
         }
 
-        const dbMember = await GuildService.getGuildConnectedMember({ guild_id: guild.id, clan_uid: clanMember.uid });
+        const dbMember = await guildService.getGuildMemberByClanUID(guild.id, clanMember.uid);
         if(!dbMember) {
             ret += split;
             continue;
@@ -71,8 +71,10 @@ async function processEmoji(msg: string, guild: Guild) {
 }
 
 export const UpdateChat: Action = {
-    run: async function(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetched = await client.guilds.cache.get(guild.guild_id);
+    run: async function(bot: Bot, guild: HydratedDocument<IGuild>) {
+        const { guildService, clanService } = bot;
+
+        const fetched = bot.client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateChat Couldn't get guild ${guild.guild_id}`);
             return;
@@ -80,14 +82,14 @@ export const UpdateChat: Action = {
 
         let timestamp = (guild.last_chat_update === undefined ? 0 : guild.last_chat_update);
 
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             logger(`#updateChat Invalid clan information`, LoggerType.ERROR);
             return;
         }
-        const messages = await ClanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
+        const messages = await clanService.getClanMessages(guild.user_uid, guild.password_hash, clan!.name);
 
-        const channel = await fetched.channels.cache.get(guild.chat_channel || "");
+        const channel = fetched.channels.cache.get(guild.chat_channel || "");
         if(!channel || channel.type !== ChannelType.GuildText) {
             logger("#updateChat Couldn't find valid chat channel!", LoggerType.ERROR);
             return;
@@ -95,7 +97,7 @@ export const UpdateChat: Action = {
 
         for(let msg of messages!) {
             if(msg.timestamp > timestamp) {
-                let processed = await processMentions(msg.content, fetched, clan!.members);
+                let processed = await processMentions(guildService, msg.content, fetched, clan!.members);
                 processed = await processEmoji(processed, fetched);
 
                 const nickname = clan!.members.find(o => o.uid === msg.uid)?.nickname || "Unkown";

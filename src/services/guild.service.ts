@@ -1,7 +1,7 @@
-import { MergeType } from "mongoose";
 import GuildModel, { IGuild } from "../models/guild";
 import MemberModel, { IMember } from "../models/member";
-import ScheduleModel, { ISchedule, ISchedulePopulated } from "../models/schedule";
+import ScheduleModel, { ISchedulePopulated } from "../models/schedule";
+import InMemoryCache from "../shared/cache";
 
 export interface GuildConnectedMember {
     guild_uid: string,
@@ -31,91 +31,101 @@ export interface GuildUpdateParams {
     chat_channel?: string
 }
 
-namespace GuildService {
-    export async function addGuild(guild_id: string, uid: string, pwd: string) {  
-        const schema: IGuild = {
-            guild_id: guild_id,
-            user_uid: uid,
-            password_hash: pwd
-        };
-    
-        await GuildModel.create(schema);
+class GuildService {
+    private _cacheGuild: InMemoryCache<IGuild | null> = new InMemoryCache(5 * 60 * 1000);
+    private _cacheGuildKey = (id: string) => `guild:${id}`;
+
+    async addGuild(guild_id: string, uid: string, pwd: string) {
+        const guild = new GuildModel({ guild_id: guild_id, user_uid: uid, password_hash: pwd });
+        await guild.save();
+
+        const lean = guild.toObject();
+        this._cacheGuild.set(this._cacheGuildKey(guild_id), lean);
+
+        return lean;
     }
 
-    export async function getGuild(id: string) {
-        const guild = await GuildModel.findOne({ guild_id: id });
-        if(!guild) return null;
+    async getGuild(id: string) {
+        const cached = this._cacheGuild.get(this._cacheGuildKey(id));
+        if(cached !== undefined) {
+            return cached;
+        }
 
-        return guild;
+        const guild = await GuildModel.findOne({ guild_id: id }).lean();
+        this._cacheGuild.set(this._cacheGuildKey(id), guild ?? null);
+
+        return guild ?? null;
     }
 
-    export async function updateGuild(id: string, params: GuildUpdateParams) {
-        const guild = await GuildService.getGuild(id);
-        if(!guild) return false;
+    async updateGuild(id: string, params: GuildUpdateParams) {
+        const update: any = {};
 
         if(params.raid_announcement_channel) {
-            guild.raid_announcement_channel = params.raid_announcement_channel;
+            update.raid_announcement_channel = params.raid_announcement_channel;
         }
 
         if(params.raid_fight_role) {
-            guild.raid_fight_role = params.raid_fight_role;
+            update.raid_fight_role = params.raid_fight_role;
         }
 
         if(params.raid_claim_role) {
-            guild.raid_claim_role = params.raid_claim_role;
+            update.raid_claim_role = params.raid_claim_role;
         }
 
         if(params.remind_channel) {
-            guild.remind_channel = params.remind_channel;
+            update.remind_channel = params.remind_channel;
         }
 
         if(params.milestone_channel) {
-            guild.milestone_channel = params.milestone_channel;
+            update.milestone_channel = params.milestone_channel;
         }
 
         if(params.chat_channel) {
-            guild.chat_channel = params.chat_channel;
+            update.chat_channel = params.chat_channel;
         }
 
-        await guild.save();
+        const result = await GuildModel.updateOne({ guild_id: id }, { $set: update });
+        if(result.matchedCount === 0) {
+            return false;
+        }
+
+        this._cacheGuild.delete(this._cacheGuildKey(id));
         return true;
     }
 
-    export async function removeGuild(id: string) {
-        const guild = await GuildService.getGuild(id);
-        if(!guild) return false;
-
-        if(guild.schedule) {
-            await ScheduleModel.deleteOne({ _id: guild.schedule });
-        }
-
+    async removeGuild(id: string) {
+        await ScheduleModel.deleteOne({ guild_id: id });
         await MemberModel.deleteMany({ guild_id: id });
-        await guild.deleteOne();
-        
+        await GuildModel.deleteOne({ guild_id: id });
+
+        this._cacheGuild.delete(this._cacheGuildKey(id));
         return true;
     }
 
-    export async function isGuildSetup(id: string) {
-        const guild = await GuildModel.exists({ guild_id: id });
+    async isGuildSetup(id: string) {
+        const guild = await this.getGuild(id);
         return guild !== null;
     }
 
-    export async function getGuildConnectedMember(params: { guild_id: string, guild_uid?: string, clan_uid?: string }) {
-        const member = await MemberModel.findOne(params);
-        if(!member) return null;
-
-        return member;
+    async getGuildMemberByClanUID(guild_id: string, clan_uid: string) {
+        const member = await MemberModel.findOne({ guild_id, clan_uid }).lean();
+        return member ?? null;
     }
 
-    export async function getGuildConnected(id: string) {
+    async getGuildMemberByDiscordUID(guild_id: string, guild_uid: string) {
+        const member = await MemberModel.findOne({ guild_id, guild_uid }).lean();
+        return member ?? null;
+    }
+
+    async getGuildMembers(id: string) {
         const members = await MemberModel.find({ guild_id: id });
         return members;
     }
 
-    export async function updateGuildConnected(guild_id: string, list: GuildConnectedMember[]) {    
+    async updateGuildConnected(guild_id: string, list: GuildConnectedMember[]) {    
         for(const connected of list) {
             if(connected.guild_uid == '') {
-                await GuildService.removeGuildConnectedMember({ clan_uid: connected.clan_uid, guild_id: guild_id });
+                await this.removeGuildConnectedMember({ clan_uid: connected.clan_uid, guild_id: guild_id });
             } else {
                 await MemberModel.findOneAndUpdate(
                     { clan_uid: connected.clan_uid, guild_id: guild_id },
@@ -126,8 +136,8 @@ namespace GuildService {
         }
     }
 
-    export async function removeGuildConnectedMember(member: IMember | { guild_id: string, guild_uid?: string, clan_uid?: string }) {
-        const schedule = await GuildService.getGuildSchedule(member.guild_id);
+    async removeGuildConnectedMember(member: IMember | { guild_id: string, guild_uid?: string, clan_uid?: string }) {
+        const schedule = await this.getGuildSchedule(member.guild_id);
         if(!schedule) return false;
 
         let scheduleIndex = -1;
@@ -143,12 +153,11 @@ namespace GuildService {
         }
         
         await MemberModel.findOneAndRemove(member);
-        
         return true;
     }
 
-    export async function getGuildSchedule(guild_id: string) {
-        const guild = await GuildService.getGuild(guild_id);
+    async getGuildSchedule(guild_id: string) {
+        const guild = await this.getGuild(guild_id);
         if(!guild) return null;
 
         let dbSchedule = await ScheduleModel.findOne({ _id: guild.schedule });
@@ -157,17 +166,17 @@ namespace GuildService {
             today.setUTCHours(0, 0, 0, 0);
 
             dbSchedule = await ScheduleModel.create({ cycle_start: today, length: 10 });
-            guild.schedule = dbSchedule._id;
 
-            await guild.save();
+            await GuildModel.updateOne({ guild_id: guild_id }, { $set: { schedule: dbSchedule!._id } });
+            this._cacheGuild.delete(this._cacheGuildKey(guild_id));
         }
 
         const populated = await dbSchedule.populate<Pick<ISchedulePopulated, 'map'>>("map.member");
         return populated;
     }
 
-    export async function updateGuildSchedule(id: string, data: GuildScheduleUpdate) {
-        const schedule = await GuildService.getGuildSchedule(id);
+    async updateGuildSchedule(id: string, data: GuildScheduleUpdate) {
+        const schedule = await this.getGuildSchedule(id);
         if(!schedule) return false;
     
         for(let i = 0; i < 10; ++i) {

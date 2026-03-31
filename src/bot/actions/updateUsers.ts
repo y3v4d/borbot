@@ -3,9 +3,7 @@ import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
 import { addCommas } from "../../shared/utils";
-import ClanService from "../../services/clanService";
 import { HydratedDocument } from "mongoose";
-import GuildService from "../../services/guildService";
 import { ChannelType } from "discord.js";
 
 const MILESTONES = [
@@ -53,19 +51,20 @@ export const UpdateUsers: Action = {
     repeat: true,
 
     async run(client: Bot, guild: HydratedDocument<IGuild>) {
-        const fetched = client.guilds.cache.get(guild.guild_id);
+        const { guildService, clanService } = client;
+        const fetched = client.client.guilds.cache.get(guild.guild_id);
         if(!fetched) {
             logger(`#updateUsers Couldn't find guild ${guild.guild_id}`);
             return;
         }
         
-        const clan = await ClanService.getClanInformation(guild.user_uid, guild.password_hash);
+        const clan = await clanService.getClanInformation(guild.user_uid, guild.password_hash);
         if(!clan) {
             logger(`#updateUsers Invalid clan information`, LoggerType.ERROR);
             return;
         }
 
-        const members = await GuildService.getGuildConnected(guild.guild_id);
+        const members = await guildService.getGuildMembers(guild.guild_id);
         const fetchedMembers = await fetched.members.fetch();
         for(const member of members) {
             const clanMember = clan!.members.find(o => o.uid === member.clan_uid);

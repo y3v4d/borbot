@@ -1,11 +1,13 @@
 import { Router } from "express";
 import AuthController from "../controllers/auth.controller";
 
-const AuthRouter = Router();
+export default function createAuthRouter(controller: AuthController) {
+    const router = Router();
 
-AuthRouter.get('/', AuthController.discord_auth_callback);
-AuthRouter.get('/back', AuthController.discord_auth_bot_callback);
-AuthRouter.post('/login', AuthController.auth_login);
-AuthRouter.post('/logout', AuthController.auth_logout);
+    router.get('/', controller.discord_auth_callback);
+    router.get('/back', controller.discord_auth_bot_callback);
+    router.post('/login', controller.auth_login);
+    router.post('/logout', controller.auth_logout);
 
-export default AuthRouter;
+    return router;
+}

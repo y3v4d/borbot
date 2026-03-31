@@ -60,13 +60,15 @@ namespace DiscordAPI {
     }[]
 
     export async function getAuthToken(clientID: string, clientSecret: string, clientCode: string, redirect: string) {
-        const params: any = {
+        const params = {
             client_id: clientID,
             client_secret: clientSecret,
             grant_type: 'authorization_code',
             code: clientCode,
-            redirect_uri: `${redirect}/api/auth`
+            redirect_uri: redirect
         };
+
+        console.log(params);
 
         return await request<AuthTokenResponse>('post', 'oauth2/token', {
             params: new URLSearchParams(params)

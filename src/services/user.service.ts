@@ -5,8 +5,8 @@ import Code from "../shared/code";
 import logger from "../shared/logger";
 import { getGuildIconURL, isAdmin } from "../shared/utils";
 
-namespace UserService {
-    export async function createOrUpdateUser(data: { id: string, token: string }) {
+class UserService {
+    async createOrUpdateUser(data: { id: string, token: string }) {
         const existing = await UserModel.findOne({ id: data.id });
 
         if(existing) {
@@ -17,18 +17,18 @@ namespace UserService {
         }
     }
 
-    export async function removeUser(id: string) {
+    async removeUser(id: string) {
         await UserModel.deleteOne({ id: id });
     }
 
-    export async function getUser(id: string) {
+    async getUser(id: string) {
         const user = await UserModel.findOne({ id: id });
         if(!user) return null;
 
         return user;
     }
 
-    export async function getUserUpdatedGuilds(user: HydratedDocument<IUser>) {
+    async getUserUpdatedGuilds(user: HydratedDocument<IUser>) {
         const isLastUpdated = user.last_update_guilds && Date.now() - user.last_update_guilds < 60000;
         if(isLastUpdated) {
             return user.guilds as IUserGuild[];
