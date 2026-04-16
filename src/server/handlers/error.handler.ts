@@ -26,6 +26,8 @@ function ErrorHandler (err: any, req: Request, res: Response, next: NextFunction
         logger(`Internal error: ${err.message}`, LoggerType.ERROR);
 
         res.status(500).send({ code: Code.INTERNAL_SERVER_ERROR, message: "Internal server error" });
+    } else if(err.code === Code.BAD_REQUEST) {
+        res.status(400).send({ code: Code.BAD_REQUEST, message: err.message || "Bad request" });
     } else {
         res.status(404).send({ code: err.code, message: CodeMessage[err.code] || '' });
     }

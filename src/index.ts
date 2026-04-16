@@ -27,8 +27,8 @@ async function main() {
 
         client.once('clientReady', async () => {
             const userService = new UserService();
-            const guildService = new GuildService();
             const clanService = new ClanService();
+            const guildService = new GuildService();
 
             const bot = new Bot(client, guildService, clanService);
             await bot.launch();

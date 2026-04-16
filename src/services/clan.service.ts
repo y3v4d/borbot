@@ -60,7 +60,17 @@ export interface ClanMessage {
 }
 
 class ClanService {
-    async getClanInformation(uid: string, pwd: string) {
+    private _cache: InMemoryCache<any> = new InMemoryCache(1 * 60 * 1000);
+    private _cacheClanKey = (uid: string) => `clan:${uid}`;
+    private _cacheRaidKey = (uid: string) => `raid:${uid}`;
+    private _cacheMessagesKey = (uid: string) => `messages:${uid}`;
+
+    async getClanInformation(uid: string, pwd: string): Promise<Clan | null> {
+        const cached = this._cache.get(this._cacheClanKey(uid));
+        if(cached !== undefined) {
+            return cached;
+        }
+
         try {
             const data = await ClickerHeroesAPI.getGuildInfo(uid, pwd);
 
@@ -75,7 +85,7 @@ class ClanService {
                 lastBonusRewardTimestamp: member.lastBonusRewardTimestamp
             }));
 
-            return {
+            const clan: Clan = {
                 name: data.guild.name,
                 masterUid: data.guild.guildMasterUid,
 
@@ -86,7 +96,10 @@ class ClanService {
                 newRaidLocked: data.guild.newRaidLocked === 'true',
 
                 autoJoin: data.guild.autoJoin
-            } as Clan;
+            };
+
+            this._cache.set(this._cacheClanKey(uid), clan);
+            return clan;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
                 return null;
@@ -96,7 +109,12 @@ class ClanService {
         }
     }
 
-    async getClanNewRaid(uid: string, pwd: string, clanName: string) {
+    async getClanNewRaid(uid: string, pwd: string, clanName: string): Promise<ClanNewRaid | null> {
+        const cached = this._cache.get(this._cacheRaidKey(uid));
+        if(cached !== undefined) {
+            return cached;
+        }
+
         try {
             const data = await ClickerHeroesAPI.getNewRaid(uid, pwd, clanName);
             const raid: ClanNewRaid = {
@@ -118,6 +136,7 @@ class ClanService {
                 raid.bonusScores.push({ uid: pair[0], score: pair[1] });
             }
 
+            this._cache.set(this._cacheRaidKey(uid), raid);
             return raid;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
@@ -129,15 +148,21 @@ class ClanService {
     }
 
     async getClanMessages(uid: string, pwd: string, guildName: string) {
+        const cached = this._cache.get(this._cacheMessagesKey(uid));
+        if(cached !== undefined) {
+            return cached;
+        }
+
         try {
             const data = await ClickerHeroesAPI.getGuildMessages(uid, pwd, guildName);
             const messages: ClanMessage[] = [];
             
             for(const key in data.messages) {
                 const split = data.messages[key].split(';', 2);
-                messages.push({ timestamp: parseFloat(key), uid: split[0], content: split[1] });
+                messages.push({ timestamp: Math.floor(parseFloat(key) * 1000), uid: split[0], content: split[1] });
             }
 
+            this._cache.set(this._cacheMessagesKey(uid), messages);
             return messages;
         } catch(error: any) {
             if(error.code === Code.CLICKERHEROES_API_FAILED) {

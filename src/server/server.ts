@@ -16,6 +16,7 @@ import GuildService from '../services/guild.service';
 import ClanService from '../services/clan.service';
 import AuthenticateUserMiddleware from './middlewares/authenticate_user.middleware';
 import IsInGuildMiddleware from './middlewares/is_in_guild.middleware';
+import session from 'express-session';
 
 function createServer(
     bot: Bot,
@@ -31,7 +32,17 @@ function createServer(
         credentials: true
     }));
     server.use(bodyParser.json());
-    server.use(cookieParser());
+    //server.use(cookieParser());
+    server.use(session({
+        secret: process.env.TOKEN_SECRET as string,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+        }
+    }))
 
     const authController = new AuthController(userService);
     const userController = new UserController(userService);

@@ -1,42 +1,184 @@
-import * as jwt from 'jsonwebtoken';
 import Code from './code';
-import logger, { LoggerType } from './logger';
+import BotClient from '../bot/client';
+import { ClanClass } from '../services/clan.service';
 
-const CDN_ENDPOINT = 'https://cdn.discordapp.com';
-const UI_ENDPOINT = 'https://ui-avatars.com/api';
+type ValidatorFunction<T> = (value: any) => T | Promise<T>;
+type InferValidator<T> = T extends ValidatorFunction<infer R> ? R : never;
 
-export function getGuildIconURL(guild: any, size = 64) {
-    if(guild.icon) {
-        return `${CDN_ENDPOINT}/icons/${guild.id}/${guild.icon}.png?size=${size}`;
-    } else {
-        const params = {
-            name: guild.name,
-            background: "494d54",
-            uppercase: "false",
-            color: "dbdcdd",
-            "font-size": "0.33",
-            size: size.toString()
-        };
+type Option<T> = {
+    type: ValidatorFunction<T>;
+    optional?: boolean;
+    nullable?: boolean;
+};
 
-        return `${UI_ENDPOINT}?${new URLSearchParams(params).toString()}`;
+export function validate_discord_channel(client: BotClient, guild_id: string): ValidatorFunction<{ id: string }> {
+    return async (value: any) => {
+        if(typeof value !== 'string') throw new Error('Invalid channel ID');
+
+        const channel = await client.getGuildChannel(guild_id, value);
+        if(!channel) throw new Error('Channel not found');
+
+        return { id: value };
     }
 }
 
-export function getUserIconURL(user: any, size = 64) {
-    if(user.avatar) {
-        return `${CDN_ENDPOINT}/avatars/${user.id}/${user.avatar}.png?size=${size}`;
-    } else {
-        const params = {
-            name: user.username,
-            background: "494d54",
-            uppercase: "false",
-            color: "dbdcdd",
-            "font-size": "0.33",
-            size: size.toString()
-        };
+export function validate_discord_role(client: BotClient, guild_id: string): ValidatorFunction<{ id: string }> {
+    return async (value: any) => {
+        if(typeof value !== 'string') throw new Error('Invalid role ID');
 
-        return `${UI_ENDPOINT}?${new URLSearchParams(params).toString()}`;
+        const role = await client.getGuildRole(guild_id, value);
+        if(!role) throw new Error('Role not found');
+
+        return { id: value };
     }
+}
+
+export function validate_str(value: any): string {
+    if(typeof value !== 'string') throw new Error('Invalid string');
+    return value;
+}
+
+export function validate_number(value: any): number {
+    if(typeof value === 'number') return value;
+
+    const parsed = parseFloat(value);
+    if(isNaN(parsed)) throw new Error('Invalid number');
+
+    return parsed;
+}
+
+export function validate_date(value: any): Date {
+    if(typeof value === 'string' || typeof value === 'number') {
+        const date = new Date(value);
+        if(isNaN(date.valueOf())) throw new Error('Invalid date');
+
+        return date;
+    }
+
+    throw new Error('Invalid date');
+}
+
+export function validate_array<T>(itemValidator: ValidatorFunction<T>): ValidatorFunction<T[]> {
+    return async (value: any) => {
+        if(!Array.isArray(value)) throw new Error('Invalid array');
+
+        const output: T[] = [];
+        for(const item of value) {
+            output.push(await itemValidator(item));
+        }
+
+        return output;
+    }
+}
+
+export function validate_bool(value: any): boolean {
+    if(typeof value === 'boolean') return value;
+
+    if(value === 'true') return true;
+    if(value === 'false') return false;
+    throw new Error('Invalid boolean');
+}
+
+export async function validateParams<
+    T extends Record<string, any>, 
+    Options extends { [K in keyof T]?: Option<T[K]> },
+>(params: T, options: Options) {
+    const output: any = {};
+
+    for(const key in options) {
+        const value = params[key];
+        const opt = options[key as keyof T]!;
+
+        if(value === undefined) {
+            if(opt.optional) {
+                output[key] = undefined;
+                continue;
+            }
+
+            throw { code: Code.BAD_REQUEST, message: `Missing parameter: ${key}` };
+        }
+
+        if(value === null) {
+            if(opt.nullable) {
+                output[key] = null;
+                continue;
+            }
+
+            throw { code: Code.BAD_REQUEST, message: `Invalid parameter ${key}: cannot be null` };
+        }
+
+        try {
+            output[key] = await opt.type(value);
+        } catch(err: any) {
+            throw { code: Code.BAD_REQUEST, message: `Invalid parameter ${key}: ${err.message}` };
+        }
+    }
+
+    return output as { 
+        [K in keyof Options]: InferValidator<NonNullable<Options[K]>['type']> |
+            (NonNullable<Options[K]>['optional'] extends true ? undefined : never) |
+            (NonNullable<Options[K]>['nullable'] extends true ? null : never);
+    };
+}
+
+export function mapUpdateAdvanced<T>(input: T, keys: { [K in keyof T]?: (value: T[K]) => any }) {
+    const out: any = {};
+
+    for (const key in keys) {
+        const value = input[key];
+        if (value === undefined) continue;
+
+        out[key] = keys[key as keyof T]!(value);
+    }
+
+    return out;
+}
+
+export function flattenObject<T extends Record<string, any>>(obj: T, prefix = '') {
+    const result: Record<string, any> = {};
+
+    for (const key in obj) {
+        const value = obj[key];
+        const newKey = prefix ? `${prefix}.${key}` : key;
+
+        if (value && typeof value === 'object' && value !== null && !isDate(value) && !Array.isArray(value)) {
+            Object.assign(result, flattenObject(value, newKey));
+        } else {
+            result[newKey] = value;
+        }
+    }
+
+    return result;
+}
+
+export function mapUpdate<T>(input: T, keys: (keyof T)[]): Partial<T> {
+  const out: any = {};
+
+  for (const key of keys) {
+    const value = input[key];
+    if (value === undefined) continue;
+
+    out[key] = value || null;
+  }
+
+  return out;
+}
+
+export function isDate(value: any): value is Date {
+    return value instanceof Date && !isNaN(value.getTime());
+}
+
+export function mapUpdateNamed<T>(input: T, keyMap: { [K in keyof T]?: string }): Partial<T> {
+    const out: any = {};
+
+    for (const key in keyMap) {
+        const value = input[key];
+        if (value === undefined) continue;
+
+        out[keyMap[key as keyof T]!] = value || null;
+    }
+
+    return out;
 }
 
 export function isAdmin(permissions: string) {
@@ -44,28 +186,14 @@ export function isAdmin(permissions: string) {
     return (parseInt(permissions) & ADMINISTRATOR_FLAG) == ADMINISTRATOR_FLAG;
 }
 
+export function printBinary(value: number) {
+    console.log(value.toString(2));
+}
+
 export function addCommas(n: number | string) {
     const temp = n.toString();
     
     return temp.length < 5 ? temp : temp.replace(/(\d)(?=(\d{3})+$)/g, "$1,");
-}
-
-export function generateAccessToken(uid: string) {
-    return jwt.sign({ uid: uid }, process.env.TOKEN_SECRET as string, { expiresIn: 3600 });
-}
-
-export function decryptAccessToken(token: string) {
-    return new Promise<{ uid: string }>((resolve, reject) => {
-        jwt.verify(token, process.env.TOKEN_SECRET as string, (err, user) => {
-            if(err) {
-                logger(`Decrypt token error: ${err.message}`, LoggerType.ERROR);
-                reject({ code: Code.TOKEN_ERROR, message: "Token error" });
-                return;
-            }
-    
-            resolve({ uid: (user as jwt.JwtPayload).uid });
-        });
-    });
 }
 
 export function getDateMidnight(date = new Date()) {
@@ -87,4 +215,17 @@ export function dateToString(date: Date, format = "Y-M-D") {
 
 export function dateDifference(self: Date, other: Date) {
     return (self.getTime() - other.getTime()) / 86400000;
+}
+
+export function getClanRoleName(role: ClanClass) {
+    switch(role) {
+        case ClanClass.Rogue:
+            return "Rogue";
+        case ClanClass.Mage:
+            return "Mage";
+        case ClanClass.Priest:
+            return "Priest";
+        default:
+            return "Undefined";
+    }
 }

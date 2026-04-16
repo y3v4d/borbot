@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Code from '../shared/code';
+import logger, { LoggerType } from '../shared/logger';
 
 namespace ClickerHeroesAPI {
     type Response<T> = {
@@ -85,6 +86,7 @@ namespace ClickerHeroesAPI {
     }
 
     async function request<T>(request: string, params: any) {
+        const now = Date.now();
         const ENDPOINT = 'https://guilds.clickerheroes.com';
         
         try {
@@ -105,8 +107,11 @@ namespace ClickerHeroesAPI {
                 }
             }
 
+            logger(`ClickerHeroesAPI ${request} request successful (took ${Date.now() - now}ms)`);
+
             return data.result!;
         } catch(error: any) {
+            logger(`ClickerHeroesAPI ${request} request failed (took ${Date.now() - now}ms)`, LoggerType.ERROR);
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
                 throw error;
             } else if (error.request) {

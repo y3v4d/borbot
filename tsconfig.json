@@ -1,14 +1,16 @@
 {
     "compilerOptions": {
         "target": "ES2022",
-        "module": "CommonJS",
+        "module": "node16",
         "strict": true,
-        "moduleResolution": "Node",
+        "moduleResolution": "node16",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
         "removeComments": true,
+        "experimentalDecorators": true,
+        "rootDir": "src",
         "outDir": "dist"
     },
     "include": [

@@ -1,11 +1,12 @@
-import { Client, ClientOptions, Guild, GuildMember, Interaction, PartialGuildMember } from "discord.js";
+import { Client, Guild, GuildMember, Interaction, PartialGuildMember } from "discord.js";
 import { Actions } from "./actions";
 import { Commands } from "./commands";
-import GuildModel from "../models/guild";
 import Action from "./core/action";
 import logger, { LoggerType } from "../shared/logger";
 import GuildService from "../services/guild.service";
 import ClanService from "../services/clan.service";
+import meassure from "../shared/meassure.decorator";
+import { singleFlight } from "../shared/single-flight.decorator";
 
 interface OngoingAction {
     action: Action,
@@ -17,6 +18,10 @@ export default class BotClient {
     private _actionsInterval?: NodeJS.Timeout;
 
     private _isRunning: boolean = false;
+
+    private _lastMembersFetch: number = 0;
+    private _lastChannelsFetch: number = 0;
+    private _lastRolesFetch: number = 0;
 
     constructor(
         readonly client: Client,
@@ -72,58 +77,145 @@ export default class BotClient {
         this._isRunning = false;
     }
 
-    getCachedGuild(id: string) {
+    @meassure
+    @singleFlight((guild_id: string, after?: string) => `listGuildMembers:${guild_id}/${after ?? 'start'}`)
+    async listGuildMembers(guild_id: string, after?: string) {
+        const guild = await this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        return guild.members.list({ limit: 10, after }).catch(() => null);
+    }
+
+    @meassure
+    @singleFlight((guild_id: string, query: string) => `searchGuildMembers:${guild_id}/${query}`)
+    async searchGuildMembers(guild_id: string, query: string) {
+        const guild = await this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        return guild.members.search({ query, limit: 10 }).catch(() => null);
+    }
+
+    @meassure
+    @singleFlight((guild_id: string, limit: number) => `fetchGuildMembers:${guild_id}/${limit}`)
+    async fetchGuildMembers(guild_id: string, limit: number) {
+        const guild = await this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        if(Date.now() - this._lastMembersFetch < 5 * 60 * 1000) {
+            return guild.members.cache;
+        }
+
+        this._lastMembersFetch = Date.now();
+        return guild.members.fetch({ limit }).catch(() => null);
+    }
+
+    @meassure
+    @singleFlight((guild_id: string) => `fetchGuildChannels:${guild_id}`)
+    async fetchGuildChannels(guild_id: string) {
+        const guild = await this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        if(Date.now() - this._lastChannelsFetch < 30 * 60 * 1000) {
+            return guild.channels.cache;
+        }
+        
+        try {
+            await guild.channels.fetch();
+            this._lastChannelsFetch = Date.now();
+
+            return guild.channels.cache;
+        } catch {
+            return null;
+        }
+    }
+
+    @meassure
+    @singleFlight((guild_id: string) => `fetchGuildRoles:${guild_id}`)
+    async fetchGuildRoles(guild_id: string) {
+        const guild = await this.getCachedGuild(guild_id);
+        if(!guild) return null;
+
+        if(Date.now() - this._lastRolesFetch < 30 * 60 * 1000) {
+            return guild.roles.cache;
+        }
+
+        this._lastRolesFetch = Date.now();
+        return guild.roles.fetch().catch(() => null);
+    }
+
+    @meassure
+    async getCachedGuild(id: string) {
         const cached = this.client.guilds.cache.get(id);
-        if(!cached) return null;
+        if(cached) return cached;
 
-        return cached;
+        return this.client.guilds.fetch(id).catch(() => null);
     }
 
-    async getCachedGuildMembers(id: string, fetch = true) {
-        const guild = this.getCachedGuild(id);
+    @meassure
+    async getCachedGuildMember(guild_id: string, member_id: string) {
+        const guild = await this.getCachedGuild(guild_id);
         if(!guild) return null;
 
-        if(fetch) await guild.members.fetch();
-        return guild.members.cache;
+        const cached = guild.members.cache.get(member_id);
+        if(cached) return cached;
+
+        return guild.members.fetch(member_id).catch(() => null);
     }
 
-    async getCachedGuildMember(guild_id: string, member_id: string, fetch = true) {
-        const guild = this.getCachedGuild(guild_id);
+    @meassure
+    async getGuildChannel(guild_id: string, channel_id: string) {
+        const guild = await this.getCachedGuild(guild_id);
         if(!guild) return null;
 
-        if(fetch) await guild.members.fetch();
-        return guild.members.cache.get(member_id);
+        const cached = guild.channels.cache.get(channel_id);
+        if(cached) return cached;
+
+        return guild.channels.fetch(channel_id).catch(() => null);
     }
 
-    async getCachedGuildChannels(id: string, fetch = false) {
-        const guild = this.getCachedGuild(id);
+    @meassure
+    async getGuildRole(guild_id: string, role_id: string) {
+        const guild = await this.getCachedGuild(guild_id);
         if(!guild) return null;
 
-        if(fetch) await guild.channels.fetch();
-        return guild.channels.cache;
+        const cached = guild.roles.cache.get(role_id);
+        if(cached) return cached;
+
+        return guild.roles.fetch(role_id).catch(() => null);
     }
 
-    async getCachedGuildChannel(guild: Guild, channel_id: string, fetch = false) {
-        if(fetch) await guild.channels.fetch();
-        return guild.channels.cache.get(channel_id);
+    @meassure
+    async getCachedGuildChannel(guild: Guild, channel_id: string) {
+        const cached = guild.channels.cache.get(channel_id);
+        if(cached) return cached;
+
+        return guild.channels.fetch(channel_id).catch(() => null);
     }
 
-    async existsCachedGuildChannel(guild: Guild, channel_id: string, fetch = false) {
-        if(fetch) await guild.channels.fetch();
-        return guild.channels.cache.has(channel_id);
+    @meassure
+    async existsCachedGuildChannel(guild: Guild, channel_id: string) {
+        const cached = guild.channels.cache.get(channel_id);
+        if(cached) return true;
+
+        if(this._lastChannelsFetch && Date.now() - this._lastChannelsFetch < 5 * 60 * 1000) {
+            return false;
+        }
+
+        const fetched = await guild.channels.fetch(channel_id).catch(() => null);
+        return !!fetched;
     }
 
-    async getCachedGuildRoles(id: string, fetch = false) {
-        const guild = this.getCachedGuild(id);
-        if(!guild) return null;
+    @meassure
+    async existsCachedGuildRole(guild: Guild, role_id: string) {
+        const cached = guild.roles.cache.get(role_id);
+        if(cached) return true;
 
-        if(fetch) await guild.roles.fetch();
-        return guild.roles.cache;
-    }
+        if(this._lastRolesFetch && Date.now() - this._lastRolesFetch < 5 * 60 * 1000) {
+            return false;
+        }
 
-    async existsCachedGuildRole(guild: Guild, role_id: string, fetch = false) {
-        if(fetch) await guild.roles.fetch();
-        return guild.roles.cache.has(role_id);
+        const fetched = await guild.roles.fetch(role_id).catch(() => null);
+        return !!fetched;
     }
 
     get isDevelopment(): boolean {
@@ -143,12 +235,16 @@ export default class BotClient {
             return;
         }
 
+        logger(`Running command ${cmd.data.name} for guild ${interaction.guildId} and user ${interaction.user.tag}`);
+
         await cmd.run(this, interaction);
     }
 
     private async _onGuildMemberRemove(member: GuildMember | PartialGuildMember) {
+        logger(`Member ${member.user.tag} left guild ${member.guild.id}`);
+        
         try {
-            await this.guildService.removeGuildConnectedMember({ guild_id: member.guild.id, guild_uid: member.id });
+            await this.guildService.removeAllDiscordLink(member.id);
         } catch(error: any) {
             logger(`Error when removing connected member: `, error);
         }
@@ -177,26 +273,42 @@ export default class BotClient {
             if(list.length === 0) {
                 return;
             }
-            
-            GuildModel.find().then(async guilds => {
-                for(const guild of guilds) {
+
+            const operations: Promise<void>[] = [];
+            const allGuildIDs = await this.guildService.getAllGuildIDs();
+            for(const guild_id of allGuildIDs) {
+                const guild = await this.guildService.getGuild(guild_id);
+                if(!guild) {
+                    logger(`#startActions Couldn't find guild with id ${guild_id}!`, LoggerType.WARN);
+                    continue;
+                }
+
+                operations.push(
                     (async () => {
+                        let successful = 0;
                         for(const action of list) {
                             try {
+                                const now = Date.now();
                                 await action.action.run(this, guild);
+                                const delta = Date.now() - now;
+                                
+                                logger(`Action ${action.action.name} in guild ${guild_id} executed successfully in ${delta}ms`);
+                                successful++;
                             } catch(error: any) {
-                                logger(`Error in action: ${JSON.stringify(error)}`, LoggerType.ERROR)
+                                logger(`Error in action ${action.action.name} for guild ${guild_id}: ${error.message}`, LoggerType.ERROR);
                             }
                         }
+                        
+                        logger(`Completed all actions for guild ${guild_id} with ${successful}/${list.length} successes!`);
+                    })()
+                );
+            }
 
-                        guild.save();
-                    })();
-                }
-            }).catch(error => logger(`ActionRunner: Couldn't fetch guilds, error: ${error}`, LoggerType.ERROR));
+            await Promise.allSettled(operations);
         }
 
         execute();
-        this._actionsInterval = setInterval(execute, 60000);
+        this._actionsInterval = setInterval(execute, 30_000);
     }
 
     private _stopActions() {

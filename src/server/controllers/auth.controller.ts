@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import DiscordAPI from "../../api/discord";
 import UserService from "../../services/user.service";
 import Code from "../../shared/code";
-import { generateAccessToken } from "../../shared/utils";
+import logger, { LoggerType } from "../../shared/logger";
+import { validate_str, validateParams } from "../../shared/utils";
 
 class AuthController {
     constructor(
@@ -12,28 +13,41 @@ class AuthController {
     auth_login = async (req: Request, res: Response) => {
         const clientID = process.env.APP_ID as string;
         const clientSecret = process.env.APP_SECRET as string;
-        const clientCode = req.body.code as string;
     
         try {
-            const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, clientCode, process.env.FRONTEND_ADDRESS! + "/auth_callback");
-            const user = await DiscordAPI.getUserInformation(oauth.access_token);
+            const params = await validateParams(req.body, {
+                code: { type: validate_str }
+            });
+            
+            const oauth = await DiscordAPI.getAuthToken(clientID, clientSecret, params.code, process.env.FRONTEND_ADDRESS! + "/auth_callback");
+            const user = await this.userService.ensureUserExistsSynced(oauth.access_token);
 
-            console.log(user);
-            console.log(oauth);
+            (req.session as any).data = {
+                uid: user.id,
 
-            await this.userService.createOrUpdateUser({ id: user.id, token: oauth.access_token });
+                discord_token: oauth.access_token,
+                discord_refresh_token: oauth.refresh_token,
+                discord_token_expires: Date.now() + oauth.expires_in * 1000
+            };
 
-            const jwtToken = generateAccessToken(user.id);
-            res.cookie('token', jwtToken).send({ code: Code.OK, msg: "OK" });
+            res.send({ code: Code.OK, msg: "OK" });
         } catch(error: any) {
-            console.log(error);
             res.status(error.status || 500);
             res.send({ code: error.data?.code || Code.INTERNAL_SERVER_ERROR, message: error.data?.message || error.message });
         }
     }
     
     auth_logout = async (req: Request, res: Response) => {
-        res.clearCookie('token').send({ code: Code.OK, msg: "OK" });
+        req.session.destroy((error) => {
+            if(error) {
+                logger(`Failed to destroy session for user ${(req.session as any).data?.uid}: ${error.message}`, LoggerType.ERROR);
+                res.status(500).send({ code: Code.INTERNAL_SERVER_ERROR, message: "Failed to logout" });
+
+                return;
+            }
+
+            res.send({ code: Code.OK, msg: "OK" });
+        });
     }
 
     discord_auth_callback = (req: Request, res: Response) => {

@@ -1,8 +1,8 @@
 import { NextFunction, Response } from "express";
-import UserService from "../../services/user.service";
-import { IUserGuild } from "../../models/user";
+import UserService, { IUserGuild } from "../../services/user.service";
 import Code from "../../shared/code";
 import { AuthenticatedRequest } from "./authenticate_user.middleware";
+import { validate_str, validateParams } from "../../shared/utils";
 
 export interface IsInGuildRequest extends AuthenticatedRequest {
     guild?: IUserGuild
@@ -12,11 +12,18 @@ export default function IsInGuildMiddleware(
     userService: UserService
 ) {
     return async function(req: IsInGuildRequest, res: Response, next: NextFunction) {
-        const guild_id = req.params.id;
-        const user = req.user!;
+        const session_data = (req.session as any).data;
+        if(!session_data) {
+            res.status(401).send({ code: Code.USER_NO_TOKEN, message: "Path requires session" });
+            return;
+        }
 
         try {
-            const guilds = await userService.getUserUpdatedGuilds(user);
+            const params = await validateParams(req.params, {
+                id: { type: validate_str }
+            });
+
+            const guilds = await userService.getUserGuilds(session_data.uid, session_data.discord_token);
             if(!guilds) {
                 return res.status(403).send({
                     code: Code.USER_NOT_REGISTERED, 
@@ -24,10 +31,10 @@ export default function IsInGuildMiddleware(
                 });
             }
             
-            const guild = guilds.find(o => o.id === guild_id);
+            const guild = guilds.find(o => o.id === params.id);
             if(!guild) {
                 return res.status(404).send({ code: Code.USER_NOT_IN_GUILD, message: "Not in the guild" });
-            } else if(!guild.isAdmin) {
+            } else if(!guild.isAdmin && !guild.owner) {
                 return res.status(404).send({ code: Code.USER_NOT_AN_ADMIN, message: "Required admin permissions" });
             }
 
@@ -35,11 +42,6 @@ export default function IsInGuildMiddleware(
 
             next();
         } catch(error: any) {
-            if(error.code === Code.USER_NOT_REGISTERED) {
-                res.status(401).send(error);
-                return;
-            }
-
             next(error);
         }
     }

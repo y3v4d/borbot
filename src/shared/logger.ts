@@ -12,7 +12,7 @@ export enum LoggerType {
     ERROR = "ERROR"
 }
 
-export default function logger(msg: string, type = LoggerType.NORMAL) {
+export default function logger(msg: string, type: LoggerType | string = LoggerType.NORMAL) {
     const date = new Date(Date.now());
 
     let dateMsg = `${dateToString(date, 'Y-M-D h:m:s')}`;
@@ -30,6 +30,7 @@ export default function logger(msg: string, type = LoggerType.NORMAL) {
             console.error(finalMsg);
             break;
         default:
+            console.log(finalMsg);
             break;
     }
 

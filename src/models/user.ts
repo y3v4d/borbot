@@ -1,36 +1,23 @@
 import mongoose from "mongoose";
 
-export interface IUserGuild {
-    id: string, 
-    name: string, 
-    icon: string, 
-    permissions: string,
-    isAdmin: boolean
-}
-
 export interface IUser {
     id: string,
-    token: string,
 
-    guilds: mongoose.Types.DocumentArray<IUserGuild>,
-    last_update_guilds?: number
+    username: string,
+    avatar: string,
+    discriminator: string,
+
+    last_user_sync?: number,
 }
 
 const UserSchema = new mongoose.Schema<IUser>({
     id: { type: String, required: true },
-    token: { type: String, required: true },
-    guilds: {
-        type: [{
-            id: String,
-            name: String,
-            icon: String,
-            permissions: String,
-            isAdmin: Boolean 
-        }],
-        required: true,
-        default: []
-    },
-    last_update_guilds: { type: Number, required: false }
+
+    username: { type: String, required: true },
+    avatar: { type: String, required: true },
+    discriminator: { type: String, required: true },
+
+    last_user_sync: { type: Number, required: false, default: Date.now() },
 });
 
 const UserModel = mongoose.model<IUser>('User', UserSchema);

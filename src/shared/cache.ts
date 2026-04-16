@@ -12,11 +12,11 @@ class InMemoryCache<T> {
     }
 
     set(key: string, value: T, ttl: number = this._ttl) {
-        const expiresAt = Date.now() + ttl;
+        const expiresAt = ttl > 0 ? Date.now() + ttl : Infinity;
         this._cache.set(key, { value, expiresAt });
     }
 
-    // Returns undefined for cache miss, null for negative cache hit, and T for positive cache hit
+    // returns undefined for cache miss, null for negative cache hit, and T for positive cache hit
     get(key: string): T | null | undefined {
         if(!this._cache.has(key)) {
             return undefined;
