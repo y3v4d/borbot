@@ -1,7 +1,7 @@
 import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
-import { dateToString } from "../../shared/utils";
+import { alignCycleStart, dateToString } from "../../shared/utils";
 import { ChannelType } from "discord.js";
 import logger from "../../shared/logger";
 
@@ -35,13 +35,16 @@ export const UpdateSchedule: Action = {
         }
         
         const MS_IN_DAY = 86400000;
+        const CYCLE_LENGTH = 10;
 
-        const cycle_end = new Date(guild.schedule.cycle_start.getTime() + MS_IN_DAY * 9);
-        const allFightsCompleted = raid!.isSuccessful && raid!.isBonusSuccessful;
+        const cycle_start = alignCycleStart(guild.schedule.cycle_start, CYCLE_LENGTH);
+        const cycle_last_day = new Date(cycle_start.getTime() + MS_IN_DAY * (CYCLE_LENGTH - 1));
 
-        let message = `:calendar_spiral: **SCHEDULE ${dateToString(guild.schedule.cycle_start, 'M.D')}-${dateToString(cycle_end, 'M.D')}** :calendar_spiral:\n\n`;
+        const allFightsCompleted = raid.isSuccessful && raid.isBonusSuccessful;
+
+        let message = `:calendar_spiral: **SCHEDULE ${dateToString(cycle_start, 'M.D')}-${dateToString(cycle_last_day, 'M.D')}** :calendar_spiral:\n\n`;
         for(let i = 0; i < guild.schedule.list.length; ++i) {
-            const date = new Date(guild.schedule.cycle_start.getTime() + MS_IN_DAY * i);
+            const date = new Date(cycle_start.getTime() + MS_IN_DAY * i);
             const time_difference = Date.now() - date.getTime();
 
             const is_past = time_difference >= MS_IN_DAY;

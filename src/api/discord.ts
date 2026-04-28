@@ -68,8 +68,14 @@ namespace DiscordAPI {
             redirect_uri: redirect
         };
 
+        console.log("Requesting auth token with params:", params);
+        console.log("Requesting auth token with params (URLSearchParams):", new URLSearchParams(params));
+
         return await request<AuthTokenResponse>('post', 'oauth2/token', {
-            params: new URLSearchParams(params)
+            params: new URLSearchParams(params),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
         });
     }
 

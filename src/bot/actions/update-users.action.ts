@@ -52,7 +52,7 @@ export const UpdateUsers: Action = {
             const dcMember = fetched.members.cache.get(member.discord.user_id);
             if(dcMember && dcMember.manageable) {
                 operations.push(
-                    dcMember.setNickname(`${member.nickname} [${member.highest_zone}]`)
+                    dcMember.setNickname(`${member.nickname} [${member.level}]`)
                 );
             }
         }

@@ -2,7 +2,7 @@ import Bot from "../client";
 import Action from "../core/action";
 import { IGuild } from "../../models/guild";
 import logger, { LoggerType } from "../../shared/logger";
-import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
+import { alignCycleStart, dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { roleMention, userMention } from "@discordjs/builders";
 import { ChannelType } from "discord.js";
 
@@ -59,8 +59,10 @@ export const AnnounceRaids: Action = {
             let mention = "@everyone";
 
             if(guild.schedule && guild.schedule.cycle_start) {
-                const cycleDay = dateDifference(currentDate, guild.schedule.cycle_start);
+                const cycle_start = alignCycleStart(guild.schedule.cycle_start, 10);
+                const cycleDay = dateDifference(currentDate, cycle_start);
                 const clanUID = guild.schedule.list[cycleDay];
+                
                 if(clanUID) {
                     const member = await guildService.getGuildMemberByClanUID(guild.guild_id, clanUID);
 
