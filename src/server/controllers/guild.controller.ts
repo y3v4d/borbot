@@ -240,11 +240,17 @@ class GuildController {
             });
 
             const hasSchedule = await this.guildService.hasGuildSchedule(GUILD_ID);
-            if(!hasSchedule && (!params.cycle_start || !params.list)) {
-                return res.status(400).send({
-                    code: Code.BAD_REQUEST,
-                    message: "Schedule cycle start, and list are required to set up schedule"
-                });
+            if(!hasSchedule) {
+                if(!params.cycle_start) {
+                    return res.status(400).send({
+                        code: Code.BAD_REQUEST,
+                        message: "Schedule cycle start, and list are required to set up schedule"
+                    });
+                }
+
+                if(!params.list || params.list.length === 0) {
+                    params.list = Array(10).fill(null);
+                }
             }
 
             if(params.cycle_start) {
