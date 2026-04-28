@@ -11,6 +11,8 @@ import UserService from './services/user.service';
 
 async function main() {
     try {
+        const PORT = process.env.PORT || 3010;
+
         await mongoose.connect(process.env.MONGODB_URI!);
 
         logger("MongoDB Connected!");
@@ -34,8 +36,8 @@ async function main() {
             await bot.launch();
 
             const api = createServer(bot, userService, guildService, clanService);
-            api.listen(3010, () => {
-                logger("Started REST API on port 3010.");
+            api.listen(PORT, () => {
+                logger(`Started REST API on port ${PORT}.`);
             });
         })
 
