@@ -32,6 +32,9 @@ class AuthController {
 
             res.send({ code: Code.OK, msg: "OK" });
         } catch(error: any) {
+            logger(`Failed to login user`, LoggerType.ERROR);
+            console.error(error);
+            
             res.status(error.status || 500);
             res.send({ code: error.data?.code || Code.INTERNAL_SERVER_ERROR, message: error.data?.message || error.message });
         }

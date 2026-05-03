@@ -1,88 +1,17 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
+import { IChannelRef, IGuild, IGuildChat, IGuildMilestone, IGuildRaid, IGuildRemind, IGuildSchedule, IRoleRef, RaidStatus } from "./types/guild.types";
 
-export interface IRoleRef {
-    id: string,
-    valid?: boolean
-}
-
-export interface IChannelRef {
-    id: string,
-    valid?: boolean
-}
-
-export interface IMessageRef {
-    id: string,
-    valid?: boolean
-}
-
-export enum RaidStatus {
-    NONE = 0,
-    FIRST_RAID_AVAILABLE = 1,
-    BONUS_RAID_AVAILABLE = 2,
-    BONUS_RAID_SUCCESS = 3
-}
-
-export interface IGuildRaid {
-    channel: IChannelRef,
-    fight_role?: IRoleRef,
-    claim_role?: IRoleRef,
-
-    status: RaidStatus,
-    last_update?: Date
-}
-
-export interface IGuildRemind {
-    channel: IChannelRef,
-    last_update?: Date
-}
-
-export interface IGuildChat {
-    channel: IChannelRef,
-    last_update?: Date
-}
-
-export interface IGuildMilestone {
-    channel: IChannelRef,
-}
-
-export interface IGuildSchedule {
-    channel?: IChannelRef,
-    message_id?: string,
-
-    cycle_start: Date,
-    list: (string | null)[],
-
-    last_update?: Date
-}
-
-export interface IGuild {
-    _id?: Types.ObjectId,
-
-    guild_id: string,
-
-    user_uid: string,
-    password_hash: string,
-    clan_name: string,
-    
-    raid?: IGuildRaid,
-    remind?: IGuildRemind,
-    chat?: IGuildChat,
-    milestone?: IGuildMilestone,
-    
-    schedule?: IGuildSchedule
-}
-
-const ChannelRefSchema = new mongoose.Schema({
+const ChannelRefSchema = new mongoose.Schema<IChannelRef>({
     id: { type: String, required: true },
-    valid: { type: Boolean, default: true },
+    valid: { type: Boolean, required: true, default: true },
 }, { _id: false });
 
-const RoleRefSchema = new mongoose.Schema({
+const RoleRefSchema = new mongoose.Schema<IRoleRef>({
     id: { type: String, required: true },
-    valid: { type: Boolean, default: true }
+    valid: { type: Boolean, required: true, default: true }
 }, { _id: false });
 
-const RaidSchema = new mongoose.Schema({
+const RaidSchema = new mongoose.Schema<IGuildRaid>({
     channel: { type: ChannelRefSchema, required: true },
     fight_role: { type: RoleRefSchema, required: false },
     claim_role: { type: RoleRefSchema, required: false },
@@ -91,21 +20,21 @@ const RaidSchema = new mongoose.Schema({
     last_update: { type: Date, required: false }
 }, { _id: false });
 
-const RemindSchema = new mongoose.Schema({
+const RemindSchema = new mongoose.Schema<IGuildRemind>({
     channel: { type: ChannelRefSchema, required: false },
     last_update: { type: Date, required: false }
 }, { _id: false });
 
-const ChatSchema = new mongoose.Schema({
+const ChatSchema = new mongoose.Schema<IGuildChat>({
     channel: { type: ChannelRefSchema, required: false },
     last_update: { type: Date, required: false }
 }, { _id: false });
 
-const MilestoneSchema = new mongoose.Schema({
+const MilestoneSchema = new mongoose.Schema<IGuildMilestone>({
     channel: { type: ChannelRefSchema, required: false },
 }, { _id: false });
 
-const ScheduleSchema = new mongoose.Schema({
+const ScheduleSchema = new mongoose.Schema<IGuildSchedule>({
     cycle_start: { type: Date, required: true },
     list: { type: [String], required: true },
 
@@ -130,13 +59,6 @@ const GuildSchema = new mongoose.Schema<IGuild>({
 });
 
 GuildSchema.index({ guild_id: 1 }, { unique: true });
-GuildSchema.index({ 'raid.channel.id': 1 }, { sparse: true });
-GuildSchema.index({ 'raid.fight_role.id': 1 }, { sparse: true });
-GuildSchema.index({ 'raid.claim_role.id': 1 }, { sparse: true });
-GuildSchema.index({ 'remind.channel.id': 1 }, { sparse: true });
-GuildSchema.index({ 'chat.channel.id': 1 }, { sparse: true });
-GuildSchema.index({ 'milestone.channel.id': 1 }, { sparse: true });
-GuildSchema.index({ 'schedule.channel.id': 1 }, { sparse: true });
 
 const GuildModel = mongoose.model<IGuild>('Guild', GuildSchema);
 export default GuildModel;

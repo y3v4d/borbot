@@ -1,8 +1,8 @@
 import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../../models/guild";
+import { IGuild } from "../../models/types/guild.types";
 import logger, { LoggerType } from "../../shared/logger";
-import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
+import { alignCycleStart, dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { roleMention, userMention } from "@discordjs/builders";
 import { ChannelType } from "discord.js";
 
@@ -13,7 +13,7 @@ export const AnnounceRaids: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.raid || !guild.raid.channel) {
+        if(!guild.raid || !guild.raid.channel || !guild.raid.channel.valid) {
             logger(`Guild ${guild.guild_id} doesn't have raid channel configured, skipping...`, LoggerType.WARN);
             return;
         }
@@ -30,9 +30,10 @@ export const AnnounceRaids: Action = {
             throw new Error(`Couldn't fetch raid information`);
         }
 
-        const channel = await bot.getCachedGuildChannel(fetched, guild.raid.channel?.id || "");
+        const channel = await bot.getCachedGuildChannel(fetched, guild.raid.channel.id);
         if(!channel || channel.type !== ChannelType.GuildText) {
-            throw new Error(`Couldn't fetch discord channel ${guild.raid.channel?.id}`);
+            await guildService.invalidateDiscordChannel(guild.guild_id, guild.raid.channel.id);
+            throw new Error(`Couldn't fetch discord channel ${guild.raid.channel.id}`);
         }
 
         const update: any = {};
@@ -59,8 +60,10 @@ export const AnnounceRaids: Action = {
             let mention = "@everyone";
 
             if(guild.schedule && guild.schedule.cycle_start) {
-                const cycleDay = dateDifference(currentDate, guild.schedule.cycle_start);
+                const cycle_start = alignCycleStart(guild.schedule.cycle_start, 10);
+                const cycleDay = dateDifference(currentDate, cycle_start);
                 const clanUID = guild.schedule.list[cycleDay];
+                
                 if(clanUID) {
                     const member = await guildService.getGuildMemberByClanUID(guild.guild_id, clanUID);
 

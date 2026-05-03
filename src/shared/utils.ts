@@ -11,6 +11,12 @@ type Option<T> = {
     nullable?: boolean;
 };
 
+const MS_IN_DAY = 86400000;
+
+export type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 export function validate_discord_channel(client: BotClient, guild_id: string): ValidatorFunction<{ id: string }> {
     return async (value: any) => {
         if(typeof value !== 'string') throw new Error('Invalid channel ID');
@@ -215,6 +221,18 @@ export function dateToString(date: Date, format = "Y-M-D") {
 
 export function dateDifference(self: Date, other: Date) {
     return (self.getTime() - other.getTime()) / 86400000;
+}
+
+export function alignCycleStart(startDate: Date, cycleLengthDays: number) {
+    const now = Date.now();
+    const cycleLengthMs = cycleLengthDays * MS_IN_DAY;
+
+    let startTime = startDate.getTime();
+    if(now > startTime + cycleLengthMs) {
+        startTime += cycleLengthMs * Math.floor((now - startTime) / cycleLengthMs);
+    }
+
+    return new Date(startTime);
 }
 
 export function getClanRoleName(role: ClanClass) {

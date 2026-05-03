@@ -1,7 +1,7 @@
 import { ChannelType, Guild } from "discord.js";
 import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../../models/guild";
+import { IGuild } from "../../models/types/guild.types";
 import logger, { LoggerType } from "../../shared/logger";
 import GuildService from "../../services/guild.service";
 import { dateToString } from "../../shared/utils";
@@ -13,7 +13,7 @@ export const UpdateChat: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.chat || !guild.chat.channel) {
+        if(!guild.chat || !guild.chat.channel || !guild.chat.channel.valid) {
             return;
         }
 
@@ -33,6 +33,7 @@ export const UpdateChat: Action = {
 
         const channel = await bot.getCachedGuildChannel(fetched, guild.chat.channel.id);
         if(!channel || channel.type !== ChannelType.GuildText) {
+            await guildService.invalidateDiscordChannel(guild.guild_id, guild.chat.channel.id);
             throw new Error(`Couldn't fetch discord channel ${guild.chat.channel.id}`);
         }
 

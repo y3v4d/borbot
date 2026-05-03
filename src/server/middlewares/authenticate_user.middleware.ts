@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import UserService from "../../services/user.service";
 import Code from "../../shared/code";
-import { IUser } from "../../models/user";
+import { IUser } from "../../models/types/user.types";
 
 export interface AuthenticatedRequest extends Request {
     user?: IUser

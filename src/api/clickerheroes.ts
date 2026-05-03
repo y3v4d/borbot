@@ -103,7 +103,7 @@ namespace ClickerHeroesAPI {
             if(!data.success) {
                 throw {
                     code: Code.CLICKERHEROES_API_FAILED,
-                    message: data.reason!
+                    message: data.reason || 'Unknown error'
                 }
             }
 
@@ -112,6 +112,7 @@ namespace ClickerHeroesAPI {
             return data.result!;
         } catch(error: any) {
             logger(`ClickerHeroesAPI ${request} request failed (took ${Date.now() - now}ms)`, LoggerType.ERROR);
+            
             if(error.code === Code.CLICKERHEROES_API_FAILED) {
                 throw error;
             } else if (error.request) {

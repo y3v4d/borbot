@@ -1,6 +1,6 @@
 import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../../models/guild";
+import { IGuild } from "../../models/types/guild.types";
 import { addCommas } from "../../shared/utils";
 import { ChannelType } from "discord.js";
 
@@ -19,9 +19,10 @@ export const UpdateUsers: Action = {
         }
 
         let milestone_channel;
-        if(guild.milestone && guild.milestone.channel) {
+        if(guild.milestone && guild.milestone.channel && guild.milestone.channel.valid) {
             milestone_channel = await bot.getCachedGuildChannel(fetched, guild.milestone.channel.id);
             if(!milestone_channel || milestone_channel.type !== ChannelType.GuildText) {
+                await guildService.invalidateDiscordChannel(guild.guild_id, guild.milestone.channel.id);
                 throw new Error(`Couldn't fetch discord channel ${guild.milestone.channel.id}`);
             }
         }
@@ -52,7 +53,7 @@ export const UpdateUsers: Action = {
             const dcMember = fetched.members.cache.get(member.discord.user_id);
             if(dcMember && dcMember.manageable) {
                 operations.push(
-                    dcMember.setNickname(`${member.nickname} [${member.highest_zone}]`)
+                    dcMember.setNickname(`${member.nickname} [${member.level}]`)
                 );
             }
         }

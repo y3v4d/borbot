@@ -83,7 +83,7 @@ export default class BotClient {
         const guild = await this.getCachedGuild(guild_id);
         if(!guild) return null;
 
-        return guild.members.list({ limit: 10, after }).catch(() => null);
+        return guild.members.list({ limit: 20, after }).catch(() => null);
     }
 
     @meassure

@@ -1,5 +1,5 @@
 import { GuildMember } from "discord.js";
-import { IMember } from "../../models/member";
+import { IMember } from "../../models/types/member.types";
 import logger from "../../shared/logger";
 import Action from "../core/action";
 

@@ -1,26 +1,12 @@
 import mongoose from "mongoose";
+import { IDiscordLink, IMember } from "./types/member.types";
 
-export interface IMember {
-    _id?: mongoose.Types.ObjectId,
-
-    guild_id: string,
-    clan_uid: string,
-
-    nickname: string,
-    highest_zone: number,
-
-    level: number,
-    role: number,
-
-    highest_milestone: number,
-
-    discord?: {
-        user_id: string,
-        username: string,
-        avatar: string,
-        cached_at: Date,
-    }
-}
+const DiscordLinkSchema = new mongoose.Schema<IDiscordLink>({
+    user_id: { type: String, required: true },
+    username: { type: String, required: true },
+    avatar: { type: String, required: true },
+    cached_at: { type: Date, required: true },
+}, { _id : false });
 
 const MemberSchema = new mongoose.Schema<IMember>({
     guild_id: { type: String, required: true },
@@ -33,12 +19,7 @@ const MemberSchema = new mongoose.Schema<IMember>({
 
     highest_milestone: { type: Number, required: true, default: -1 },
 
-    discord: {
-        user_id: { type: String, required: false },
-        username: { type: String, required: false },
-        avatar: { type: String, required: false },
-        cached_at: { type: Date, required: false },
-    }
+    discord: { type: DiscordLinkSchema, required: false }
 });
 
 MemberSchema.index({ guild_id: 1, clan_uid: 1 }, { unique: true });

@@ -1,9 +1,9 @@
 import Bot from "../client";
 import Action from "../core/action";
-import { IGuild } from "../../models/guild";
+import { IGuild } from "../../models/types/guild.types";
 import { dateDifference, dateToString, getDateMidnight } from "../../shared/utils";
 import { ChannelType } from "discord.js";
-import { IMember } from "../../models/member";
+import { IMember } from "../../models/types/member.types";
 import logger from "../../shared/logger";
 import { ClanClass } from "../../services/clan.service";
 
@@ -14,7 +14,7 @@ export const RemindClaim: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.remind || !guild.remind.channel) {
+        if(!guild.remind || !guild.remind.channel || !guild.remind.channel.valid) {
             logger(`Guild ${guild.guild_id} doesn't have remind channel configured, skipping...`);
             return;
         }
@@ -41,6 +41,7 @@ export const RemindClaim: Action = {
 
         const channel = await bot.getCachedGuildChannel(fetchedGuild, guild.remind.channel.id);
         if(!channel || channel.type !== ChannelType.GuildText) {
+            await guildService.invalidateDiscordChannel(guild.guild_id, guild.remind.channel.id);
             throw new Error(`Couldn't fetch discord channel ${guild.remind.channel.id}`);
         }
 

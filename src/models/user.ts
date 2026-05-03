@@ -1,14 +1,5 @@
 import mongoose from "mongoose";
-
-export interface IUser {
-    id: string,
-
-    username: string,
-    avatar: string,
-    discriminator: string,
-
-    last_user_sync?: number,
-}
+import { IUser } from "./types/user.types";
 
 const UserSchema = new mongoose.Schema<IUser>({
     id: { type: String, required: true },

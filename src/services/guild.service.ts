@@ -1,5 +1,7 @@
-import GuildModel, { IGuild, IGuildChat, IGuildMilestone, IGuildRaid, IGuildRemind, IGuildSchedule } from "../models/guild";
-import MemberModel, { IMember } from "../models/member";
+import GuildModel from "../models/guild";
+import MemberModel from "../models/member";
+import { IGuild, IGuildChat, IGuildMilestone, IGuildRaid, IGuildRemind, IGuildSchedule } from "../models/types/guild.types";
+import { IMember } from "../models/types/member.types";
 import InMemoryCache from "../shared/cache";
 import { ClanMember } from "./clan.service";
 import { flattenObject, mapUpdate, mapUpdateAdvanced, mapUpdateNamed } from "../shared/utils";
@@ -30,7 +32,7 @@ class GuildService {
         return lean;
     }
 
-    async setGuildRaid(guild_id: string, raid: Partial<IGuildRaid>) {
+    async setGuildRaid(guild_id: string, raid: DeepPartial<IGuildRaid>) {
         const update = mapUpdateAdvanced(raid, {
             channel: (channel) => mapUpdate(channel!, ["id", "valid"]),
             fight_role: (role) => mapUpdate(role!, ["id", "valid"]),
@@ -59,7 +61,7 @@ class GuildService {
         this._cacheGuild.delete(this._cacheGuildKey(guild_id));
     }
 
-    async setGuildRemind(guild_id: string, remind: Partial<IGuildRemind>) {
+    async setGuildRemind(guild_id: string, remind: DeepPartial<IGuildRemind>) {
         const update = mapUpdateAdvanced(remind, {
             channel: (channel) => mapUpdate(channel!, ["id", "valid"]),
             last_update: (last_update) => last_update
@@ -85,7 +87,7 @@ class GuildService {
         this._cacheGuild.delete(this._cacheGuildKey(guild_id));
     }
 
-    async setGuildChat(guild_id: string, chat: Partial<IGuildChat>) {
+    async setGuildChat(guild_id: string, chat: DeepPartial<IGuildChat>) {
         const update = mapUpdateAdvanced(chat, {
             channel: (channel) => mapUpdate(channel!, ["id", "valid"]),
             last_update: (last_update) => last_update
@@ -111,7 +113,7 @@ class GuildService {
         this._cacheGuild.delete(this._cacheGuildKey(guild_id));
     }
 
-    async setGuildMilestone(guild_id: string, milestone: Partial<IGuildMilestone>) {
+    async setGuildMilestone(guild_id: string, milestone: DeepPartial<IGuildMilestone>) {
         const update = mapUpdateAdvanced(milestone, {
             channel: (channel) => mapUpdate(channel!, ["id", "valid"])
         });
@@ -136,7 +138,7 @@ class GuildService {
         this._cacheGuild.delete(this._cacheGuildKey(guild_id));
     }
 
-    async setGuildSchedule(guild_id: string, schedule: Partial<IGuildSchedule>) {
+    async setGuildSchedule(guild_id: string, schedule: DeepPartial<IGuildSchedule>) {
         const update = mapUpdateAdvanced(schedule, {
             channel: (channel) => mapUpdate(channel!, ["id", "valid"]),
             message_id: (message_id) => message_id,
@@ -257,6 +259,36 @@ class GuildService {
         await MemberModel.updateOne({ guild_id, clan_uid }, { $unset: {
             "discord": ""
         }});
+    }
+
+    async invalidateDiscordChannel(guild_id: string, channel_id: string) {
+        const guild = await this.getGuild(guild_id);
+        if(!guild) {
+            return;
+        }
+
+        const paths = [
+            "raid",
+            "remind",
+            "chat",
+            "milestone",
+            "schedule"
+        ] as const;
+
+        const fields: Record<string, boolean> = {};
+        for(const path of paths) {
+            const channel = guild[path]?.channel;
+            if(channel && channel.id === channel_id) {
+                fields[`${path}.channel.valid`] = false;
+            }
+        }
+
+        if(Object.keys(fields).length === 0) {
+            return;
+        }
+
+        await GuildModel.updateOne({ guild_id: guild_id }, { $set: fields });
+        this._cacheGuild.delete(this._cacheGuildKey(guild_id));
     }
 
     async removeAllDiscordLinks(discord_uids: string[]) {
