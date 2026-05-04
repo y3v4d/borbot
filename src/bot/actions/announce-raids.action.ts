@@ -13,7 +13,7 @@ export const AnnounceRaids: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.raid || !guild.raid.channel || !guild.raid.channel.valid) {
+        if(!guild.raid || !guild.raid.channel || guild.raid.channel.valid == false) {
             logger(`Guild ${guild.guild_id} doesn't have raid channel configured, skipping...`, LoggerType.WARN);
             return;
         }

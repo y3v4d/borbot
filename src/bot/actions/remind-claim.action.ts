@@ -14,7 +14,7 @@ export const RemindClaim: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.remind || !guild.remind.channel || !guild.remind.channel.valid) {
+        if(!guild.remind || !guild.remind.channel || guild.remind.channel.valid == false) {
             logger(`Guild ${guild.guild_id} doesn't have remind channel configured, skipping...`);
             return;
         }

@@ -13,7 +13,7 @@ export const UpdateChat: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.chat || !guild.chat.channel || !guild.chat.channel.valid) {
+        if(!guild.chat || !guild.chat.channel || guild.chat.channel.valid == false) {
             return;
         }
 

@@ -12,7 +12,7 @@ export const UpdateSchedule: Action = {
     repeat: true,
 
     run: async function(bot: Bot, guild: IGuild) {
-        if(!guild.schedule || !guild.schedule.channel || !guild.schedule.channel.valid || !guild.schedule.cycle_start || !guild.schedule.list) {
+        if(!guild.schedule || !guild.schedule.channel || guild.schedule.channel.valid == false || !guild.schedule.cycle_start || !guild.schedule.list) {
             logger(`Guild ${guild.guild_id} doesn't have schedule channel configured, skipping...`);
             return;
         }

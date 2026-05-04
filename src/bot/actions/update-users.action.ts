@@ -19,7 +19,7 @@ export const UpdateUsers: Action = {
         }
 
         let milestone_channel;
-        if(guild.milestone && guild.milestone.channel && guild.milestone.channel.valid) {
+        if(guild.milestone && guild.milestone.channel && guild.milestone.channel.valid != false) {
             milestone_channel = await bot.getCachedGuildChannel(fetched, guild.milestone.channel.id);
             if(!milestone_channel || milestone_channel.type !== ChannelType.GuildText) {
                 await guildService.invalidateDiscordChannel(guild.guild_id, guild.milestone.channel.id);
