@@ -216,9 +216,9 @@ class GuildService {
             guild_id: guild_id,
             clan_uid: clan_uid,
             nickname: data.nickname,
-            highest_zone: data.highestZone,
-            level: data.level,
-            role: data.class,
+            highest_zone: isNaN(data.highestZone) ? 0 : data.highestZone,
+            level: isNaN(data.level) ? 0 : data.level,
+            role: isNaN(data.class) ? 0 : data.class,
             highest_milestone: -1
         });
 
@@ -307,8 +307,8 @@ class GuildService {
         await MemberModel.updateOne({ guild_id, clan_uid }, { $set: {
             nickname: data.nickname,
             highest_zone: data.highestZone,
-            level: data.level,
-            role: data.class
+            level: isNaN(data.level) ? 0 : data.level,
+            role: isNaN(data.class) ? 0 : data.class
         }});
     }
 
@@ -334,7 +334,7 @@ class GuildService {
 
         const guilds = await GuildModel.find({}, { guild_id: 1, _id: 0 }).lean();
         const guildIDs = guilds.map(o => o.guild_id);
-        
+
         for(const id of guildIDs) {
             this._allGuildIdsCache.add(id);
         }

@@ -30,10 +30,10 @@ export const UpdateUsers: Action = {
         const operations: Promise<any>[] = [];
         const members = await guildService.getGuildMembers(guild.guild_id);
         for(const member of members) {
-            const lastMilestone = member.highest_milestone || -1;
+            const lastMilestone = member.highest_milestone ?? -1;
             const currentMilestone = getMilestoneFromZone(member.highest_zone);
 
-            if(lastMilestone < currentMilestone) {
+            if (lastMilestone < currentMilestone) {
                 if(milestone_channel) {
                     const prettyZone = addCommas(getZoneFromMilestone(currentMilestone));
                     operations.push(
@@ -44,6 +44,10 @@ export const UpdateUsers: Action = {
                         guildService.updateMember(member._id.toString(), { highest_milestone: currentMilestone })
                     );
                 }
+            } else if(lastMilestone > currentMilestone) {
+                operations.push(
+                    guildService.updateMember(member._id.toString(), { highest_milestone: currentMilestone })
+                );
             }
 
             if(!member.discord) {
@@ -82,6 +86,10 @@ const MILESTONES = [
 ];
 
 function getMilestoneFromZone(zone: number) {
+    if (MILESTONES.length == 0 || zone < MILESTONES[0]) {
+        return -1;
+    }
+
     let milestone = -1;
     for(let i = 0; i < MILESTONES.length; ++i) {
         if(zone < MILESTONES[i]) {

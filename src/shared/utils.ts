@@ -86,7 +86,7 @@ export function validate_bool(value: any): boolean {
 }
 
 export async function validateParams<
-    T extends Record<string, any>, 
+    T extends Record<string, any>,
     Options extends { [K in keyof T]?: Option<T[K]> },
 >(params: T, options: Options) {
     const output: any = {};
@@ -120,7 +120,7 @@ export async function validateParams<
         }
     }
 
-    return output as { 
+    return output as {
         [K in keyof Options]: InferValidator<NonNullable<Options[K]>['type']> |
             (NonNullable<Options[K]>['optional'] extends true ? undefined : never) |
             (NonNullable<Options[K]>['nullable'] extends true ? null : never);
@@ -164,7 +164,7 @@ export function mapUpdate<T>(input: T, keys: (keyof T)[]): Partial<T> {
     const value = input[key];
     if (value === undefined) continue;
 
-    out[key] = value || null;
+    out[key] = value ?? null;
   }
 
   return out;
@@ -181,7 +181,7 @@ export function mapUpdateNamed<T>(input: T, keyMap: { [K in keyof T]?: string })
         const value = input[key];
         if (value === undefined) continue;
 
-        out[keyMap[key as keyof T]!] = value || null;
+        out[keyMap[key as keyof T]!] = value ?? null;
     }
 
     return out;
@@ -198,7 +198,7 @@ export function printBinary(value: number) {
 
 export function addCommas(n: number | string) {
     const temp = n.toString();
-    
+
     return temp.length < 5 ? temp : temp.replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 }
 
